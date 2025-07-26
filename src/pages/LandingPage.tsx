@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Heart, MapPin, Users, Clock, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-encontro.jpg";
+import Footer from "@/components/Footer";
 
 const LandingPage = () => {
   return (
@@ -166,6 +167,8 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 };

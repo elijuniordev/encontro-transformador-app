@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Footer from "@/components/Footer";
 
 const Login = () => {
   const { toast } = useToast();
@@ -128,6 +129,7 @@ const Login = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };

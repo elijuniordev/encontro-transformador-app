@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import Footer from "@/components/Footer";
 
 const WhatsAppConfirmation = () => {
   return (
@@ -48,6 +49,7 @@ const WhatsAppConfirmation = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };

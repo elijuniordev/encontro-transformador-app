@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Filter, LogOut, Eye, Edit, Users, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Footer from "@/components/Footer";
 
 interface Inscription {
   id: string;
@@ -403,6 +404,7 @@ const Management = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };

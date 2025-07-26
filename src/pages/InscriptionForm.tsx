@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Send } from "lucide-react";
+import Footer from "@/components/Footer";
 
 const InscriptionForm = () => {
   const { toast } = useToast();
@@ -18,22 +19,31 @@ const InscriptionForm = () => {
     sexo: "",
     idade: "",
     whatsapp: "",
-    situacao: ""
+    situacao: "",
+    // Novos campos para encontristas
+    nomeResponsavel1: "",
+    whatsappResponsavel1: "",
+    nomeResponsavel2: "",
+    whatsappResponsavel2: "",
+    nomeResponsavel3: "",
+    whatsappResponsavel3: ""
   });
 
-  // Dados fictícios para demonstração - em produção viriam do Supabase
+  // Dados atualizados conforme solicitação
   const discipuladoresOptions = [
-    "Pastor João e Ana Silva",
-    "Marcos e Carla Santos",
-    "Pedro e Maria Oliveira",
-    "José e Helena Costa"
+    "Arthur e Beatriz",
+    "José Gomes e Edna",
+    "Rosana",
+    "Isaac e Andrea",
+    "Rafael Ângelo e Ingrid"
   ];
 
   const lideresMap: { [key: string]: string[] } = {
-    "Pastor João e Ana Silva": ["Líder Carlos", "Líder Ana", "Líder Paulo"],
-    "Marcos e Carla Santos": ["Líder Roberto", "Líder Sônia", "Líder Lucas"],
-    "Pedro e Maria Oliveira": ["Líder Fernanda", "Líder Antônio", "Líder Rosa"],
-    "José e Helena Costa": ["Líder Marcos", "Líder Juliana", "Líder Bruno"]
+    "Arthur e Beatriz": ["Maria e Mauro", "Welligton e Nathalia", "Rafael Vicente e Fabiana", "Lucas e Gabriela Tangerino"],
+    "José Gomes e Edna": ["Celina", "Junior e Patricia", "José Gomes e Edna", "Eliana", "Vinicius e Eliane"],
+    "Rosana": ["Deusa", "Maria Sandrimara"],
+    "Isaac e Andrea": ["Marcio e Rita", "Alexandre e Carol"],
+    "Rafael Ângelo e Ingrid": ["Renan e Edziane", "Vladimir e Elaine", "Rafael Ângelo e Ingrid", "Hugo e Luciane"]
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,6 +54,16 @@ const InscriptionForm = () => {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validação específica para encontristas
+    if (formData.situacao === "Encontrista" && (!formData.nomeResponsavel1 || !formData.whatsappResponsavel1)) {
+      toast({
+        title: "Campos obrigatórios para Encontrista",
+        description: "Por favor, preencha ao menos o primeiro contato responsável.",
         variant: "destructive"
       });
       return;
@@ -67,7 +87,13 @@ const InscriptionForm = () => {
         sexo: "",
         idade: "",
         whatsapp: "",
-        situacao: ""
+        situacao: "",
+        nomeResponsavel1: "",
+        whatsappResponsavel1: "",
+        nomeResponsavel2: "",
+        whatsappResponsavel2: "",
+        nomeResponsavel3: "",
+        whatsappResponsavel3: ""
       });
       
     } catch (error) {
@@ -203,13 +229,100 @@ const InscriptionForm = () => {
                     <SelectValue placeholder="Selecione sua situação" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="membro">Membro da igreja</SelectItem>
-                    <SelectItem value="visitante">Visitante</SelectItem>
-                    <SelectItem value="novo_convertido">Novo convertido</SelectItem>
-                    <SelectItem value="lideranca">Liderança</SelectItem>
+                    <SelectItem value="Encontrista">Encontrista</SelectItem>
+                    <SelectItem value="Equipe">Equipe</SelectItem>
+                    <SelectItem value="Cozinha">Cozinha</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Seção condicional para Encontristas */}
+              {formData.situacao === "Encontrista" && (
+                <div className="bg-accent/30 p-6 rounded-lg space-y-6">
+                  <h3 className="text-lg font-semibold text-primary">Contatos de Pessoas Responsáveis</h3>
+                  
+                  {/* Contato 1 - Obrigatório */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-primary">Contato 1 (Obrigatório) *</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nomeResponsavel1">Nome do Responsável 1: *</Label>
+                        <Input
+                          id="nomeResponsavel1"
+                          type="text"
+                          value={formData.nomeResponsavel1}
+                          onChange={(e) => setFormData({ ...formData, nomeResponsavel1: e.target.value })}
+                          placeholder="Nome completo do responsável"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="whatsappResponsavel1">WhatsApp do Responsável 1: *</Label>
+                        <Input
+                          id="whatsappResponsavel1"
+                          type="tel"
+                          value={formData.whatsappResponsavel1}
+                          onChange={(e) => setFormData({ ...formData, whatsappResponsavel1: e.target.value })}
+                          placeholder="(11) 99999-9999"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contato 2 - Opcional */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-muted-foreground">Contato 2 (Opcional)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nomeResponsavel2">Nome do Responsável 2:</Label>
+                        <Input
+                          id="nomeResponsavel2"
+                          type="text"
+                          value={formData.nomeResponsavel2}
+                          onChange={(e) => setFormData({ ...formData, nomeResponsavel2: e.target.value })}
+                          placeholder="Nome completo do responsável"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="whatsappResponsavel2">WhatsApp do Responsável 2:</Label>
+                        <Input
+                          id="whatsappResponsavel2"
+                          type="tel"
+                          value={formData.whatsappResponsavel2}
+                          onChange={(e) => setFormData({ ...formData, whatsappResponsavel2: e.target.value })}
+                          placeholder="(11) 99999-9999"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contato 3 - Opcional */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-muted-foreground">Contato 3 (Opcional)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nomeResponsavel3">Nome do Responsável 3:</Label>
+                        <Input
+                          id="nomeResponsavel3"
+                          type="text"
+                          value={formData.nomeResponsavel3}
+                          onChange={(e) => setFormData({ ...formData, nomeResponsavel3: e.target.value })}
+                          placeholder="Nome completo do responsável"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="whatsappResponsavel3">WhatsApp do Responsável 3:</Label>
+                        <Input
+                          id="whatsappResponsavel3"
+                          type="tel"
+                          value={formData.whatsappResponsavel3}
+                          onChange={(e) => setFormData({ ...formData, whatsappResponsavel3: e.target.value })}
+                          placeholder="(11) 99999-9999"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-accent/30 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">
@@ -231,6 +344,7 @@ const InscriptionForm = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };
