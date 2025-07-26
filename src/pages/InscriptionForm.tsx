@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Send } from "lucide-react";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 const InscriptionForm = () => {
   const { toast } = useToast();
@@ -70,8 +71,41 @@ const InscriptionForm = () => {
     }
 
     try {
-      // Em produção, salvaria no Supabase
+      // Preparar dados para inserção no Supabase
+      const inscriptionData = {
+        nome_completo: formData.nomeCompleto,
+        anjo_guarda: formData.anjoGuarda || '',
+        sexo: formData.sexo,
+        idade: formData.idade,
+        whatsapp: formData.whatsapp,
+        situacao: formData.situacao,
+        discipuladores: formData.discipuladores,
+        lider: formData.lider,
+        irmao_voce_e: formData.situacao, // Mapear para o campo correto
+        responsavel_1_nome: formData.nomeResponsavel1 || null,
+        responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
+        responsavel_2_nome: formData.nomeResponsavel2 || null,
+        responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
+        responsavel_3_nome: formData.nomeResponsavel3 || null,
+        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
+        status_pagamento: 'Pendente',
+        valor: 200.00
+      };
+
       console.log("Dados da inscrição:", formData);
+      
+      // Inserir dados no Supabase
+      const { data, error } = await supabase
+        .from('inscriptions')
+        .insert([inscriptionData])
+        .select();
+
+      if (error) {
+        console.error('Erro ao inserir no Supabase:', error);
+        throw error;
+      }
+
+      console.log('Inscrição salva com sucesso:', data);
       
       toast({
         title: "Inscrição realizada com sucesso!",
@@ -97,6 +131,7 @@ const InscriptionForm = () => {
       });
       
     } catch (error) {
+      console.error('Erro completo:', error);
       toast({
         title: "Erro na inscrição",
         description: "Ocorreu um erro ao processar sua inscrição. Tente novamente.",
