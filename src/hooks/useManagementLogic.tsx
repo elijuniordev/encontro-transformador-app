@@ -1,20 +1,8 @@
-// src/pages/Management.tsx
+// src/hooks/useManagementLogic.tsx
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-// Importar os componentes de UI (verifique se todos estão corretos e importados)
-import ManagementHeader from "@/components/management/ManagementHeader";
-import ManagementFilters from "@/components/management/ManagementFilters";
-import StatisticsCards from "@/components/management/StatisticsCards";
-import SituationStatistics from "@/components/management/SituationStatistics";
-import InscriptionsTable from "@/components/management/InscriptionsTable";
-import PaymentMethodStatistics from "@/components/management/PaymentMethodStatistics"; // NOVO: Importar componente de estatísticas de pagamento
-
-// Importações de tipos ou utilitários necessários que são usados diretamente aqui
 import { Badge } from "@/components/ui/badge"; // Necessário para getStatusBadge
 import * as XLSX from 'xlsx'; // Necessário para handleExportXLSX
 
@@ -41,10 +29,9 @@ interface Inscription {
   created_at: string;
 }
 
-const Management = () => {
+export const useManagementLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDiscipulado, setFilterDiscipulado] = useState(false);
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
@@ -57,8 +44,8 @@ const Management = () => {
   const userDiscipulado = localStorage.getItem("userDiscipulado");
   const isAuthenticated = localStorage.getItem("isAuthenticated");
 
-  console.log('Management Page - User Role:', userRole, 'Is Authenticated:', isAuthenticated);
-  console.log('Management Page - isRegistrationsOpen state:', isRegistrationsOpen);
+  console.log('useManagementLogic - User Role:', userRole, 'Is Authenticated:', isAuthenticated);
+  console.log('useManagementLogic - isRegistrationsOpen state:', isRegistrationsOpen);
 
   const fetchInscriptions = useCallback(async () => {
     const { data, error } = await supabase
@@ -139,7 +126,7 @@ const Management = () => {
   const filteredInscriptions = useMemo(() => {
     return inscriptions.filter(inscription => {
       const matchesSearch = inscription.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           inscription.whatsapp.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           inscription.whatsapp.toLowerCase().includes(searchTerm.toLowerCase()) || // Convert whatsapp to lowercase for consistent search
                            inscription.discipuladores.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesDiscipulado = !filterDiscipulado || 
@@ -165,19 +152,19 @@ const Management = () => {
     return counts;
   }, [filteredInscriptions]);
 
-  // NOVO: Cálculo das contagens por forma de pagamento
   const paymentMethodCounts = useMemo(() => {
     const counts: { [key: string]: number } = {
       Pix: 0,
-      'Cartão de Crédito': 0,
-      Transferência: 0,
+      'Cartão de Crédito': 0, 
+      'CartaoCredito2x': 0,   // Chave para o novo valor
+      'CartaoDebito': 0,      // Chave para o novo valor
+      Transferência: 0,       // Manter se ainda for usada como opção de SelectItem
       Dinheiro: 0,
     };
     filteredInscriptions.forEach(inscription => {
       if (inscription.forma_pagamento && Object.hasOwn(counts, inscription.forma_pagamento)) {
         counts[inscription.forma_pagamento]++;
       } else if (inscription.forma_pagamento) {
-        // Para formas de pagamento não mapeadas explicitamente, adicione-as dinamicamente
         counts[inscription.forma_pagamento] = (counts[inscription.forma_pagamento] || 0) + 1;
       }
     });
@@ -268,62 +255,30 @@ const Management = () => {
   }, [filteredInscriptions, toast]);
 
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-peaceful flex flex-col">
-      {/* O conteúdo da página está aqui, ocupando o espaço e com padding */}
-      <div className="mx-auto flex-grow px-4 py-4 w-full md:max-w-7xl sm:px-6"> 
-        
-        {/* Componente: Cabeçalho da Página de Gestão */}
-        <ManagementHeader 
-          userEmail={userEmail} 
-          userRole={userRole} 
-          isRegistrationsOpen={isRegistrationsOpen} 
-          handleLogout={handleLogout} 
-          handleToggleRegistrations={handleToggleRegistrations} 
-        />
-
-        {/* Componente: Filtros e Botão de Exportação */}
-        <ManagementFilters 
-          searchTerm={searchTerm} 
-          setSearchTerm={setSearchTerm} 
-          filterDiscipulado={filterDiscipulado} 
-          setFilterDiscipulado={setFilterDiscipulado} 
-          userRole={userRole} 
-          userDiscipulado={userDiscipulado} 
-          handleExportXLSX={handleExportXLSX} 
-        />
-
-        {/* Componente: Cards de Estatísticas Gerais */}
-        <StatisticsCards filteredInscriptions={filteredInscriptions} />
-
-        {/* Componente: Estatísticas por Função */}
-        <SituationStatistics situationCounts={situationCounts} />
-
-        {/* NOVO COMPONENTE: Estatísticas por Forma de Pagamento */}
-        <PaymentMethodStatistics paymentMethodCounts={paymentMethodCounts} />
-
-        {/* Componente: Tabela de Inscrições */}
-        <InscriptionsTable 
-          filteredInscriptions={filteredInscriptions} 
-          isMobile={isMobile} 
-          userRole={userRole}
-          userDiscipulado={userDiscipulado}
-          getStatusBadge={getStatusBadge}
-          editingId={editingId}
-          setEditingId={setEditingId}
-          editData={editData}
-          setEditData={setEditData}
-          handleEdit={handleEdit}
-          handleSaveEdit={handleSaveEdit}
-        />
-      </div>
-      <Footer />
-    </div>
-  );
+  return {
+    searchTerm,
+    setSearchTerm,
+    filterDiscipulado,
+    setFilterDiscipulado,
+    inscriptions,
+    filteredInscriptions,
+    situationCounts,
+    paymentMethodCounts, // Exportar a nova contagem
+    editingId,
+    setEditingId,
+    editData,
+    setEditData,
+    isRegistrationsOpen,
+    userRole,
+    userEmail,
+    userDiscipulado,
+    isAuthenticated,
+    handleLogout,
+    handleToggleRegistrations,
+    getStatusBadge,
+    handleEdit,
+    handleSaveEdit,
+    handleExportXLSX,
+    fetchInscriptions, 
+  };
 };
-
-export default Management;
