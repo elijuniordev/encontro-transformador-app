@@ -14,7 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      inscriptions: {
+        Row: {
+          anjo_guarda: string
+          created_at: string
+          discipuladores: string
+          forma_pagamento: string | null
+          id: string
+          idade: string
+          irmao_voce_e: string
+          lider: string
+          nome_completo: string
+          observacao: string | null
+          responsavel_1_nome: string | null
+          responsavel_1_whatsapp: string | null
+          responsavel_2_nome: string | null
+          responsavel_2_whatsapp: string | null
+          responsavel_3_nome: string | null
+          responsavel_3_whatsapp: string | null
+          sexo: string
+          situacao: string
+          status_pagamento: string
+          updated_at: string
+          valor: number
+          whatsapp: string
+        }
+        Insert: {
+          anjo_guarda: string
+          created_at?: string
+          discipuladores: string
+          forma_pagamento?: string | null
+          id?: string
+          idade: string
+          irmao_voce_e: string
+          lider: string
+          nome_completo: string
+          observacao?: string | null
+          responsavel_1_nome?: string | null
+          responsavel_1_whatsapp?: string | null
+          responsavel_2_nome?: string | null
+          responsavel_2_whatsapp?: string | null
+          responsavel_3_nome?: string | null
+          responsavel_3_whatsapp?: string | null
+          sexo: string
+          situacao: string
+          status_pagamento?: string
+          updated_at?: string
+          valor?: number
+          whatsapp: string
+        }
+        Update: {
+          anjo_guarda?: string
+          created_at?: string
+          discipuladores?: string
+          forma_pagamento?: string | null
+          id?: string
+          idade?: string
+          irmao_voce_e?: string
+          lider?: string
+          nome_completo?: string
+          observacao?: string | null
+          responsavel_1_nome?: string | null
+          responsavel_1_whatsapp?: string | null
+          responsavel_2_nome?: string | null
+          responsavel_2_whatsapp?: string | null
+          responsavel_3_nome?: string | null
+          responsavel_3_whatsapp?: string | null
+          sexo?: string
+          situacao?: string
+          status_pagamento?: string
+          updated_at?: string
+          valor?: number
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          discipulado: string | null
+          email: string
+          id: string
+          password_hash: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          discipulado?: string | null
+          email: string
+          id?: string
+          password_hash: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          discipulado?: string | null
+          email?: string
+          id?: string
+          password_hash?: string
+          role?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
