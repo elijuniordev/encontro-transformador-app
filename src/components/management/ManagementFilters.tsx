@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Importado Select components
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Download } from "lucide-react";
 
 interface ManagementFiltersProps {
@@ -16,7 +16,6 @@ interface ManagementFiltersProps {
   userDiscipulado: string | null;
   handleExportXLSX: () => void;
   
-  // Novas props para os filtros adicionais
   filterByFuncao: string;
   setFilterByFuncao: (value: string) => void;
   filterByStatusPagamento: string;
@@ -37,7 +36,6 @@ const ManagementFilters = ({
   userDiscipulado,
   handleExportXLSX,
   
-  // Desestruturando as novas props
   filterByFuncao,
   setFilterByFuncao,
   filterByStatusPagamento,
@@ -70,14 +68,14 @@ const ManagementFilters = ({
         </div>
 
         {/* Novos Filtros Dropdown */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-wrap"> {/* Container para os selects */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-wrap">
           {/* Filtro por Função */}
           <Select value={filterByFuncao} onValueChange={setFilterByFuncao}>
             <SelectTrigger className="w-[180px] sm:w-[150px]">
               <SelectValue placeholder="Filtrar por Função" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem> {/* Opção para limpar o filtro */}
+              <SelectItem value="all">Todos</SelectItem> {/* ALTERADO AQUI: value="all" */}
               {funcaoOptions.map(option => (
                 <SelectItem key={option} value={option}>{option}</SelectItem>
               ))}
@@ -90,7 +88,7 @@ const ManagementFilters = ({
               <SelectValue placeholder="Filtrar por Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem> {/* Opção para limpar o filtro */}
+              <SelectItem value="all">Todos</SelectItem> {/* ALTERADO AQUI: value="all" */}
               {statusPagamentoOptions.map(option => (
                 <SelectItem key={option} value={option}>{option}</SelectItem>
               ))}
@@ -103,7 +101,7 @@ const ManagementFilters = ({
               <SelectValue placeholder="Filtrar por Discipulado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem> {/* Opção para limpar o filtro */}
+              <SelectItem value="all">Todos</SelectItem> {/* ALTERADO AQUI: value="all" */}
               {discipuladoGroupOptions.map(option => (
                 <SelectItem key={option} value={option}>{option}</SelectItem>
               ))}

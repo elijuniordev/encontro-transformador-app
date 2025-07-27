@@ -10,16 +10,12 @@ import * as XLSX from 'xlsx';
 const FUNCAO_OPTIONS = ["Encontrista", "Equipe", "Cozinha"];
 const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Cancelado", "Isento"];
 
-// Importar DISCIPULADORES_OPTIONS e LIDERES_MAP do useInscriptionFormLogic para reutilização
-// Certifique-se de que DISCIPULADORES_OPTIONS não inclua "Sou Obreiro..." se não for um grupo de discipulado real para filtro
-// Se DISCIPULADORES_OPTIONS for grande, você pode considerar buscar dinamicamente os grupos únicos de discipuladores do DB.
 const DISCIPULADORES_OPTIONS_FOR_FILTER = [
   "Arthur e Beatriz",
   "José Gomes e Edna",
   "Rosana",
   "Isaac e Andrea",
   "Rafael Ângelo e Ingrid"
-  // Não incluir "Sou Obreiro, Discipulador ou Pastor" aqui se ele não representa um grupo filtrável
 ];
 
 
@@ -32,7 +28,7 @@ interface Inscription {
   sexo: string;
   idade: string;
   whatsapp: string;
-  irmao_voce_e: string; // Corresponde à situacao do formulário
+  irmao_voce_e: string;
   responsavel_1_nome: string | null;
   responsavel_1_whatsapp: string | null;
   responsavel_2_nome: string | null;
@@ -50,12 +46,11 @@ export const useManagementLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDiscipulado, setFilterDiscipulado] = useState(false); // Flag para filtrar pelo discipulador logado
+  const [filterDiscipulado, setFilterDiscipulado] = useState(false);
   
-  // Novos estados para os filtros adicionais
-  const [filterByFuncao, setFilterByFuncao] = useState("");
-  const [filterByStatusPagamento, setFilterByStatusPagamento] = useState("");
-  const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState(""); // Para o novo filtro dropdown de discipulados
+  const [filterByFuncao, setFilterByFuncao] = useState("all"); // Valor inicial para "all"
+  const [filterByStatusPagamento, setFilterByStatusPagamento] = useState("all"); // Valor inicial para "all"
+  const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState("all"); // Valor inicial para "all"
 
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -155,9 +150,9 @@ export const useManagementLogic = () => {
       const matchesDiscipuladoByLoggedInUser = !filterDiscipulado || (userDiscipulado && inscription.discipuladores === userDiscipulado);
       
       // Novos filtros
-      const matchesFuncao = !filterByFuncao || inscription.irmao_voce_e === filterByFuncao;
-      const matchesStatusPagamento = !filterByStatusPagamento || inscription.status_pagamento === filterByStatusPagamento;
-      const matchesDiscipuladoGroup = !filterByDiscipuladoGroup || inscription.discipuladores === filterByDiscipuladoGroup;
+      const matchesFuncao = filterByFuncao === "all" || inscription.irmao_voce_e === filterByFuncao; // ALTERADO AQUI: check for "all"
+      const matchesStatusPagamento = filterByStatusPagamento === "all" || inscription.status_pagamento === filterByStatusPagamento; // ALTERADO AQUI: check for "all"
+      const matchesDiscipuladoGroup = filterByDiscipuladoGroup === "all" || inscription.discipuladores === filterByDiscipuladoGroup; // ALTERADO AQUI: check for "all"
 
       return matchesSearch && matchesDiscipuladoByLoggedInUser && matchesFuncao && matchesStatusPagamento && matchesDiscipuladoGroup;
     });
@@ -324,8 +319,8 @@ export const useManagementLogic = () => {
     handleSaveEdit,
     handleExportXLSX,
     fetchInscriptions,
-    funcaoOptions: FUNCAO_OPTIONS, // Exportando as opções
-    statusPagamentoOptions: STATUS_PAGAMENTO_OPTIONS, // Exportando as opções
-    discipuladoGroupOptions: DISCIPULADORES_OPTIONS_FOR_FILTER, // Exportando as opções
+    funcaoOptions: FUNCAO_OPTIONS,
+    statusPagamentoOptions: STATUS_PAGAMENTO_OPTIONS,
+    discipuladoGroupOptions: DISCIPULADORES_OPTIONS_FOR_FILTER,
   };
 };
