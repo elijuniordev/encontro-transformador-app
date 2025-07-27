@@ -1,6 +1,6 @@
 // src/components/management/ManagementHeader.tsx
 import { Link } from "react-router-dom";
-import { LogOut, Settings, AlertTriangle } from "lucide-react"; // Adicionado Settings e AlertTriangle
+import { LogOut, Settings, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,14 +13,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"; // Importado AlertDialog components
+} from "@/components/ui/alert-dialog";
 
 interface ManagementHeaderProps {
   userEmail: string | null;
   userRole: string | null;
   handleLogout: () => void;
-  isRegistrationsOpen: boolean; // Mantido e usado aqui
-  handleToggleRegistrations: () => void; // Mantido e usado aqui
+  isRegistrationsOpen: boolean;
+  handleToggleRegistrations: () => void;
 }
 
 const ManagementHeader = ({
@@ -37,32 +37,49 @@ const ManagementHeader = ({
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-primary text-primary-foreground shadow-md">
-      <Link to="/management" className="flex items-center gap-2">
-        <Settings className="h-6 w-6" /> {/* Alterado para Settings */}
-        <h1 className="text-xl font-bold">Gestão</h1>
-      </Link>
-      <div className="flex items-center gap-4">
+    <header className="flex flex-col sm:flex-row items-center sm:justify-between p-4 bg-primary text-primary-foreground shadow-md">
+      {/* Container da Esquerda: Título e Avatar/Email no Mobile */}
+      <div className="flex items-center justify-between w-full sm:w-auto mb-2 sm:mb-0">
+        <Link to="/management" className="flex items-center gap-2 flex-shrink-0">
+          <Settings className="h-6 w-6" />
+          <h1 className="text-xl font-bold">Gestão</h1>
+        </Link>
+        {/* Avatar/Email visível apenas no mobile (até sm) neste bloco */}
         {userEmail && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:hidden">
             <Avatar>
               <AvatarImage src="/avatar-placeholder.png" alt="User Avatar" />
               <AvatarFallback>{getInitials(userEmail)}</AvatarFallback>
             </Avatar>
-            <span className="text-sm hidden sm:block">{userEmail}</span>
+            {/* Email oculto no mobile pequeno para economizar espaço */}
+            <span className="text-sm hidden xs:block">{userEmail}</span> 
           </div>
         )}
-        
-        {/* Botão de Toggle de Inscrições para Admin (movido de volta para cá) */}
+      </div>
+
+      {/* Container da Direita: Avatar/Email no Desktop e Botões de Ação */}
+      <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+        {/* Avatar/Email visível apenas no desktop (a partir de sm) neste bloco */}
+        {userEmail && (
+          <div className="hidden sm:flex items-center gap-2">
+            <Avatar>
+              <AvatarImage src="/avatar-placeholder.png" alt="User Avatar" />
+              <AvatarFallback>{getInitials(userEmail)}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm">{userEmail}</span>
+          </div>
+        )}
+
+        {/* Botão de Toggle de Inscrições para Admin */}
         {userRole === "admin" && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button 
-                variant={isRegistrationsOpen ? "destructive" : "default"} 
-                className="flex items-center gap-2 text-sm px-3 py-2 justify-center" // Ajustado para ser mais compacto
+              <Button
+                variant={isRegistrationsOpen ? "destructive" : "default"}
+                className="flex items-center gap-1 text-xs px-2 py-1 justify-center sm:px-3 sm:py-2 sm:text-sm" // Tamanho ajustado para mobile
               >
-                <AlertTriangle className="h-4 w-4" />
-                {isRegistrationsOpen ? "Encerrar Inscrições" : "Abrir Inscrições"}
+                <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" /> {/* Ícone menor no mobile */}
+                {isRegistrationsOpen ? "Encerrar" : "Abrir"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -84,8 +101,8 @@ const ManagementHeader = ({
           </AlertDialog>
         )}
 
-        <Button onClick={handleLogout} variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/20">
-          <LogOut className="h-5 w-5 mr-2" /> Sair
+        <Button onClick={handleLogout} variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/20 flex items-center gap-1 text-xs px-2 py-1 sm:px-3 sm:py-2 sm:text-sm"> {/* Tamanho ajustado para mobile */}
+          <LogOut className="h-3 w-3 sm:h-5 sm:w-5" /> Sair
         </Button>
       </div>
     </header>

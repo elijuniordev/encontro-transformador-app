@@ -190,6 +190,7 @@ export const useInscriptionFormLogic = () => {
       }
       // ** FIM DA VALIDAÇÃO DE WHATSAPP DUPLICADO **
 
+
       const finalLider = formData.discipuladores === "Sou Obreiro, Discipulador ou Pastor"
                          ? "Sou Obreiro, Discipulador ou Pastor"
                          : formData.lider;
@@ -217,12 +218,12 @@ export const useInscriptionFormLogic = () => {
         discipuladores: formData.discipuladores,
         lider: finalLider,
         irmao_voce_e: formData.situacao,
-        status_pagamento: initialStatusPagamento, // Usar o status definido condicionalmente
-        forma_pagamento: initialFormaPagamento,   // Usar a forma de pagamento definida condicionalmente
+        status_pagamento: initialStatusPagamento,
+        forma_pagamento: initialFormaPagamento,
         valor: 200.00
       };
 
-      console.log("Dados da inscrição:", inscriptionData);
+      // REMOVIDO: console.log("Dados da inscrição:", inscriptionData);
 
       const { data, error } = await supabase
         .from('inscriptions')
@@ -234,7 +235,7 @@ export const useInscriptionFormLogic = () => {
         throw error;
       }
 
-      console.log('Inscrição salva com sucesso:', data);
+      // REMOVIDO: console.log('Inscrição salva com sucesso:', data);
 
       toast({
         title: "Inscrição realizada com sucesso!",

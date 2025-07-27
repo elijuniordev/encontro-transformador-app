@@ -48,9 +48,9 @@ export const useManagementLogic = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDiscipulado, setFilterDiscipulado] = useState(false);
   
-  const [filterByFuncao, setFilterByFuncao] = useState("all"); // Valor inicial para "all"
-  const [filterByStatusPagamento, setFilterByStatusPagamento] = useState("all"); // Valor inicial para "all"
-  const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState("all"); // Valor inicial para "all"
+  const [filterByFuncao, setFilterByFuncao] = useState("all");
+  const [filterByStatusPagamento, setFilterByStatusPagamento] = useState("all");
+  const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState("all");
 
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -62,8 +62,8 @@ export const useManagementLogic = () => {
   const userDiscipulado = localStorage.getItem("userDiscipulado");
   const isAuthenticated = localStorage.getItem("isAuthenticated");
 
-  console.log('useManagementLogic - User Role:', userRole, 'Is Authenticated:', isAuthenticated);
-  console.log('useManagementLogic - isRegistrationsOpen state:', isRegistrationsOpen);
+  // REMOVIDO: console.log('useManagementLogic - User Role:', userRole, 'Is Authenticated:', isAuthenticated);
+  // REMOVIDO: console.log('useManagementLogic - isRegistrationsOpen state:', isRegistrationsOpen);
 
   const fetchInscriptions = useCallback(async () => {
     const { data, error } = await supabase
@@ -149,10 +149,9 @@ export const useManagementLogic = () => {
 
       const matchesDiscipuladoByLoggedInUser = !filterDiscipulado || (userDiscipulado && inscription.discipuladores === userDiscipulado);
       
-      // Novos filtros
-      const matchesFuncao = filterByFuncao === "all" || inscription.irmao_voce_e === filterByFuncao; // ALTERADO AQUI: check for "all"
-      const matchesStatusPagamento = filterByStatusPagamento === "all" || inscription.status_pagamento === filterByStatusPagamento; // ALTERADO AQUI: check for "all"
-      const matchesDiscipuladoGroup = filterByDiscipuladoGroup === "all" || inscription.discipuladores === filterByDiscipuladoGroup; // ALTERADO AQUI: check for "all"
+      const matchesFuncao = filterByFuncao === "all" || inscription.irmao_voce_e === filterByFuncao;
+      const matchesStatusPagamento = filterByStatusPagamento === "all" || inscription.status_pagamento === filterByStatusPagamento;
+      const matchesDiscipuladoGroup = filterByDiscipuladoGroup === "all" || inscription.discipuladores === filterByDiscipuladoGroup;
 
       return matchesSearch && matchesDiscipuladoByLoggedInUser && matchesFuncao && matchesStatusPagamento && matchesDiscipuladoGroup;
     });
@@ -245,7 +244,7 @@ export const useManagementLogic = () => {
         title: "Dados atualizados",
         description: "As informações foram salvas com sucesso.",
       });
-      fetchInscriptions(); // Re-buscar os dados após salvar
+      fetchInscriptions();
     }
 
     setEditingId(null);
