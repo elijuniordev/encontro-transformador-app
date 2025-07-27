@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx'; // Certifique-se que xlsx está importado
 
 // Definindo opções para filtros que são constantes
 const FUNCAO_OPTIONS = ["Encontrista", "Equipe", "Cozinha"];
@@ -61,9 +61,6 @@ export const useManagementLogic = () => {
   const userEmail = localStorage.getItem("userEmail");
   const userDiscipulado = localStorage.getItem("userDiscipulado");
   const isAuthenticated = localStorage.getItem("isAuthenticated");
-
-  // REMOVIDO: console.log('useManagementLogic - User Role:', userRole, 'Is Authenticated:', isAuthenticated);
-  // REMOVIDO: console.log('useManagementLogic - isRegistrationsOpen state:', isRegistrationsOpen);
 
   const fetchInscriptions = useCallback(async () => {
     const { data, error } = await supabase
@@ -276,6 +273,44 @@ export const useManagementLogic = () => {
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+    // 1. Definir larguras de coluna
+    const wscols = [
+        {wch: 10}, // ID
+        {wch: 25}, // Nome Completo
+        {wch: 20}, // Discipuladores
+        {wch: 20}, // Líder
+        {wch: 20}, // Anjo da Guarda
+        {wch: 8},  // Sexo
+        {wch: 6},  // Idade
+        {wch: 15}, // WhatsApp
+        {wch: 12}, // Função
+        {wch: 25}, // Resp. 1 Nome
+        {wch: 18}, // Resp. 1 WhatsApp
+        {wch: 25}, // Resp. 2 Nome
+        {wch: 18}, // Resp. 2 WhatsApp
+        {wch: 25}, // Resp. 3 Nome
+        {wch: 18}, // Resp. 3 WhatsApp
+        {wch: 18}, // Status Pagamento
+        {wch: 18}, // Forma Pagamento
+        {wch: 10}, // Valor
+        {wch: 30}, // Observação
+        {wch: 15}, // Data Inscrição
+    ];
+    ws['!cols'] = wscols;
+
+    // 2. Adicionar auto-filtro aos cabeçalhos
+    if (dataToExport.length > 0) {
+        // Obter o range atual da planilha (ex: "A1:T" + (dataToExport.length + 1))
+        const range = XLSX.utils.decode_range(ws['!ref'] || "A1");
+        // Ajustar o range para incluir apenas a linha do cabeçalho
+        ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: range.s.r, c: range.s.c }, e: { r: range.s.r, c: range.e.c } }) };
+        // Para aplicar o filtro a todas as linhas de dados, o ref deve incluir a última linha de dados.
+        // O ref completo para autoFilter deve ser A1:LastColumnLastRow
+        ws['!autofilter'] = { ref: ws['!ref'] };
+    }
+
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Inscrições");
     XLSX.writeFile(wb, "inscricoes_encontro_com_deus.xlsx");
