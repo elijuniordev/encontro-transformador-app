@@ -73,7 +73,7 @@ export const useManagementLogic = () => {
 
     if (error) {
       console.error("Erro ao buscar status das inscrições:", error);
-      setIsRegistrationsOpen(true); 
+      setIsRegistrationsOpen(true);
     } else {
       setIsRegistrationsOpen(data.registrations_open);
     }
@@ -105,7 +105,7 @@ export const useManagementLogic = () => {
     const { error } = await supabase
       .from('event_settings')
       .update({ registrations_open: newStatus })
-      .eq('id', settingsId); 
+      .eq('id', settingsId);
 
     if (error) {
       console.error("Erro ao atualizar status das inscrições:", error);
@@ -128,10 +128,10 @@ export const useManagementLogic = () => {
       const matchesSearch = inscription.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            inscription.whatsapp.toLowerCase().includes(searchTerm.toLowerCase()) || // Convert whatsapp to lowercase for consistent search
                            inscription.discipuladores.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesDiscipulado = !filterDiscipulado || 
+
+      const matchesDiscipulado = !filterDiscipulado ||
                                 (userDiscipulado && inscription.discipuladores === userDiscipulado);
-      
+
       return matchesSearch && matchesDiscipulado;
     });
   }, [inscriptions, searchTerm, filterDiscipulado, userDiscipulado]);
@@ -155,17 +155,22 @@ export const useManagementLogic = () => {
   const paymentMethodCounts = useMemo(() => {
     const counts: { [key: string]: number } = {
       Pix: 0,
-      'Cartão de Crédito': 0, 
-      'CartaoCredito2x': 0,   // Chave para o novo valor
-      'CartaoDebito': 0,      // Chave para o novo valor
-      Transferência: 0,       // Manter se ainda for usada como opção de SelectItem
-      Dinheiro: 0,
+      'Cartão de Crédito': 0,
+      'CartaoCredito2x': 0,
+      'CartaoDebito': 0,
+      // 'Transferência': 0, // Removida a inicialização explícita de 'Transferência'
+      'Dinheiro': 0,
+      'Pendente': 0,
+      'Cancelado': 0,
+      'Isento': 0,
     };
     filteredInscriptions.forEach(inscription => {
-      if (inscription.forma_pagamento && Object.hasOwn(counts, inscription.forma_pagamento)) {
-        counts[inscription.forma_pagamento]++;
-      } else if (inscription.forma_pagamento) {
-        counts[inscription.forma_pagamento] = (counts[inscription.forma_pagamento] || 0) + 1;
+      const key = inscription.forma_pagamento;
+      if (key && Object.hasOwn(counts, key)) {
+        counts[key]++;
+      } else if (key) {
+        // Para formas de pagamento não mapeadas explicitamente, adicione-as dinamicamente
+        counts[key] = (counts[key] || 0) + 1;
       }
     });
     return counts;
@@ -194,7 +199,7 @@ export const useManagementLogic = () => {
 
   const handleSaveEdit = useCallback(async () => {
     if (!editingId) return;
-    
+
     const { error } = await supabase
       .from('inscriptions')
       .update(editData)
@@ -214,7 +219,7 @@ export const useManagementLogic = () => {
       });
       fetchInscriptions(); // Re-buscar os dados após salvar
     }
-    
+
     setEditingId(null);
     setEditData({});
   }, [editingId, editData, fetchInscriptions, toast]);
@@ -279,6 +284,6 @@ export const useManagementLogic = () => {
     handleEdit,
     handleSaveEdit,
     handleExportXLSX,
-    fetchInscriptions, 
+    fetchInscriptions,
   };
 };

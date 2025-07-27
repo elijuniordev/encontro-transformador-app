@@ -1,13 +1,13 @@
 // src/components/management/InscriptionsTable.tsx
-import { useState, useCallback } from "react"; 
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button"; 
-import { Eye, Edit, Users, ChevronRight } from "lucide-react"; 
-import { useIsMobile } from "@/hooks/use-mobile"; 
+import { Button } from "@/components/ui/button";
+import { Eye, Edit, Users, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Inscription {
   id: string;
@@ -34,15 +34,15 @@ interface Inscription {
 
 interface InscriptionsTableProps {
   filteredInscriptions: Inscription[];
-  isMobile: boolean; 
+  isMobile: boolean;
   userRole: string | null;
   userDiscipulado: string | null;
   getStatusBadge: (status: string) => JSX.Element;
   editingId: string | null;
   setEditingId: (id: string | null) => void;
   // CORRIGIDO AQUI: Adicionado editData e setEditData com o tipo correto
-  editData: Partial<Inscription>; 
-  setEditData: React.Dispatch<React.SetStateAction<Partial<Inscription>>>; 
+  editData: Partial<Inscription>;
+  setEditData: React.Dispatch<React.SetStateAction<Partial<Inscription>>>;
   handleEdit: (inscription: Inscription) => void;
   handleSaveEdit: () => void;
 }
@@ -76,12 +76,12 @@ const InscriptionsTable = ({
         <p><strong className="text-primary">Valor:</strong> R$ {inscription.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         <p><strong className="text-primary">Forma Pagamento:</strong> {inscription.forma_pagamento || "-"}</p>
         <p><strong className="text-primary">Observação:</strong> {inscription.observacao || "-"}</p>
-        
+
         {/* Botão de Edição para Mobile */}
         <div className="flex justify-end mt-3">
           {editingId === inscription.id ? (
             <div className="flex flex-col gap-2 w-full">
-              <Select 
+              <Select
                 value={editData.status_pagamento || ''}
                 onValueChange={(value) => {
                   setEditData({ ...editData, status_pagamento: value });
@@ -104,7 +104,7 @@ const InscriptionsTable = ({
                   <SelectItem value="Isento">Isento</SelectItem>
                 </SelectContent>
               </Select>
-              <Select 
+              <Select
                 value={editData.forma_pagamento || ''}
                 onValueChange={(value) => setEditData({...editData, forma_pagamento: value})}
                 // Desabilitar se status_pagamento for Pendente, Cancelado ou Isento
@@ -116,8 +116,8 @@ const InscriptionsTable = ({
                 <SelectContent>
                   <SelectItem value="Pix">Pix</SelectItem>
                   <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                  <SelectItem value="CartaoCredito2x">Cartão de Crédito 2x</SelectItem> 
-                  <SelectItem value="CartaoDebito">Cartão de Débito</SelectItem> 
+                  <SelectItem value="CartaoCredito2x">Cartão de Crédito 2x</SelectItem>
+                  <SelectItem value="CartaoDebito">Cartão de Débito</SelectItem>
                   <SelectItem value="Dinheiro">Dinheiro</SelectItem>
                   {/* Adiciona as opções de status como itens selecionáveis quando desabilitado, mas que não podem ser escolhidos */}
                   {['Pendente', 'Cancelado', 'Isento'].map(statusVal => (
@@ -208,18 +208,17 @@ const InscriptionsTable = ({
                     <TableCell className="text-sm">{inscription.irmao_voce_e}</TableCell>
                     <TableCell>
                       {editingId === inscription.id ? (
-                        <Select 
+                        <Select
                           value={editData.status_pagamento || ''}
                           onValueChange={(value) => {
                             setEditData({ ...editData, status_pagamento: value });
                             // Lógica para ajustar a forma_pagamento automaticamente
                             if (['Pendente', 'Cancelado', 'Isento'].includes(value)) {
                               setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: value }));
-                            } else if (editData.forma_pagamento === value && value !== 'Confirmado') {
-                                // Se mudar de Pendente/Cancelado/Isento para Confirmado, limpa a forma de pagamento
-                                setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: null }));
                             } else if (value === 'Confirmado' && ['Pendente', 'Cancelado', 'Isento'].includes(editData.forma_pagamento || '')) {
                                 // Se mudar de Pendente/Cancelado/Isento para Confirmado, e forma_pagamento estava "travada"
+                                setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: null }));
+                            } else if (value === 'Confirmado') {
                                 setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: null }));
                             }
                           }}
@@ -240,7 +239,7 @@ const InscriptionsTable = ({
                     </TableCell>
                     <TableCell>
                       {editingId === inscription.id ? (
-                        <Select 
+                        <Select
                           value={editData.forma_pagamento || ''}
                           onValueChange={(value) => setEditData({...editData, forma_pagamento: value})}
                           // Desabilitar se status_pagamento for Pendente, Cancelado ou Isento
@@ -252,8 +251,8 @@ const InscriptionsTable = ({
                           <SelectContent>
                             <SelectItem value="Pix">Pix</SelectItem>
                             <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                            <SelectItem value="CartaoCredito2x">Cartão de Crédito 2x</SelectItem> 
-                            <SelectItem value="CartaoDebito">Cartão de Débito</SelectItem> 
+                            <SelectItem value="CartaoCredito2x">Cartão de Crédito 2x</SelectItem>
+                            <SelectItem value="CartaoDebito">Cartão de Débito</SelectItem>
                             <SelectItem value="Dinheiro">Dinheiro</SelectItem>
                           </SelectContent>
                         </Select>

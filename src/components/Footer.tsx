@@ -3,9 +3,8 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    // 'w-full' garante largura total, 'px-4' para padding interno
-    <footer className="w-full bg-primary text-primary-foreground py-4 px-4">
-      {/* 'max-w-6xl mx-auto text-center' centraliza o conteúdo dentro do footer de largura total */}
+    // O footer agora usará o gradiente definido no tema
+    <footer className="w-full bg-gradient-divine text-primary-foreground py-8 px-4 border-t border-border shadow-peaceful">
       <div className="max-w-6xl mx-auto text-center">
         <p className="text-sm">
           Direitos reservados a Igreja Videira Osasco. Desenvolvido por{" "}
@@ -13,7 +12,8 @@ const Footer = () => {
             href="https://digitaldominus.com.br/"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-white"
+            // O link usará uma cor secundária clara e brilhará ao passar o mouse
+            className="underline text-secondary hover:text-primary-glow transition-colors"
           >
             Dominus Digital
           </a>

@@ -17,6 +17,7 @@ const PaymentMethodStatistics = ({ paymentMethodCounts }: PaymentMethodStatistic
       </CardHeader>
       <CardContent className="pt-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card: Pix */}
           <Card className="shadow-sm border">
             <CardContent className="pt-6 flex items-center gap-3">
               <QrCode className="h-7 w-7 text-green-600" />
@@ -27,6 +28,7 @@ const PaymentMethodStatistics = ({ paymentMethodCounts }: PaymentMethodStatistic
             </CardContent>
           </Card>
 
+          {/* Card: Cartão de Crédito (geral) */}
           <Card className="shadow-sm border">
             <CardContent className="pt-6 flex items-center gap-3">
               <CreditCard className="h-7 w-7 text-blue-600" />
@@ -58,7 +60,8 @@ const PaymentMethodStatistics = ({ paymentMethodCounts }: PaymentMethodStatistic
               </div>
             </CardContent>
           </Card>
-          
+
+          {/* Card: Dinheiro */}
           <Card className="shadow-sm border">
             <CardContent className="pt-6 flex items-center gap-3">
               <Banknote className="h-7 w-7 text-yellow-600" />
@@ -68,6 +71,52 @@ const PaymentMethodStatistics = ({ paymentMethodCounts }: PaymentMethodStatistic
               </div>
             </CardContent>
           </Card>
+
+          {/* Cards para os Status de Pagamento (Pendente, Cancelado, Isento) */}
+          {/* Eles sempre aparecerão, pois são inicializados no useManagementLogic.tsx */}
+          <Card className="shadow-sm border">
+            <CardContent className="pt-6 flex items-center gap-3">
+              <DollarSign className="h-7 w-7 text-yellow-500" />
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-yellow-600">{paymentMethodCounts.Pendente || 0}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Pagamento Pendente</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border">
+            <CardContent className="pt-6 flex items-center gap-3">
+              <DollarSign className="h-7 w-7 text-red-500" />
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-red-600">{paymentMethodCounts.Cancelado || 0}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Pagamento Cancelado</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border">
+            <CardContent className="pt-6 flex items-center gap-3">
+              <DollarSign className="h-7 w-7 text-gray-500" />
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-gray-600">{paymentMethodCounts.Isento || 0}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Pagamento Isento</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card para "Transferência" (aparece apenas se houver dados com essa forma de pagamento) */}
+          {paymentMethodCounts.Transferência !== undefined && paymentMethodCounts.Transferência > 0 && (
+            <Card className="shadow-sm border">
+              <CardContent className="pt-6 flex items-center gap-3">
+                <Banknote className="h-7 w-7 text-indigo-600" />
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-indigo-700">{paymentMethodCounts.Transferência || 0}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Via Transferência</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
         </div>
       </CardContent>
     </Card>

@@ -8,7 +8,7 @@ const WhyParticipateSection = () => {
     <section className="py-16 px-4 sm:px-6 bg-primary/5 border-t border-b border-gray-200">
       <div className="max-w-4xl mx-auto text-center">
         <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-12">
-          Por Que Participar do Encontro com Deus?
+          Por que participar do Encontro com Deus?
         </h2>
         <p className="text-lg sm:text-xl text-gray-700 mb-10 leading-relaxed">
           <Quote className="inline-block h-6 w-6 text-primary mr-2" />
