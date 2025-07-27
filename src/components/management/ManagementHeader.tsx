@@ -1,8 +1,8 @@
 // src/components/management/ManagementHeader.tsx
+import { Link } from "react-router-dom";
+import { LogOut, Settings, AlertTriangle } from "lucide-react"; // Adicionado Settings e AlertTriangle
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"; // Importar CardContent também
-import { Badge } from "@/components/ui/badge"; // Importar Badge
-import { AlertTriangle, LogOut, Settings } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,78 +13,82 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label"; // Importar Label se for usar o Switch novamente no futuro
+} from "@/components/ui/alert-dialog"; // Importado AlertDialog components
 
 interface ManagementHeaderProps {
   userEmail: string | null;
   userRole: string | null;
-  isRegistrationsOpen: boolean;
   handleLogout: () => void;
-  handleToggleRegistrations: () => void;
+  isRegistrationsOpen: boolean; // Mantido e usado aqui
+  handleToggleRegistrations: () => void; // Mantido e usado aqui
 }
 
 const ManagementHeader = ({
   userEmail,
   userRole,
-  isRegistrationsOpen,
   handleLogout,
+  isRegistrationsOpen,
   handleToggleRegistrations,
 }: ManagementHeaderProps) => {
+  const getInitials = (email: string | null) => {
+    if (!email) return "US";
+    const parts = email.split('@')[0];
+    return parts.slice(0, 2).toUpperCase();
+  };
+
   return (
-    <Card className="shadow-peaceful mb-6">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between flex-wrap gap-2">
-          <div className="flex-grow min-w-0"> 
-            <CardTitle className="text-xl sm:text-2xl font-bold text-primary flex items-center gap-2">
-              <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
-              <span className="truncate">Sistema de Gestão - Encontro com Deus</span>
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Logado como: <span className="truncate">{userEmail} ({userRole})</span>
-            </p>
+    <header className="flex items-center justify-between p-4 bg-primary text-primary-foreground shadow-md">
+      <Link to="/management" className="flex items-center gap-2">
+        <Settings className="h-6 w-6" /> {/* Alterado para Settings */}
+        <h1 className="text-xl font-bold">Gestão</h1>
+      </Link>
+      <div className="flex items-center gap-4">
+        {userEmail && (
+          <div className="flex items-center gap-2">
+            <Avatar>
+              <AvatarImage src="/avatar-placeholder.png" alt="User Avatar" />
+              <AvatarFallback>{getInitials(userEmail)}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm hidden sm:block">{userEmail}</span>
           </div>
-          
-          {/* Botões de Ação do Header - Ajustado para melhor responsividade no topo */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            {userRole === "admin" && ( // A condição está correta como "admin"
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant={isRegistrationsOpen ? "destructive" : "default"} 
-                    className="flex items-center gap-2 text-sm px-3 py-2 w-full justify-center"
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                    {isRegistrationsOpen ? "Encerrar Inscrições" : "Abrir Inscrições"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {isRegistrationsOpen ? "Tem certeza que deseja ENCERRAR as inscrições?" : "Tem certeza que deseja ABRIR as inscrições?"}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta ação irá {isRegistrationsOpen ? "encerrar" : "abrir"} imediatamente as inscrições para o Encontro com Deus. Os usuários verão o status atualizado.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleToggleRegistrations}>
-                      {isRegistrationsOpen ? "Sim, Encerrar" : "Sim, Abrir"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-            
-            <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 text-sm px-3 py-2 w-full justify-center">
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-    </Card>
+        )}
+        
+        {/* Botão de Toggle de Inscrições para Admin (movido de volta para cá) */}
+        {userRole === "admin" && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant={isRegistrationsOpen ? "destructive" : "default"} 
+                className="flex items-center gap-2 text-sm px-3 py-2 justify-center" // Ajustado para ser mais compacto
+              >
+                <AlertTriangle className="h-4 w-4" />
+                {isRegistrationsOpen ? "Encerrar Inscrições" : "Abrir Inscrições"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {isRegistrationsOpen ? "Tem certeza que deseja ENCERRAR as inscrições?" : "Tem certeza que deseja ABRIR as inscrições?"}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá {isRegistrationsOpen ? "encerrar" : "abrir"} imediatamente as inscrições para o Encontro com Deus. Os usuários verão o status atualizado.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleToggleRegistrations}>
+                  {isRegistrationsOpen ? "Sim, Encerrar" : "Sim, Abrir"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
+        <Button onClick={handleLogout} variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/20">
+          <LogOut className="h-5 w-5 mr-2" /> Sair
+        </Button>
+      </div>
+    </header>
   );
 };
 

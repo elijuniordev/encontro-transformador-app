@@ -4,14 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ManagementHeader from "@/components/management/ManagementHeader";
 import ManagementFilters from "@/components/management/ManagementFilters";
-import StatisticsCards from "@/components/management/StatisticsCards";
+// REMOVIDO: import StatisticsCards from "@/components/management/StatisticsCards"; // Não será mais usado
 import SituationStatistics from "@/components/management/SituationStatistics";
 import PaymentMethodStatistics from "@/components/management/PaymentMethodStatistics";
 import InscriptionsTable from "@/components/management/InscriptionsTable";
 import Footer from "@/components/Footer";
 import { useManagementLogic } from "@/hooks/useManagementLogic";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+// REMOVIDO: import { Label } from "@/components/ui/label"; // Não precisa mais
+// REMOVIDO: import { Switch } from "@/components/ui/switch"; // Não precisa mais
 
 const Management = () => {
   const {
@@ -33,13 +33,13 @@ const Management = () => {
     setEditingId,
     editData,
     setEditData,
-    isRegistrationsOpen,
+    isRegistrationsOpen, // Ainda extraído para passar ao ManagementHeader
     userRole,
     userEmail,
     userDiscipulado,
     isAuthenticated,
     handleLogout,
-    handleToggleRegistrations,
+    handleToggleRegistrations, // Ainda extraído para passar ao ManagementHeader
     getStatusBadge,
     handleEdit,
     handleSaveEdit,
@@ -52,15 +52,14 @@ const Management = () => {
 
   const navigate = useNavigate();
 
-  // Redireciona para o login se não estiver autenticado
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
     }
-  }, [isAuthenticated, navigate]); // Adicionado 'navigate' às dependências
+  }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) {
-    return null; // Ou um spinner de carregamento, etc.
+    return null;
   }
 
   return (
@@ -69,8 +68,8 @@ const Management = () => {
         userEmail={userEmail}
         userRole={userRole}
         handleLogout={handleLogout}
-        isRegistrationsOpen={isRegistrationsOpen}
-        handleToggleRegistrations={handleToggleRegistrations}
+        isRegistrationsOpen={isRegistrationsOpen} // Mantido aqui pois o ManagementHeader precisa
+        handleToggleRegistrations={handleToggleRegistrations} // Mantido aqui pois o ManagementHeader precisa
       />
       <main className="flex-grow p-4 md:p-6 lg:p-8 space-y-6">
         <ManagementFilters
@@ -92,26 +91,16 @@ const Management = () => {
           discipuladoGroupOptions={discipuladoGroupOptions}
         />
         
-        {userRole === "admin" && (
-          <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border">
-            <Label htmlFor="registrations-toggle" className="text-sm font-medium">
-              Inscrições: {isRegistrationsOpen ? "Abertas" : "Encerradas"}
-            </Label>
-            <Switch
-              id="registrations-toggle"
-              checked={isRegistrationsOpen}
-              onCheckedChange={handleToggleRegistrations}
-            />
-          </div>
-        )}
-
-        <StatisticsCards
-          totalInscriptions={filteredInscriptions.length}
-          isRegistrationsOpen={isRegistrationsOpen}
-        />
+        {/* REMOVIDO: O bloco do botão de toggle de inscrições foi movido de volta para ManagementHeader.tsx */}
+        {/* REMOVIDO: O StatisticsCards completo também foi removido, pois suas funções serão redistribuídas */}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SituationStatistics situationCounts={situationCounts} />
+          {/* totalInscriptions será passado para SituationStatistics */}
+          <SituationStatistics 
+            situationCounts={situationCounts} 
+            totalInscriptions={filteredInscriptions.length} 
+            isRegistrationsOpen={isRegistrationsOpen} // Para exibir o status do evento aqui se desejar
+          />
           <PaymentMethodStatistics paymentMethodCounts={paymentMethodCounts} />
         </div>
 
