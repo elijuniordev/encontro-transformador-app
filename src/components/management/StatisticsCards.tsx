@@ -1,101 +1,75 @@
 // src/components/management/StatisticsCards.tsx
-import { Card, CardContent } from "@/components/ui/card";
-import { Users, DollarSign } from "lucide-react"; // Importar ícones necessários
-
-interface Inscription {
-  id: string;
-  discipuladores: string;
-  lider: string;
-  nome_completo: string;
-  anjo_guarda: string;
-  sexo: string;
-  idade: string;
-  whatsapp: string;
-  irmao_voce_e: string;
-  responsavel_1_nome: string | null;
-  responsavel_1_whatsapp: string | null;
-  responsavel_2_nome: string | null;
-  responsavel_2_whatsapp: string | null;
-  responsavel_3_nome: string | null;
-  responsavel_3_whatsapp: string | null;
-  status_pagamento: string;
-  forma_pagamento: string | null;
-  valor: number;
-  observacao: string | null;
-  created_at: string;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { User, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 interface StatisticsCardsProps {
-  filteredInscriptions: Inscription[];
+  totalInscriptions: number; // Adicionada esta propriedade
+  isRegistrationsOpen: boolean;
 }
 
-const StatisticsCards = ({ filteredInscriptions }: StatisticsCardsProps) => {
+const StatisticsCards = ({ totalInscriptions, isRegistrationsOpen }: StatisticsCardsProps) => {
   return (
-    // Seção de Estatísticas Gerais (Total, Confirmados, Pendentes, Arrecadado)
-    // Ajustado para 1 coluna no mobile, 2 em telas pequenas, e 4 em telas grandes
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"> 
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card className="shadow-peaceful">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <Users className="h-7 w-7 text-primary" /> 
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-primary">{filteredInscriptions.length}</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Total de Inscrições</p>
-            </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total de Inscrições</CardTitle>
+          <User className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalInscriptions}</div>
+          <p className="text-xs text-muted-foreground">
+            Inscrições ativas
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-peaceful">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Status do Evento</CardTitle>
+          {isRegistrationsOpen ? (
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          ) : (
+            <XCircle className="h-4 w-4 text-red-500" />
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            {isRegistrationsOpen ? "Aberto" : "Encerrado"}
           </div>
+          <p className="text-xs text-muted-foreground">
+            {isRegistrationsOpen
+              ? "Inscrições ativas no momento"
+              : "Inscrições fechadas"}
+          </p>
         </CardContent>
       </Card>
       
-      <Card className="shadow-peaceful">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-green-100 rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-green-600">
-                {filteredInscriptions.filter(i => i.status_pagamento === "Confirmado").length}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Pagamentos Confirmados</p>
-            </div>
-          </div>
+      {/* Cards de exemplo para outros status, remova se não for usar */}
+      {/* <Card className="shadow-peaceful">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Inscrições Confirmadas</CardTitle>
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">0</div>
+          <p className="text-xs text-muted-foreground">
+            Inscrições com pagamento confirmado
+          </p>
         </CardContent>
       </Card>
-      
+
       <Card className="shadow-peaceful">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-yellow-100 rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-yellow-600">
-                {filteredInscriptions.filter(i => i.status_pagamento === "Pendente").length}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Pagamentos Pendentes</p>
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Inscrições Pendentes</CardTitle>
+          <Clock className="h-4 w-4 text-yellow-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">0</div>
+          <p className="text-xs text-muted-foreground">
+            Aguardando confirmação de pagamento
+          </p>
         </CardContent>
-      </Card>
-      
-      <Card className="shadow-peaceful">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-blue-600">
-                R$ {filteredInscriptions
-                  .filter(i => i.status_pagamento === "Confirmado")
-                  .reduce((sum, i) => sum + i.valor, 0)
-                  .toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Total Arrecadado</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };
