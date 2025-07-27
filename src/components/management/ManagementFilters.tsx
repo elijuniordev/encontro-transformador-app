@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/label"; // Certifique-se de que Label está importado
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Download } from "lucide-react";
@@ -16,6 +16,7 @@ interface ManagementFiltersProps {
   userDiscipulado: string | null;
   handleExportXLSX: () => void;
   
+  // Novas props para os filtros adicionais
   filterByFuncao: string;
   setFilterByFuncao: (value: string) => void;
   filterByStatusPagamento: string;
@@ -63,50 +64,61 @@ const ManagementFilters = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 pr-4 py-2 w-full"
+            id="search-term-input" // Adicionado ID para label
           />
+          <Label htmlFor="search-term-input" className="sr-only">Buscar</Label> {/* Label oculto para acessibilidade */}
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         </div>
 
         {/* Novos Filtros Dropdown */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-wrap">
           {/* Filtro por Função */}
-          <Select value={filterByFuncao} onValueChange={setFilterByFuncao}>
-            <SelectTrigger className="w-[180px] sm:w-[150px]">
-              <SelectValue placeholder="Filtrar por Função" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem> {/* ALTERADO AQUI: value="all" */}
-              {funcaoOptions.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1"> {/* Adicionado div para agrupar Label e Select */}
+            <Label htmlFor="filter-funcao" className="text-sm">Função</Label>
+            <Select value={filterByFuncao} onValueChange={setFilterByFuncao}>
+              <SelectTrigger id="filter-funcao" className="w-[180px] sm:w-[150px]">
+                <SelectValue placeholder="Filtrar por Função" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {funcaoOptions.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Filtro por Status de Pagamento */}
-          <Select value={filterByStatusPagamento} onValueChange={setFilterByStatusPagamento}>
-            <SelectTrigger className="w-[180px] sm:w-[180px]">
-              <SelectValue placeholder="Filtrar por Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem> {/* ALTERADO AQUI: value="all" */}
-              {statusPagamentoOptions.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1"> {/* Adicionado div para agrupar Label e Select */}
+            <Label htmlFor="filter-status-pagamento" className="text-sm">Status Pagamento</Label>
+            <Select value={filterByStatusPagamento} onValueChange={setFilterByStatusPagamento}>
+              <SelectTrigger id="filter-status-pagamento" className="w-[180px] sm:w-[180px]">
+                <SelectValue placeholder="Filtrar por Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {statusPagamentoOptions.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Filtro por Discipulado */}
-          <Select value={filterByDiscipuladoGroup} onValueChange={setFilterByDiscipuladoGroup}>
-            <SelectTrigger className="w-[220px] sm:w-[180px]">
-              <SelectValue placeholder="Filtrar por Discipulado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem> {/* ALTERADO AQUI: value="all" */}
-              {discipuladoGroupOptions.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1"> {/* Adicionado div para agrupar Label e Select */}
+            <Label htmlFor="filter-discipulado-group" className="text-sm">Discipulado</Label>
+            <Select value={filterByDiscipuladoGroup} onValueChange={setFilterByDiscipuladoGroup}>
+              <SelectTrigger id="filter-discipulado-group" className="w-[220px] sm:w-[180px]">
+                <SelectValue placeholder="Filtrar por Discipulado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {discipuladoGroupOptions.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
 
