@@ -3,8 +3,25 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge"; // Necessário para getStatusBadge
-import * as XLSX from 'xlsx'; // Necessário para handleExportXLSX
+import { Badge } from "@/components/ui/badge";
+import * as XLSX from 'xlsx';
+
+// Definindo opções para filtros que são constantes
+const FUNCAO_OPTIONS = ["Encontrista", "Equipe", "Cozinha"];
+const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Cancelado", "Isento"];
+
+// Importar DISCIPULADORES_OPTIONS e LIDERES_MAP do useInscriptionFormLogic para reutilização
+// Certifique-se de que DISCIPULADORES_OPTIONS não inclua "Sou Obreiro..." se não for um grupo de discipulado real para filtro
+// Se DISCIPULADORES_OPTIONS for grande, você pode considerar buscar dinamicamente os grupos únicos de discipuladores do DB.
+const DISCIPULADORES_OPTIONS_FOR_FILTER = [
+  "Arthur e Beatriz",
+  "José Gomes e Edna",
+  "Rosana",
+  "Isaac e Andrea",
+  "Rafael Ângelo e Ingrid"
+  // Não incluir "Sou Obreiro, Discipulador ou Pastor" aqui se ele não representa um grupo filtrável
+];
+
 
 interface Inscription {
   id: string;
@@ -15,7 +32,7 @@ interface Inscription {
   sexo: string;
   idade: string;
   whatsapp: string;
-  irmao_voce_e: string;
+  irmao_voce_e: string; // Corresponde à situacao do formulário
   responsavel_1_nome: string | null;
   responsavel_1_whatsapp: string | null;
   responsavel_2_nome: string | null;
@@ -33,7 +50,13 @@ export const useManagementLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDiscipulado, setFilterDiscipulado] = useState(false);
+  const [filterDiscipulado, setFilterDiscipulado] = useState(false); // Flag para filtrar pelo discipulador logado
+  
+  // Novos estados para os filtros adicionais
+  const [filterByFuncao, setFilterByFuncao] = useState("");
+  const [filterByStatusPagamento, setFilterByStatusPagamento] = useState("");
+  const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState(""); // Para o novo filtro dropdown de discipulados
+
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<Inscription>>({});
@@ -126,15 +149,27 @@ export const useManagementLogic = () => {
   const filteredInscriptions = useMemo(() => {
     return inscriptions.filter(inscription => {
       const matchesSearch = inscription.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           inscription.whatsapp.toLowerCase().includes(searchTerm.toLowerCase()) || // Convert whatsapp to lowercase for consistent search
+                           inscription.whatsapp.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            inscription.discipuladores.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesDiscipulado = !filterDiscipulado ||
-                                (userDiscipulado && inscription.discipuladores === userDiscipulado);
+      const matchesDiscipuladoByLoggedInUser = !filterDiscipulado || (userDiscipulado && inscription.discipuladores === userDiscipulado);
+      
+      // Novos filtros
+      const matchesFuncao = !filterByFuncao || inscription.irmao_voce_e === filterByFuncao;
+      const matchesStatusPagamento = !filterByStatusPagamento || inscription.status_pagamento === filterByStatusPagamento;
+      const matchesDiscipuladoGroup = !filterByDiscipuladoGroup || inscription.discipuladores === filterByDiscipuladoGroup;
 
-      return matchesSearch && matchesDiscipulado;
+      return matchesSearch && matchesDiscipuladoByLoggedInUser && matchesFuncao && matchesStatusPagamento && matchesDiscipuladoGroup;
     });
-  }, [inscriptions, searchTerm, filterDiscipulado, userDiscipulado]);
+  }, [
+    inscriptions,
+    searchTerm,
+    filterDiscipulado,
+    userDiscipulado,
+    filterByFuncao,
+    filterByStatusPagamento,
+    filterByDiscipuladoGroup
+  ]);
 
   const situationCounts = useMemo(() => {
     const counts: { [key: string]: number } = {
@@ -158,7 +193,6 @@ export const useManagementLogic = () => {
       'Cartão de Crédito': 0,
       'CartaoCredito2x': 0,
       'CartaoDebito': 0,
-      // 'Transferência': 0, // Removida a inicialização explícita de 'Transferência'
       'Dinheiro': 0,
       'Pendente': 0,
       'Cancelado': 0,
@@ -169,7 +203,6 @@ export const useManagementLogic = () => {
       if (key && Object.hasOwn(counts, key)) {
         counts[key]++;
       } else if (key) {
-        // Para formas de pagamento não mapeadas explicitamente, adicione-as dinamicamente
         counts[key] = (counts[key] || 0) + 1;
       }
     });
@@ -265,10 +298,16 @@ export const useManagementLogic = () => {
     setSearchTerm,
     filterDiscipulado,
     setFilterDiscipulado,
+    filterByFuncao,
+    setFilterByFuncao,
+    filterByStatusPagamento,
+    setFilterByStatusPagamento,
+    filterByDiscipuladoGroup,
+    setFilterByDiscipuladoGroup,
     inscriptions,
     filteredInscriptions,
     situationCounts,
-    paymentMethodCounts, // Exportar a nova contagem
+    paymentMethodCounts,
     editingId,
     setEditingId,
     editData,
@@ -285,5 +324,8 @@ export const useManagementLogic = () => {
     handleSaveEdit,
     handleExportXLSX,
     fetchInscriptions,
+    funcaoOptions: FUNCAO_OPTIONS, // Exportando as opções
+    statusPagamentoOptions: STATUS_PAGAMENTO_OPTIONS, // Exportando as opções
+    discipuladoGroupOptions: DISCIPULADORES_OPTIONS_FOR_FILTER, // Exportando as opções
   };
 };
