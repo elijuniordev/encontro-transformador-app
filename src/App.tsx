@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Management from "./pages/Management";
 import NotFound from "./pages/NotFound";
 import RegistrationsClosedPage from "./pages/RegistrationsClosedPage";
+import RegisterDiscipulador from './pages/RegisterDiscipulador'; // Importe a nova página de registro
 
 const queryClient = new QueryClient();
 
@@ -20,7 +21,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       {/* Container principal para garantir que o footer fique sempre no final */}
-      <div className="flex flex-col min-h-screen"> 
+      <div className="flex flex-col min-h-screen">
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
@@ -28,7 +29,8 @@ const App = () => (
             <Route path="/inscription" element={<InscriptionForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/management" element={<Management />} />
-            <Route path="/inscricoes-encerradas" element={<RegistrationsClosedPage />} />
+            <Route path="/inscricoes-encerradas" element={<RegistrationsClosedPage />} /> {/* Mantido o seu nome de rota */}
+            <Route path="/register-discipulador" element={<RegisterDiscipulador />} /> {/* Nova rota para o cadastro de discipuladores */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
