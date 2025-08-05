@@ -42,11 +42,11 @@ const InscriptionForm = () => {
 
   // Lógica corrigida para os líderes
   const lideresMap: { [key: string]: string[] } = {
-    "Arthur e Beatriz": ["Maria e Mauro", "Welligton e Nathalia", "Rafael Vicente e Fabiana", "Lucas e Gabriela Tangerino"],
+    "Arthur e Beatriz": ["Maria e Mauro", "Welligton e Nathalia", "Rafael Vicente e Fabiana", "Lucas e Gabriela Tangerino", "Marcio e Rita"],
     "José Gomes e Edna": ["Celina", "Junior e Patricia", "José Gomes e Edna", "Eliana", "Vinicius e Eliane"],
     "Rosana": ["Deusa", "Maria Sandrimara"],
     // Removido o discipulado de "Isaac e Andrea"
-    "Rafael Ângelo e Ingrid": ["Renan e Edziane", "Vladimir e Elaine", "Rafael Ângelo e Ingrid", "Hugo e Luciane"]
+    "Rafael Ângelo e Ingrid": ["Renan e Edziane", "Vladimir e Elaine", "Rafael Ângelo e Ingrid", "Hugo e Luciane", "Alexandre e Carol"]
   };
 
   // Efeito para buscar o status das inscrições ao carregar a página
