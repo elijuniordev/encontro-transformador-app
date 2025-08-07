@@ -218,8 +218,19 @@ const InscriptionForm = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
+                    <Input
+                      id="nomeCompleto"
+                      type="text"
+                      value={formData.nomeCompleto}
+                      onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
+                      placeholder="Digite seu nome completo"
+                    />
+                  </div>
 
-                  {/* O CAMPO "Quem é seu Anjo da Guarda?" SÓ APARECE PARA ENCONTRISTAS */}
+                  {/* O CAMPO "Quem é seu Anjo da Guarda?" SÓ APARECE PARA ENCONTRISTAS E FOI MOVIDO AQUI */}
                   {formData.situacao === 'Encontrista' && (
                     <div className="space-y-2">
                       <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
