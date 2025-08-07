@@ -70,7 +70,7 @@ interface InscriptionsTableProps {
 const DeleteButtonWithDialog = ({ id, name, handleDelete }: { id: string, name: string, handleDelete: (id: string) => void }) => (
   <AlertDialog>
     <AlertDialogTrigger asChild>
-      <Button size="sm" variant="destructive" className="w-1/2 md:w-auto">
+      <Button size="sm" variant="destructive" className="w-full md:w-auto">
         <Trash2 className="h-4 w-4 mr-2" /> Deletar
       </Button>
     </AlertDialogTrigger>
@@ -83,6 +83,7 @@ const DeleteButtonWithDialog = ({ id, name, handleDelete }: { id: string, name: 
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancelar</AlertDialogCancel>
+        {/* Alteração: Garante que a função é passada corretamente */}
         <AlertDialogAction onClick={() => handleDelete(id)}>
           Sim, excluir
         </AlertDialogAction>
