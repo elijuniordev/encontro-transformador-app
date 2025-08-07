@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import * as XLSX from 'xlsx'; // Certifique-se que xlsx está importado
+import * as XLSX from 'xlsx';
 
 // Definindo opções para filtros que são constantes
 const FUNCAO_OPTIONS = ["Encontrista", "Equipe", "Cozinha"];
@@ -186,15 +186,25 @@ export const useManagementLogic = () => {
       'CartaoDebito': 0,
       'Dinheiro': 0,
       'Pendente': 0,
+      'Confirmado': 0,
       'Cancelado': 0,
       'Isento': 0,
     };
     filteredInscriptions.forEach(inscription => {
-      const key = inscription.forma_pagamento;
-      if (key && Object.hasOwn(counts, key)) {
-        counts[key]++;
-      } else if (key) {
-        counts[key] = (counts[key] || 0) + 1;
+      // Conta as formas de pagamento para pagamentos confirmados
+      if (inscription.status_pagamento === 'Confirmado' && inscription.forma_pagamento) {
+        const key = inscription.forma_pagamento;
+        if (Object.hasOwn(counts, key)) {
+          counts[key]++;
+        } else {
+          counts[key] = (counts[key] || 0) + 1;
+        }
+      }
+      
+      // Conta os status de pagamento (Pendente, Cancelado, Isento)
+      const statusKey = inscription.status_pagamento;
+      if (statusKey && Object.hasOwn(counts, statusKey)) {
+        counts[statusKey]++;
       }
     });
     return counts;
@@ -247,6 +257,30 @@ export const useManagementLogic = () => {
     setEditingId(null);
     setEditData({});
   }, [editingId, editData, fetchInscriptions, toast]);
+  
+  const handleDelete = useCallback(async (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir esta inscrição? Esta ação não pode ser desfeita.")) {
+      const { error } = await supabase
+        .from('inscriptions')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error("Erro ao excluir inscrição:", error);
+        toast({
+          title: "Erro ao excluir",
+          description: "Não foi possível excluir a inscrição. Tente novamente.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Inscrição excluída",
+          description: "A inscrição foi removida com sucesso.",
+        });
+        fetchInscriptions();
+      }
+    }
+  }, [fetchInscriptions, toast]);
 
   const handleExportXLSX = useCallback(() => {
     const dataToExport = filteredInscriptions.map(inscription => ({
@@ -351,6 +385,7 @@ export const useManagementLogic = () => {
     getStatusBadge,
     handleEdit,
     handleSaveEdit,
+    handleDelete,
     handleExportXLSX,
     fetchInscriptions,
     funcaoOptions: FUNCAO_OPTIONS,

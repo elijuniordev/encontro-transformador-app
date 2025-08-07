@@ -6,8 +6,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Users, ChevronRight } from "lucide-react";
+import { Eye, Edit, Users, ChevronRight, Trash2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 interface Inscription {
   id: string;
@@ -45,6 +57,7 @@ interface InscriptionsTableProps {
   setEditData: React.Dispatch<React.SetStateAction<Partial<Inscription>>>;
   handleEdit: (inscription: Inscription) => void;
   handleSaveEdit: () => void;
+  handleDelete: (id: string) => void;
 }
 
 const InscriptionsTable = ({
@@ -59,6 +72,7 @@ const InscriptionsTable = ({
   setEditData,
   handleEdit,
   handleSaveEdit,
+  handleDelete,
 }: InscriptionsTableProps) => {
 
   // Componente para exibir uma inscrição em formato de cartão no mobile
@@ -69,16 +83,23 @@ const InscriptionsTable = ({
           <p className="font-bold text-primary flex-grow min-w-0">Nome: <span className="font-normal text-foreground truncate">{inscription.nome_completo}</span></p>
           <Badge variant={getStatusBadge(inscription.status_pagamento).props.variant} className="ml-auto">{inscription.status_pagamento}</Badge>
         </div>
+        <p><strong className="text-primary">Função:</strong> {inscription.irmao_voce_e}</p>
+        <p><strong className="text-primary">Anjo da Guarda:</strong> {inscription.anjo_guarda || "-"}</p>
         <p><strong className="text-primary">Discipulador:</strong> {inscription.discipuladores}</p>
         <p><strong className="text-primary">Líder:</strong> {inscription.lider}</p>
         <p><strong className="text-primary">WhatsApp:</strong> {inscription.whatsapp}</p>
-        <p><strong className="text-primary">Função:</strong> {inscription.irmao_voce_e}</p>
         <p><strong className="text-primary">Valor:</strong> R$ {inscription.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         <p><strong className="text-primary">Forma Pagamento:</strong> {inscription.forma_pagamento || "-"}</p>
+        {inscription.irmao_voce_e === "Encontrista" && (
+          <>
+            <p><strong className="text-primary">Responsável 1:</strong> {inscription.responsavel_1_nome || "-"}</p>
+            <p><strong className="text-primary">WhatsApp Resp. 1:</strong> {inscription.responsavel_1_whatsapp || "-"}</p>
+          </>
+        )}
         <p><strong className="text-primary">Observação:</strong> {inscription.observacao || "-"}</p>
 
         {/* Botão de Edição para Mobile */}
-        <div className="flex justify-end mt-3">
+        <div className="flex flex-col gap-2 mt-3">
           {editingId === inscription.id ? (
             <div className="flex flex-col gap-2 w-full">
               <Select
@@ -144,9 +165,32 @@ const InscriptionsTable = ({
               </div>
             </div>
           ) : (
-            <Button size="sm" variant="outline" onClick={() => handleEdit(inscription)} className="w-full">
-              <Edit className="h-4 w-4 mr-2" /> Editar
-            </Button>
+            <div className="flex flex-row gap-2 w-full mt-3">
+              <Button size="sm" variant="outline" onClick={() => handleEdit(inscription)} className="w-1/2">
+                <Edit className="h-4 w-4 mr-2" /> Editar
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive" className="w-1/2">
+                    <Trash2 className="h-4 w-4 mr-2" /> Deletar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação não pode ser desfeita. Isso excluirá permanentemente a inscrição de {inscription.nome_completo}.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDelete(inscription.id)}>
+                      Sim, excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           )}
         </div>
       </CardContent>
@@ -189,11 +233,14 @@ const InscriptionsTable = ({
                   <TableHead>Nome</TableHead>
                   <TableHead>Discipuladores</TableHead>
                   <TableHead>Líder</TableHead>
+                  <TableHead>Anjo da Guarda</TableHead>
                   <TableHead>WhatsApp</TableHead>
                   <TableHead>Função</TableHead>
                   <TableHead>Status Pagamento</TableHead>
                   <TableHead>Forma Pagamento</TableHead>
                   <TableHead>Valor</TableHead>
+                  <TableHead>Responsável</TableHead>
+                  <TableHead>WhatsApp Resp.</TableHead>
                   <TableHead>Observação</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -204,6 +251,7 @@ const InscriptionsTable = ({
                     <TableCell className="font-medium text-sm">{inscription.nome_completo}</TableCell>
                     <TableCell className="text-sm">{inscription.discipuladores}</TableCell>
                     <TableCell className="text-sm">{inscription.lider}</TableCell>
+                    <TableCell className="text-sm">{inscription.anjo_guarda || "-"}</TableCell>
                     <TableCell className="text-sm">{inscription.whatsapp}</TableCell>
                     <TableCell className="text-sm">{inscription.irmao_voce_e}</TableCell>
                     <TableCell>
@@ -216,7 +264,6 @@ const InscriptionsTable = ({
                             if (['Pendente', 'Cancelado', 'Isento'].includes(value)) {
                               setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: value }));
                             } else if (value === 'Confirmado' && ['Pendente', 'Cancelado', 'Isento'].includes(editData.forma_pagamento || '')) {
-                                // Se mudar de Pendente/Cancelado/Isento para Confirmado, e forma_pagamento estava "travada"
                                 setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: null }));
                             } else if (value === 'Confirmado') {
                                 setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: null }));
@@ -272,6 +319,16 @@ const InscriptionsTable = ({
                         `R$ ${inscription.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       )}
                     </TableCell>
+                    <TableCell className="text-sm">
+                      {inscription.responsavel_1_nome || "-"}
+                      {inscription.responsavel_2_nome && `, ${inscription.responsavel_2_nome}`}
+                      {inscription.responsavel_3_nome && `, ${inscription.responsavel_3_nome}`}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {inscription.responsavel_1_whatsapp || "-"}
+                      {inscription.responsavel_2_whatsapp && `, ${inscription.responsavel_2_whatsapp}`}
+                      {inscription.responsavel_3_whatsapp && `, ${inscription.responsavel_3_whatsapp}`}
+                    </TableCell>
                     <TableCell>
                       {editingId === inscription.id ? (
                         <Input
@@ -295,9 +352,32 @@ const InscriptionsTable = ({
                           </Button>
                         </div>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(inscription)} className="px-2 py-1">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" onClick={() => handleEdit(inscription)} className="px-2 py-1">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive" className="px-2 py-1">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta ação não pode ser desfeita. Isso excluirá permanentemente a inscrição de {inscription.nome_completo}.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(inscription.id)}>
+                                  Sim, excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
