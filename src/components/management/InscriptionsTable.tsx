@@ -83,7 +83,7 @@ const InscriptionsTable = ({
 }: InscriptionsTableProps) => {
 
   // Componente para exibir uma inscrição em formato de cartão no mobile
-  const MobileInscriptionCard = ({ inscription }: { inscription: Inscription }) => (
+  const MobileInscriptionCard = ({ inscription, handleDelete }: { inscription: Inscription, handleDelete: (id: string) => void }) => (
     <Card className="shadow-sm border mb-4">
       <CardContent className="p-4 space-y-2 text-sm">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
@@ -228,7 +228,7 @@ const InscriptionsTable = ({
               </Card>
             ) : (
               filteredInscriptions.map((inscription) => (
-                <MobileInscriptionCard key={inscription.id} inscription={inscription} />
+                <MobileInscriptionCard key={inscription.id} inscription={inscription} handleDelete={handleDelete} />
               ))
             )}
           </div>
