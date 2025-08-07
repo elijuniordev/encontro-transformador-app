@@ -221,6 +221,7 @@ const InscriptionsTable = ({
                 </CardContent>
               </Card>
             ) : (
+              // Corrigido aqui: passando a prop handleDelete para o componente MobileInscriptionCard
               filteredInscriptions.map((inscription) => (
                 <MobileInscriptionCard key={inscription.id} inscription={inscription} handleDelete={handleDelete} />
               ))
@@ -403,7 +404,6 @@ const InscriptionsTable = ({
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                {/* Alteração: Garante que a função é passada corretamente */}
                                 <AlertDialogAction onClick={() => handleDelete(inscription.id)}>
                                   Sim, excluir
                                 </AlertDialogAction>
