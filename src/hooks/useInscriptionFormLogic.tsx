@@ -239,7 +239,7 @@ export const useInscriptionFormLogic = () => {
 
       toast({
         title: "Inscrição realizada com sucesso!",
-        description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento.",
+        description: "Sua inscrição foi registrada. Favor realizar o pagamento e enviar o comprovante para seu líder ou discipulador.",
       });
 
       setFormData({
