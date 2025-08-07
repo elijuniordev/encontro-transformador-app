@@ -83,8 +83,15 @@ const DeleteButtonWithDialog = ({ id, name, handleDelete }: { id: string, name: 
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-        {/* Alteração: Garante que a função é passada corretamente */}
-        <AlertDialogAction onClick={() => handleDelete(id)}>
+        <AlertDialogAction onClick={() => {
+          console.log('Botão "Sim, excluir" clicado. Tentando chamar handleDelete...');
+          console.log('Tipo de handleDelete:', typeof handleDelete);
+          if (typeof handleDelete === 'function') {
+            handleDelete(id);
+          } else {
+            console.error('handleDelete não é uma função!');
+          }
+        }}>
           Sim, excluir
         </AlertDialogAction>
       </AlertDialogFooter>
