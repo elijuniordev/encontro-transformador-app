@@ -42,7 +42,7 @@ const InscriptionForm = () => {
 
   // Lógica corrigida para os líderes
   const lideresMap: { [key: string]: string[] } = {
-    "Arthur e Beatriz": ["Maria e Mauro", "Welligton e Nathalia", "Rafael Vicente e Fabiana", "Lucas e Gabriela Tangerino", "Marcio e Rita"],
+    "Arthur e Beatriz": ["Maria e Mauro", "Welligton e Nathalia", "Rafael Vicente e Fabiana", "Lucas e Gabriela Tangerino", "Marcio e Rita", "Alfredo e Luana"],
     "José Gomes e Edna": ["Celina", "Junior e Patricia", "José Gomes e Edna", "Eliana", "Vinicius e Eliane"],
     "Rosana": ["Deusa", "Maria Sandrimara"],
     // Removido o discipulado de "Isaac e Andrea"
