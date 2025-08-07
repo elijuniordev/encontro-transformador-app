@@ -171,7 +171,6 @@ const InscriptionForm = () => {
   };
 
   return (
-    // CONTAINER DA PÁGINA: flex-col para empilhar conteúdo e footer, min-h-screen para ocupar a tela toda
     <div className="min-h-screen bg-gradient-peaceful flex flex-col">
       {/* CONTEÚDO PRINCIPAL (Card): Ocupa o espaço restante e centraliza o Card */}
       <div className="flex-grow flex items-center justify-center p-4">
@@ -203,7 +202,12 @@ const InscriptionForm = () => {
                   {/* O CAMPO "Irmão, você é:" FOI MOVIDO AQUI PARA O TOPO */}
                   <div className="space-y-2">
                     <Label htmlFor="situacao">Irmão, você é: *</Label>
-                    <Select value={formData.situacao} onValueChange={(value) => setFormData({ ...formData, situacao: value })}>
+                    <Select value={formData.situacao} onValueChange={(value) => setFormData({ 
+                      ...formData, 
+                      situacao: value,
+                      // Lógica condicional para Anjo da Guarda
+                      anjoGuarda: (value === 'Equipe' || value === 'Cozinha') ? value : ''
+                    })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione sua situação" />
                       </SelectTrigger>
@@ -214,6 +218,20 @@ const InscriptionForm = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* O CAMPO "Quem é seu Anjo da Guarda?" SÓ APARECE PARA ENCONTRISTAS */}
+                  {formData.situacao === 'Encontrista' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
+                      <Input
+                        id="anjoGuarda"
+                        type="text"
+                        value={formData.anjoGuarda}
+                        onChange={(e) => setFormData({ ...formData, anjoGuarda: e.target.value })}
+                        placeholder="Nome da pessoa que te convidou"
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="discipuladores">Seus discipuladores, são: *</Label>
@@ -251,28 +269,6 @@ const InscriptionForm = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
-                    <Input
-                      id="nomeCompleto"
-                      type="text"
-                      value={formData.nomeCompleto}
-                      onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
-                      placeholder="Digite seu nome completo"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
-                    <Input
-                      id="anjoGuarda"
-                      type="text"
-                      value={formData.anjoGuarda}
-                      onChange={(e) => setFormData({ ...formData, anjoGuarda: e.target.value })}
-                      placeholder="Nome da pessoa que te convidou"
-                    />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
