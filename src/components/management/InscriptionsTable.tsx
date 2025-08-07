@@ -123,7 +123,7 @@ const InscriptionsTable = ({
                 <SelectContent>
                   <SelectItem value="Pendente">Pendente</SelectItem>
                   <SelectItem value="Confirmado">Confirmado</SelectItem>
-                  <SelectItem value="Cancelado">Cancelado</SelectItem>
+                  <SelectItem value="Cancelado">Cancelar</SelectItem>
                   <SelectItem value="Isento">Isento</SelectItem>
                 </SelectContent>
               </Select>
@@ -184,7 +184,7 @@ const InscriptionsTable = ({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    {/* Alteração: Garante que a função é passada corretamente */}
+                    {/* Alteração para garantir que a função seja passada corretamente */}
                     <AlertDialogAction onClick={() => handleDelete(inscription.id)}>
                       Sim, excluir
                     </AlertDialogAction>
@@ -212,7 +212,7 @@ const InscriptionsTable = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {isMobile ? (
+        {useIsMobile() ? (
           <div className="space-y-4">
             {filteredInscriptions.length === 0 ? (
               <Card className="shadow-sm border">
