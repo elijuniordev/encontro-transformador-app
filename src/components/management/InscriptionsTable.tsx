@@ -246,7 +246,7 @@ const InscriptionsTable = ({
                   <TableHead>Status Pagamento</TableHead>
                   <TableHead>Forma Pagamento</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead>Responsáveis</TableHead> {/* Coluna unificada */}
+                  <TableHead>Responsáveis</TableHead>
                   <TableHead>Observação</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -266,7 +266,6 @@ const InscriptionsTable = ({
                           value={editData.status_pagamento || ''}
                           onValueChange={(value) => {
                             setEditData({ ...editData, status_pagamento: value });
-                            // Lógica para ajustar a forma_pagamento automaticamente
                             if (['Pendente', 'Cancelado', 'Isento'].includes(value)) {
                               setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: value }));
                             } else if (value === 'Confirmado' && ['Pendente', 'Cancelado', 'Isento'].includes(editData.forma_pagamento || '')) {
@@ -281,8 +280,8 @@ const InscriptionsTable = ({
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Pendente">Pendente</SelectItem>
-                            <SelectItem value="Confirmado">Confirmado</SelectItem>
-                            <SelectItem value="Cancelado">Cancelado</SelectItem>
+                            <SelectItem value="Confirmado">Confirmar</SelectItem>
+                            <SelectItem value="Cancelado">Cancelar</SelectItem>
                             <SelectItem value="Isento">Isento</SelectItem>
                           </SelectContent>
                         </Select>
@@ -295,7 +294,6 @@ const InscriptionsTable = ({
                         <Select
                           value={editData.forma_pagamento || ''}
                           onValueChange={(value) => setEditData({...editData, forma_pagamento: value})}
-                          // Desabilitar se status_pagamento for Pendente, Cancelado ou Isento
                           disabled={['Pendente', 'Cancelado', 'Isento'].includes(editData.status_pagamento || '')}
                         >
                           <SelectTrigger className="w-[100px] text-xs sm:text-sm">
