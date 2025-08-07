@@ -59,7 +59,6 @@ interface InscriptionsTableProps {
   getStatusBadge: (status: string) => JSX.Element;
   editingId: string | null;
   setEditingId: (id: string | null) => void;
-  // CORRIGIDO AQUI: Adicionado editData e setEditData com o tipo correto
   editData: Partial<Inscription>;
   setEditData: React.Dispatch<React.SetStateAction<Partial<Inscription>>>;
   handleEdit: (inscription: Inscription) => void;
@@ -82,7 +81,6 @@ const InscriptionsTable = ({
   handleDelete,
 }: InscriptionsTableProps) => {
 
-  // Componente para exibir uma inscrição em formato de cartão no mobile
   const MobileInscriptionCard = ({ inscription, handleDelete }: { inscription: Inscription, handleDelete: (id: string) => void }) => (
     <Card className="shadow-sm border mb-4">
       <CardContent className="p-4 space-y-2 text-sm">
@@ -105,7 +103,6 @@ const InscriptionsTable = ({
         )}
         <p><strong className="text-primary">Observação:</strong> {inscription.observacao || "-"}</p>
 
-        {/* Botão de Edição para Mobile */}
         <div className="flex flex-col gap-2 mt-3">
           {editingId === inscription.id ? (
             <div className="flex flex-col gap-2 w-full">
@@ -113,11 +110,9 @@ const InscriptionsTable = ({
                 value={editData.status_pagamento || ''}
                 onValueChange={(value) => {
                   setEditData({ ...editData, status_pagamento: value });
-                  // Lógica para ajustar a forma_pagamento automaticamente
                   if (['Pendente', 'Cancelado', 'Isento'].includes(value)) {
-                    setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: value })); // Garante que status_pagamento seja atualizado
+                    setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: value }));
                   } else if (editData.forma_pagamento === value) {
-                    // Se mudar de Pendente/Cancelado/Isento para Confirmado, limpa a forma de pagamento
                     setEditData(prev => ({ ...prev, status_pagamento: value, forma_pagamento: null }));
                   }
                 }}
@@ -135,7 +130,6 @@ const InscriptionsTable = ({
               <Select
                 value={editData.forma_pagamento || ''}
                 onValueChange={(value) => setEditData({...editData, forma_pagamento: value})}
-                // Desabilitar se status_pagamento for Pendente, Cancelado ou Isento
                 disabled={['Pendente', 'Cancelado', 'Isento'].includes(editData.status_pagamento || '')}
               >
                 <SelectTrigger className="w-full text-sm">
@@ -147,7 +141,6 @@ const InscriptionsTable = ({
                   <SelectItem value="CartaoCredito2x">Cartão de Crédito 2x</SelectItem>
                   <SelectItem value="CartaoDebito">Cartão de Débito</SelectItem>
                   <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                  {/* Adiciona as opções de status como itens selecionáveis quando desabilitado, mas que não podem ser escolhidos */}
                   {['Pendente', 'Cancelado', 'Isento'].map(statusVal => (
                     <SelectItem key={statusVal} value={statusVal} disabled>{statusVal}</SelectItem>
                   ))}
@@ -191,6 +184,7 @@ const InscriptionsTable = ({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    {/* Alteração: Garante que a função é passada corretamente */}
                     <AlertDialogAction onClick={() => handleDelete(inscription.id)}>
                       Sim, excluir
                     </AlertDialogAction>
@@ -409,6 +403,7 @@ const InscriptionsTable = ({
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                {/* Alteração: Garante que a função é passada corretamente */}
                                 <AlertDialogAction onClick={() => handleDelete(inscription.id)}>
                                   Sim, excluir
                                 </AlertDialogAction>
