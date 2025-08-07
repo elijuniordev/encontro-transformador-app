@@ -109,7 +109,6 @@ const InscriptionForm = () => {
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
-        situacao: formData.situacao,
         discipuladores: formData.discipuladores,
         lider: formData.lider,
         irmao_voce_e: formData.situacao, // Mapear para o campo correto
@@ -198,6 +197,21 @@ const InscriptionForm = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* O CAMPO "Irmão, você é:" FOI MOVIDO AQUI PARA O TOPO */}
+                <div className="space-y-2">
+                  <Label htmlFor="situacao">Irmão, você é: *</Label>
+                  <Select value={formData.situacao} onValueChange={(value) => setFormData({ ...formData, situacao: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione sua situação" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Encontrista">Encontrista</SelectItem>
+                      <SelectItem value="Equipe">Equipe</SelectItem>
+                      <SelectItem value="Cozinha">Cozinha</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="discipuladores">Seus discipuladores, são: *</Label>
                   <Select value={formData.discipuladores} onValueChange={(value) => {
@@ -295,20 +309,6 @@ const InscriptionForm = () => {
                   onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                   placeholder="(11) 99999-9999"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="situacao">Irmão, você é: *</Label>
-                <Select value={formData.situacao} onValueChange={(value) => setFormData({ ...formData, situacao: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione sua situação" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Encontrista">Encontrista</SelectItem>
-                    <SelectItem value="Equipe">Equipe</SelectItem>
-                    <SelectItem value="Cozinha">Cozinha</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               {/* Seção condicional para Encontristas */}
