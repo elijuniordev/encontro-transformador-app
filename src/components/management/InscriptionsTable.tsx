@@ -81,6 +81,30 @@ const InscriptionsTable = ({
   handleDelete,
 }: InscriptionsTableProps) => {
 
+  const DeleteButtonWithDialog = ({ id, name, handleDelete }: { id: string, name: string, handleDelete: (id: string) => void }) => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant="destructive" className="w-1/2">
+          <Trash2 className="h-4 w-4 mr-2" /> Deletar
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação não pode ser desfeita. Isso excluirá permanentemente a inscrição de {name}.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => handleDelete(id)}>
+            Sim, excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   const MobileInscriptionCard = ({ inscription, handleDelete }: { inscription: Inscription, handleDelete: (id: string) => void }) => (
     <Card className="shadow-sm border mb-4">
       <CardContent className="p-4 space-y-2 text-sm">
@@ -169,28 +193,7 @@ const InscriptionsTable = ({
               <Button size="sm" variant="outline" onClick={() => handleEdit(inscription)} className="w-1/2">
                 <Edit className="h-4 w-4 mr-2" /> Editar
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="destructive" className="w-1/2">
-                    <Trash2 className="h-4 w-4 mr-2" /> Deletar
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. Isso excluirá permanentemente a inscrição de {inscription.nome_completo}.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    {/* Alteração para garantir que a função seja passada corretamente */}
-                    <AlertDialogAction onClick={() => handleDelete(inscription.id)}>
-                      Sim, excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <DeleteButtonWithDialog id={inscription.id} name={inscription.nome_completo} handleDelete={handleDelete} />
             </div>
           )}
         </div>
@@ -221,7 +224,6 @@ const InscriptionsTable = ({
                 </CardContent>
               </Card>
             ) : (
-              // Corrigido aqui: passando a prop handleDelete para o componente MobileInscriptionCard
               filteredInscriptions.map((inscription) => (
                 <MobileInscriptionCard key={inscription.id} inscription={inscription} handleDelete={handleDelete} />
               ))
