@@ -43,6 +43,7 @@ const Management = () => {
     getStatusBadge,
     handleEdit,
     handleSaveEdit,
+    handleDelete, // AQUI: A função está sendo extraída do hook
     handleExportXLSX,
     fetchInscriptions,
     funcaoOptions,
@@ -116,6 +117,7 @@ const Management = () => {
           setEditData={setEditData}
           handleEdit={handleEdit}
           handleSaveEdit={handleSaveEdit}
+          handleDelete={handleDelete} // AQUI: A função está sendo passada para a tabela
         />
       </main>
       <Footer />
