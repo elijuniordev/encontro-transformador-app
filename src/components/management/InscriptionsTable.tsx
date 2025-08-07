@@ -19,7 +19,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Inscription {
   id: string;
@@ -239,8 +246,7 @@ const InscriptionsTable = ({
                   <TableHead>Status Pagamento</TableHead>
                   <TableHead>Forma Pagamento</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead>WhatsApp Resp.</TableHead>
+                  <TableHead>Responsáveis</TableHead> {/* Coluna unificada */}
                   <TableHead>Observação</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -319,15 +325,49 @@ const InscriptionsTable = ({
                         `R$ ${inscription.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       )}
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {inscription.responsavel_1_nome || "-"}
-                      {inscription.responsavel_2_nome && `, ${inscription.responsavel_2_nome}`}
-                      {inscription.responsavel_3_nome && `, ${inscription.responsavel_3_nome}`}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {inscription.responsavel_1_whatsapp || "-"}
-                      {inscription.responsavel_2_whatsapp && `, ${inscription.responsavel_2_whatsapp}`}
-                      {inscription.responsavel_3_whatsapp && `, ${inscription.responsavel_3_whatsapp}`}
+                    <TableCell>
+                      {inscription.irmao_voce_e === "Encontrista" && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline" className="px-2 py-1">
+                              <Eye className="h-4 w-4 mr-1" />
+                              Ver Contatos
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Contatos Responsáveis</DialogTitle>
+                              <DialogDescription>
+                                Detalhes dos responsáveis por {inscription.nome_completo}.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              {inscription.responsavel_1_nome && (
+                                <div className="space-y-1">
+                                  <h4 className="text-md font-semibold">Responsável 1</h4>
+                                  <p>Nome: {inscription.responsavel_1_nome}</p>
+                                  <p>WhatsApp: {inscription.responsavel_1_whatsapp}</p>
+                                </div>
+                              )}
+                              {inscription.responsavel_2_nome && (
+                                <div className="space-y-1">
+                                  <h4 className="text-md font-semibold">Responsável 2</h4>
+                                  <p>Nome: {inscription.responsavel_2_nome}</p>
+                                  <p>WhatsApp: {inscription.responsavel_2_whatsapp}</p>
+                                </div>
+                              )}
+                              {inscription.responsavel_3_nome && (
+                                <div className="space-y-1">
+                                  <h4 className="text-md font-semibold">Responsável 3</h4>
+                                  <p>Nome: {inscription.responsavel_3_nome}</p>
+                                  <p>WhatsApp: {inscription.responsavel_3_whatsapp}</p>
+                                </div>
+                              )}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                      {inscription.irmao_voce_e !== "Encontrista" && "-"}
                     </TableCell>
                     <TableCell>
                       {editingId === inscription.id ? (
