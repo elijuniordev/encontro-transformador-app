@@ -48,7 +48,7 @@ const SituationStatistics = ({ situationCounts, totalInscriptions, isRegistratio
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <Card className="shadow-sm border">
             <CardContent className="pt-6 flex items-center gap-3">
               <Users className="h-7 w-7 text-purple-600" />
@@ -65,6 +65,17 @@ const SituationStatistics = ({ situationCounts, totalInscriptions, isRegistratio
               <div>
                 <p className="text-xl sm:text-2xl font-bold text-indigo-700">{situationCounts.Equipe || 0}</p>
                 <p className="text-xs sm:text-sm text-muted-foreground">Equipe</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Novo card para Acompanhante */}
+          <Card className="shadow-sm border">
+            <CardContent className="pt-6 flex items-center gap-3">
+              <Users className="h-7 w-7 text-pink-600" />
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-pink-700">{situationCounts.Acompanhante || 0}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Acompanhantes</p>
               </div>
             </CardContent>
           </Card>

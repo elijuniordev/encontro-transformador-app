@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import * as XLSX from 'xlsx';
 
 // Definindo opções para filtros que são constantes
-const FUNCAO_OPTIONS = ["Encontrista", "Equipe", "Cozinha"];
+const FUNCAO_OPTIONS = ["Encontrista", "Equipe", "Acompanhante", "Cozinha"];
 const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Cancelado", "Isento"];
 
 const DISCIPULADORES_OPTIONS_FOR_FILTER = [
@@ -166,6 +166,7 @@ export const useManagementLogic = () => {
     const counts: { [key: string]: number } = {
       Encontrista: 0,
       Equipe: 0,
+      Acompanhante: 0,
       Cozinha: 0,
     };
     filteredInscriptions.forEach(inscription => {
