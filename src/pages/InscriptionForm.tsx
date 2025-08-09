@@ -222,7 +222,7 @@ const InscriptionForm = () => {
 
                   {formData.situacao === 'Acompanhante' && (
                     <p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
-                      **Aviso:** Esta opção é para quem irá como equipe pela primeira vez.
+                      <strong>Aviso:</strong> A opção de Acompanhante, é para quem vai  servir como equipe pela primeira vez.
                     </p>
                   )}
                   
