@@ -3,11 +3,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
-import { Textarea } from "@/components/ui/textarea"; 
-import { useToast } from "@/hooks/use-toast"; 
-import { UserPlus, Send, AlertTriangle } from "lucide-react"; 
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { UserPlus, Send, AlertTriangle } from "lucide-react";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -70,7 +70,7 @@ const InscriptionForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Impede o envio se as inscrições estiverem encerradas
     if (!isRegistrationsOpen) {
       toast({
@@ -202,11 +202,11 @@ const InscriptionForm = () => {
                   {/* O CAMPO "Irmão, você é:" FOI MOVIDO AQUI PARA O TOPO */}
                   <div className="space-y-2">
                     <Label htmlFor="situacao">Irmão, você é: *</Label>
-                    <Select value={formData.situacao} onValueChange={(value) => setFormData({ 
-                      ...formData, 
+                    <Select value={formData.situacao} onValueChange={(value) => setFormData({
+                      ...formData,
                       situacao: value,
                       // Lógica condicional para Anjo da Guarda
-                      anjoGuarda: (value === 'Equipe' || value === 'Cozinha') ? value : ''
+                      anjoGuarda: (value === 'Equipe' || value === 'Cozinha' || value === 'Acompanhante') ? value : ''
                     })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione sua situação" />
@@ -214,10 +214,17 @@ const InscriptionForm = () => {
                       <SelectContent>
                         <SelectItem value="Encontrista">Encontrista</SelectItem>
                         <SelectItem value="Equipe">Equipe</SelectItem>
+                        <SelectItem value="Acompanhante">Acompanhante</SelectItem>
                         <SelectItem value="Cozinha">Cozinha</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {formData.situacao === 'Acompanhante' && (
+                    <p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
+                      **Aviso:** Esta opção é para quem irá como equipe pela primeira vez.
+                    </p>
+                  )}
                   
                   <div className="space-y-2">
                     <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
@@ -230,7 +237,7 @@ const InscriptionForm = () => {
                     />
                   </div>
 
-                  {/* O CAMPO "Quem é seu Anjo da Guarda?" SÓ APARECE PARA ENCONTRISTAS E FOI MOVIDO AQUI */}
+                  {/* O campo "Quem é seu Anjo da Guarda?" SÓ APARECE PARA ENCONTRISTAS */}
                   {formData.situacao === 'Encontrista' && (
                     <div className="space-y-2">
                       <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
