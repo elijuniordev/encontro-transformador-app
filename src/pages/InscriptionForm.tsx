@@ -413,11 +413,23 @@ const InscriptionForm = () => {
                   )}
 
                   {/* Lembrete PIX */}
-                  <div className="bg-accent/30 p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      <strong>Atenção:</strong> Após a inscrição, realizar o pagamento via PIX no valor de R$200,00. Para isso, utilize a chave PIX: chave PIX: videiraosascoencontro@gmail.com e envie o comprovante para o WhatsApp do discipulador ou líder que você cadastrou, ou para a pessoa que te convidou.
-                    </p>
+                  <div className="flex items-start bg-red-100 border-l-4 border-red-600 p-4 rounded-lg shadow-md">
+  <svg
+    className="w-6 h-6 text-red-600 mr-3 flex-shrink-0"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+  <p className="text-sm text-red-800">
+    <strong>Atenção:</strong> Após a inscrição, realize o pagamento via <strong>PIX</strong> no valor de <strong>R$200,00</strong>.  
+    Use a chave: <strong>videiraosascoencontro@gmail.com</strong> e envie o comprovante para o WhatsApp do discipulador/líder que você cadastrou ou para a pessoa que te convidou.
+  </p>
                   </div>
+
 
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Enviando..." : <><Send className="mr-2 h-4 w-4" /> Enviar Inscrição</>}
