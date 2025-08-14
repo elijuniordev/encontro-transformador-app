@@ -40,6 +40,34 @@ const inscriptionSchema = z.object({
   whatsappResponsavel1: z.string().optional()
 });
 
+// Componente para inputs de responsáveis
+interface ResponsavelInputProps {
+  index: 1 | 2 | 3;
+  valueNome?: string;
+  onChangeNome?: (val: string) => void;
+  valueWhats?: string;
+  onChangeWhats?: (val: string) => void;
+}
+
+const ResponsavelInput = ({ index, valueNome, onChangeNome, valueWhats, onChangeWhats }: ResponsavelInputProps) => (
+  <div className="space-y-2">
+    <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:</Label>
+    <Input
+      id={`nomeResponsavel${index}`}
+      type="text"
+      value={valueNome || ""}
+      onChange={(e) => onChangeNome?.(e.target.value)}
+    />
+    <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:</Label>
+    <Input
+      id={`whatsappResponsavel${index}`}
+      type="tel"
+      value={valueWhats || ""}
+      onChange={(e) => onChangeWhats?.(e.target.value)}
+    />
+  </div>
+);
+
 const InscriptionForm = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<InscriptionFormData>({
@@ -91,40 +119,7 @@ const InscriptionForm = () => {
     fetchRegistrationStatus();
   }, []);
 
-  // Componente reutilizável para campos de responsável
-  const ResponsavelInput = ({ index }: { index: 1 | 2 | 3 }) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index} {index === 1 ? '*' : '(opcional)'}:</Label>
-        <Input
-          id={`nomeResponsavel${index}`}
-          type="text"
-          value={formData[`nomeResponsavel${index}` as keyof InscriptionFormData] as string}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              [`nomeResponsavel${index}`]: e.target.value
-            })
-          }
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index} {index === 1 ? '*' : '(opcional)'}:</Label>
-        <Input
-          id={`whatsappResponsavel${index}`}
-          type="tel"
-          value={formData[`whatsappResponsavel${index}` as keyof InscriptionFormData] as string}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              [`whatsappResponsavel${index}`]: e.target.value
-            })
-          }
-        />
-      </div>
-    </div>
-  );
-
+  // Função centralizada para definir anjoGuarda
   const getAnjoGuardaValue = () => {
     if (formData.situacao === "Encontrista") return formData.anjoGuarda;
     if (formData.situacao === "Pastor, obreiro ou discipulador") return formData.nomeCompleto;
@@ -155,7 +150,7 @@ const InscriptionForm = () => {
     if (formData.situacao === "Encontrista" && (!formData.nomeResponsavel1 || !formData.whatsappResponsavel1)) {
       toast({
         title: "Campos obrigatórios para Encontrista",
-        description: "O primeiro contato de responsável é obrigatório. Preencha com familiares ou responsáveis para caso seja necessário acionar.",
+        description: "É necessário preencher pelo menos o primeiro responsável. Estes contatos precisam ser de familiares para caso seja necessário acionar.",
         variant: "destructive"
       });
       return;
@@ -194,7 +189,7 @@ const InscriptionForm = () => {
 
       toast({
         title: "Inscrição realizada com sucesso!",
-        description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento."
+        description: "Sua inscrição foi registrada. Após a inscrição, realizar o pagamento via PIX no valor de R$200,00. Para isso, utilize a chave PIX: chave PIX: videiraosascoencontro@gmail.com e envie o comprovante para o WhatsApp do discipulador ou líder que você cadastrou, ou para a pessoa que te convidou."
       });
 
       setFormData({
@@ -247,26 +242,15 @@ const InscriptionForm = () => {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* BLOCO: Irmão, você é */}
-                  <div className="space-y-2 bg-gradient-to-r from-yellow-100 via-yellow-200 to-yellow-100 p-4 rounded-lg border-2 border-yellow-400">
-                    <Label className="text-lg font-bold">Irmão, você é: *</Label>
-                    <Select
-                      value={formData.situacao}
-                      onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          situacao: value,
-                          anjoGuarda:
-                            value === 'Equipe' ||
-                            value === 'Cozinha' ||
-                            value === 'Acompanhante' ||
-                            value === 'Pastor, obreiro ou discipulador'
-                              ? value
-                              : ''
-                        })
-                      }
-                    >
-                      <SelectTrigger className="border-yellow-400">
+                  {/* Situação */}
+                  <div className="space-y-2">
+                    <Label htmlFor="situacao">Irmão, você é: *</Label>
+                    <Select value={formData.situacao} onValueChange={(value) => setFormData({
+                      ...formData,
+                      situacao: value,
+                      anjoGuarda: (value === 'Equipe' || value === 'Cozinha' || value === 'Acompanhante' || value === 'Pastor, obreiro ou discipulador') ? value : ''
+                    })}>
+                      <SelectTrigger>
                         <SelectValue placeholder="Selecione sua situação" />
                       </SelectTrigger>
                       <SelectContent>
@@ -277,15 +261,15 @@ const InscriptionForm = () => {
                         <SelectItem value="Pastor, obreiro ou discipulador">Pastor, obreiro ou discipulador</SelectItem>
                       </SelectContent>
                     </Select>
-
-                    {formData.situacao === 'Acompanhante' && (
-                      <p className="text-sm text-yellow-800 bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
-                        <strong>Aviso:</strong> A opção de Acompanhante é para quem vai servir como equipe pela primeira vez.
-                      </p>
-                    )}
                   </div>
 
-                  {/* BLOCO: Nome completo */}
+                  {formData.situacao === 'Acompanhante' && (
+                    <p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
+                      <strong>Aviso:</strong> A opção de Acompanhante é para quem vai servir como equipe pela primeira vez.
+                    </p>
+                  )}
+
+                  {/* Nome completo */}
                   <div className="space-y-2">
                     <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
                     <Input
@@ -297,7 +281,7 @@ const InscriptionForm = () => {
                     />
                   </div>
 
-                  {/* BLOCO: Anjo da Guarda */}
+                  {/* Anjo da guarda */}
                   {formData.situacao === 'Encontrista' && (
                     <div className="space-y-2">
                       <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
@@ -311,7 +295,7 @@ const InscriptionForm = () => {
                     </div>
                   )}
 
-                  {/* BLOCO: Discipuladores e Líderes */}
+                  {/* Discipuladores e líderes */}
                   {!(formData.situacao === "Pastor, obreiro ou discipulador") && (
                     <>
                       <div className="space-y-2">
@@ -347,7 +331,7 @@ const InscriptionForm = () => {
                     </>
                   )}
 
-                  {/* BLOCO: Sexo e Idade */}
+                  {/* Sexo e idade */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="sexo">Sexo: *</Label>
@@ -375,7 +359,7 @@ const InscriptionForm = () => {
                     </div>
                   </div>
 
-                  {/* BLOCO: WhatsApp */}
+                  {/* WhatsApp */}
                   <div className="space-y-2">
                     <Label htmlFor="whatsapp">Compartilhe seu WhatsApp: *</Label>
                     <Input
@@ -387,28 +371,68 @@ const InscriptionForm = () => {
                     />
                   </div>
 
-                  {/* BLOCO: Responsáveis */}
-                  {formData.situacao === 'Encontrista' && (
-                    <div className="bg-red-50 border-2 border-red-400 p-6 rounded-lg space-y-6">
-                      <h3 className="text-lg font-semibold text-red-700">Contatos de Pessoas Responsáveis</h3>
-                      <p className="text-sm text-red-800 mb-2">
-                        Estes contatos devem ser preenchidos com familiares ou responsáveis, para caso seja necessário acionar.
+                  {/* Responsável principal (Obrigatório) */}
+                  {formData.situacao === "Encontrista" && (
+                    <div className="bg-accent/30 p-6 rounded-lg space-y-6">
+                      <h3 className="text-lg font-semibold text-primary">Contato de Responsável Principal *</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Este contato é obrigatório e deve ser de familiares, para caso seja necessário acionar.
                       </p>
-                      {[1, 2, 3].map((i) => <ResponsavelInput key={i} index={i as 1 | 2 | 3} />)}
+                      <ResponsavelInput
+                        index={1}
+                        valueNome={formData.nomeResponsavel1}
+                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel1: val })}
+                        valueWhats={formData.whatsappResponsavel1}
+                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel1: val })}
+                      />
                     </div>
                   )}
 
-                  {/* BLOCO: PIX */}
-                  <div className="bg-orange-50 border-2 border-orange-400 p-4 rounded-lg">
-                    <p className="text-sm text-orange-800 mb-2">
-                      <strong>Atenção:</strong> Após a inscrição, realizar o pagamento via PIX no valor de R$200,00. Para isso, utilize a chave PIX: videiraosascoencontro@gmail.com e envie o comprovante para o WhatsApp do discipulador ou líder que você cadastrou, ou para a pessoa que te convidou.
+                  {/* Responsáveis adicionais (Opcional) */}
+                  {formData.situacao === "Encontrista" && (
+                    <div className="bg-accent/30 p-6 rounded-lg space-y-4 mt-4">
+                      <h3 className="text-lg font-semibold text-primary">Responsáveis Adicionais (opcionais)</h3>
+                      <ResponsavelInput
+                        index={2}
+                        valueNome={formData.nomeResponsavel2}
+                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel2: val })}
+                        valueWhats={formData.whatsappResponsavel2}
+                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel2: val })}
+                      />
+                      <ResponsavelInput
+                        index={3}
+                        valueNome={formData.nomeResponsavel3}
+                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel3: val })}
+                        valueWhats={formData.whatsappResponsavel3}
+                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel3: val })}
+                      />
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Estes contatos são opcionais e servem como adicionais caso o responsável principal não esteja disponível.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Lembrete PIX */}
+                  <div className="flex items-start bg-red-100 border-l-4 border-red-600 p-4 rounded-lg shadow-md">
+                    <svg
+                      className="w-6 h-6 text-red-600 mr-3 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm text-red-800">
+                      <strong>Atenção:</strong> Após a inscrição, realize o pagamento via <strong>PIX</strong> no valor de <strong>R$200,00</strong>.  
+                      Use a chave: <strong>videiraosascoencontro@gmail.com</strong> e envie o comprovante para o WhatsApp do discipulador/líder que você cadastrou ou para a pessoa que te convidou.
                     </p>
                   </div>
 
-                  {/* BOTÃO */}
-                  <Button type="submit" variant="divine" size="lg" className="w-full" disabled={loading}>
-                    <Send className="mr-2 h-5 w-5" />
-                    {loading ? "Enviando..." : "Finalizar Inscrição"}
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Enviando..." : <><Send className="mr-2 h-4 w-4" /> Enviar Inscrição</>}
                   </Button>
                 </form>
               )}
