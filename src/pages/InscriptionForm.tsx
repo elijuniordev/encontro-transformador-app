@@ -189,7 +189,7 @@ const InscriptionForm = () => {
 
       toast({
         title: "Inscrição realizada com sucesso!",
-        description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento."
+        description: "Sua inscrição foi registrada. Após a inscrição, realizar o pagamento via PIX no valor de R$200,00. Para isso, utilize a chave PIX: chave PIX: videiraosascoencontro@gmail.com e envie o comprovante para o WhatsApp do discipulador ou líder que você cadastrou, ou para a pessoa que te convidou."
       });
 
       setFormData({
@@ -415,7 +415,7 @@ const InscriptionForm = () => {
                   {/* Lembrete PIX */}
                   <div className="bg-accent/30 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-2">
-                      <strong>Atenção:</strong> Após a inscrição, você receberá instruções para efetuar o pagamento via PIX.
+                      <strong>Atenção:</strong> Após a inscrição, realizar o pagamento via PIX no valor de R$200,00. Para isso, utilize a chave PIX: chave PIX: videiraosascoencontro@gmail.com e envie o comprovante para o WhatsApp do discipulador ou líder que você cadastrou, ou para a pessoa que te convidou.
                     </p>
                   </div>
 
