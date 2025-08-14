@@ -9,10 +9,40 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Send, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import * as z from "zod";
+
+// Tipagem mais forte
+interface InscriptionFormData {
+  discipuladores: string;
+  lider: string;
+  nomeCompleto: string;
+  anjoGuarda: string;
+  sexo: string;
+  idade: string;
+  whatsapp: string;
+  situacao: string;
+  nomeResponsavel1: string;
+  whatsappResponsavel1: string;
+  nomeResponsavel2: string;
+  whatsappResponsavel2: string;
+  nomeResponsavel3: string;
+  whatsappResponsavel3: string;
+}
+
+// Validação com Zod
+const inscriptionSchema = z.object({
+  situacao: z.string().nonempty(),
+  nomeCompleto: z.string().nonempty(),
+  sexo: z.string().nonempty(),
+  idade: z.string().nonempty(),
+  whatsapp: z.string().nonempty(),
+  nomeResponsavel1: z.string().optional(),
+  whatsappResponsavel1: z.string().optional()
+});
 
 const InscriptionForm = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "",
     lider: "",
     nomeCompleto: "",
@@ -29,6 +59,7 @@ const InscriptionForm = () => {
     whatsappResponsavel3: ""
   });
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const discipuladoresOptions = [
     "Arthur e Beatriz",
@@ -60,6 +91,33 @@ const InscriptionForm = () => {
     fetchRegistrationStatus();
   }, []);
 
+  // Componente reutilizável para campos de responsável
+  const ResponsavelInput = ({ index }: { index: 1 | 2 | 3 }) => (
+    <div className="space-y-2">
+      <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:</Label>
+      <Input
+        id={`nomeResponsavel${index}`}
+        type="text"
+        value={formData[`nomeResponsavel${index}` as keyof InscriptionFormData] as string}
+        onChange={(e) => setFormData({ ...formData, [`nomeResponsavel${index}`]: e.target.value })}
+      />
+      <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:</Label>
+      <Input
+        id={`whatsappResponsavel${index}`}
+        type="tel"
+        value={formData[`whatsappResponsavel${index}` as keyof InscriptionFormData] as string}
+        onChange={(e) => setFormData({ ...formData, [`whatsappResponsavel${index}`]: e.target.value })}
+      />
+    </div>
+  );
+
+  // Função centralizada para definir anjoGuarda
+  const getAnjoGuardaValue = () => {
+    if (formData.situacao === "Encontrista") return formData.anjoGuarda;
+    if (formData.situacao === "Pastor, obreiro ou discipulador") return formData.nomeCompleto;
+    return "";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isRegistrationsOpen) {
@@ -71,10 +129,11 @@ const InscriptionForm = () => {
       return;
     }
 
-    if (!formData.situacao || !formData.nomeCompleto || !formData.sexo || !formData.idade || !formData.whatsapp) {
+    const parseResult = inscriptionSchema.safeParse(formData);
+    if (!parseResult.success) {
       toast({
         title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios.",
+        description: "Por favor, preencha todos os campos obrigatórios corretamente.",
         variant: "destructive"
       });
       return;
@@ -89,20 +148,17 @@ const InscriptionForm = () => {
       return;
     }
 
-    const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-    const discipuladorFinal = isPastorObreiro ? formData.nomeCompleto : formData.discipuladores;
-    const liderFinal = isPastorObreiro ? formData.nomeCompleto : formData.lider;
-    const anjoFinal = (formData.situacao === 'Encontrista') ? formData.anjoGuarda : (isPastorObreiro ? formData.nomeCompleto : '');
-
+    setLoading(true);
     try {
+      const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
       const inscriptionData = {
         nome_completo: formData.nomeCompleto,
-        anjo_guarda: anjoFinal,
+        anjo_guarda: getAnjoGuardaValue(),
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
-        discipuladores: discipuladorFinal,
-        lider: liderFinal,
+        discipuladores: isPastorObreiro ? formData.nomeCompleto : formData.discipuladores,
+        lider: isPastorObreiro ? formData.nomeCompleto : formData.lider,
         irmao_voce_e: formData.situacao,
         responsavel_1_nome: formData.nomeResponsavel1 || null,
         responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
@@ -121,16 +177,11 @@ const InscriptionForm = () => {
         .insert([inscriptionData])
         .select();
 
-      if (error) {
-        console.error('Erro ao inserir no Supabase:', error);
-        throw error;
-      }
-
-      console.log('Inscrição salva com sucesso:', data);
+      if (error) throw error;
 
       toast({
         title: "Inscrição realizada com sucesso!",
-        description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento.",
+        description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento."
       });
 
       setFormData({
@@ -149,7 +200,6 @@ const InscriptionForm = () => {
         nomeResponsavel3: "",
         whatsappResponsavel3: ""
       });
-
     } catch (error) {
       console.error('Erro completo:', error);
       toast({
@@ -157,6 +207,8 @@ const InscriptionForm = () => {
         description: "Ocorreu um erro ao processar sua inscrição. Tente novamente.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -169,12 +221,8 @@ const InscriptionForm = () => {
               <div className="mx-auto mb-4 w-16 h-16 bg-gradient-glow rounded-full flex items-center justify-center">
                 <UserPlus className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-3xl font-bold text-primary">
-                Formulário de Inscrição
-              </CardTitle>
-              <p className="text-muted-foreground">
-                Encontro com Deus - 29 a 31 de Agosto
-              </p>
+              <CardTitle className="text-3xl font-bold text-primary">Formulário de Inscrição</CardTitle>
+              <p className="text-muted-foreground">Encontro com Deus - 29 a 31 de Agosto</p>
             </CardHeader>
             <CardContent>
               {!isRegistrationsOpen ? (
@@ -205,11 +253,13 @@ const InscriptionForm = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
                   {formData.situacao === 'Acompanhante' && (
                     <p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
                       <strong>Aviso:</strong> A opção de Acompanhante é para quem vai servir como equipe pela primeira vez.
                     </p>
                   )}
+
                   <div className="space-y-2">
                     <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
                     <Input
@@ -220,6 +270,7 @@ const InscriptionForm = () => {
                       placeholder="Digite seu nome completo"
                     />
                   </div>
+
                   {formData.situacao === 'Encontrista' && (
                     <div className="space-y-2">
                       <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
@@ -232,6 +283,7 @@ const InscriptionForm = () => {
                       />
                     </div>
                   )}
+
                   {!(formData.situacao === "Pastor, obreiro ou discipulador") && (
                     <>
                       <div className="space-y-2">
@@ -266,6 +318,7 @@ const InscriptionForm = () => {
                       </div>
                     </>
                   )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="sexo">Sexo: *</Label>
@@ -292,6 +345,7 @@ const InscriptionForm = () => {
                       />
                     </div>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="whatsapp">Compartilhe seu WhatsApp: *</Label>
                     <Input
@@ -302,29 +356,14 @@ const InscriptionForm = () => {
                       placeholder="(11) 99999-9999"
                     />
                   </div>
+
                   {formData.situacao === "Encontrista" && (
                     <div className="bg-accent/30 p-6 rounded-lg space-y-6">
                       <h3 className="text-lg font-semibold text-primary">Contatos de Pessoas Responsáveis</h3>
-                      <div className="space-y-2">
-                        <Label htmlFor="nomeResponsavel1">Responsável 1:</Label>
-                        <Input id="nomeResponsavel1" type="text" value={formData.nomeResponsavel1} onChange={(e) => setFormData({ ...formData, nomeResponsavel1: e.target.value })} />
-                        <Label htmlFor="whatsappResponsavel1">WhatsApp 1:</Label>
-                        <Input id="whatsappResponsavel1" type="tel" value={formData.whatsappResponsavel1} onChange={(e) => setFormData({ ...formData, whatsappResponsavel1: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="nomeResponsavel2">Responsável 2:</Label>
-                        <Input id="nomeResponsavel2" type="text" value={formData.nomeResponsavel2} onChange={(e) => setFormData({ ...formData, nomeResponsavel2: e.target.value })} />
-                        <Label htmlFor="whatsappResponsavel2">WhatsApp 2:</Label>
-                        <Input id="whatsappResponsavel2" type="tel" value={formData.whatsappResponsavel2} onChange={(e) => setFormData({ ...formData, whatsappResponsavel2: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="nomeResponsavel3">Responsável 3:</Label>
-                        <Input id="nomeResponsavel3" type="text" value={formData.nomeResponsavel3} onChange={(e) => setFormData({ ...formData, nomeResponsavel3: e.target.value })} />
-                        <Label htmlFor="whatsappResponsavel3">WhatsApp 3:</Label>
-                        <Input id="whatsappResponsavel3" type="tel" value={formData.whatsappResponsavel3} onChange={(e) => setFormData({ ...formData, whatsappResponsavel3: e.target.value })} />
-                      </div>
+                      {[1, 2, 3].map((i) => <ResponsavelInput key={i} index={i as 1 | 2 | 3} />)}
                     </div>
                   )}
+
                   <div className="bg-accent/30 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-2">
                       <strong>Lembre-se:</strong> Após enviar sua inscrição, realize o pagamento via PIX para:
@@ -336,9 +375,10 @@ const InscriptionForm = () => {
                       E envie o comprovante para seu discipulador ou líder.
                     </p>
                   </div>
-                  <Button type="submit" variant="divine" size="lg" className="w-full">
+
+                  <Button type="submit" variant="divine" size="lg" className="w-full" disabled={loading}>
                     <Send className="mr-2 h-5 w-5" />
-                    Finalizar Inscrição
+                    {loading ? "Enviando..." : "Finalizar Inscrição"}
                   </Button>
                 </form>
               )}
