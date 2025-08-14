@@ -363,7 +363,7 @@ const InscriptionForm = () => {
                   )}
 
                   <p className="text-sm text-muted-foreground">
-                    Após o preenchimento, você será direcionado(a) para a tela de pagamento via PIX.
+                    Após o preenchimento, favor enviar o comprovante de pagamento para o WhatsApp do discipulador ou líder informado.
                   </p>
 
                   <Button type="submit" className="w-full flex justify-center items-center" disabled={loading}>
