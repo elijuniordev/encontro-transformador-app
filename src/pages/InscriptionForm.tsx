@@ -156,6 +156,18 @@ const InscriptionForm = () => {
       return;
     }
 
+    // 🔹 Validação que você pediu
+    if (formData.situacao !== "Pastor, obreiro ou discipulador") {
+      if (!formData.discipuladores || !formData.lider) {
+        toast({
+          title: "Discipulador e Líder obrigatórios",
+          description: "Por favor, selecione seus discipuladores e líder antes de prosseguir.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
