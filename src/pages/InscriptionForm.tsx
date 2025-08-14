@@ -94,14 +94,14 @@ const InscriptionForm = () => {
 
   const ResponsavelInput = ({ index }: { index: 1 | 2 | 3 }) => (
     <div className="space-y-2">
-      <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:</Label>
+      <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:{index === 1 ? " *" : ""}</Label>
       <Input
         id={`nomeResponsavel${index}`}
         type="text"
         value={formData[`nomeResponsavel${index}` as keyof InscriptionFormData] as string}
         onChange={(e) => setFormData({ ...formData, [`nomeResponsavel${index}`]: e.target.value })}
       />
-      <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:</Label>
+      <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:{index === 1 ? " *" : ""}</Label>
       <Input
         id={`whatsappResponsavel${index}`}
         type="tel"
