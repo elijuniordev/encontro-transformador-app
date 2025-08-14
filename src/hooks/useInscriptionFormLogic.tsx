@@ -1,4 +1,3 @@
-// src/hooks/useInscriptionFormLogic.tsx
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +5,6 @@ import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/config/options";
 import { useNavigate } from "react-router-dom";
 
-// Tipagem mais forte para o formulário
 interface InscriptionFormData {
   discipuladores: string;
   lider: string;
@@ -24,13 +22,11 @@ interface InscriptionFormData {
   whatsappResponsavel3?: string;
 }
 
-// Crie um schema para o WhatsApp reutilizável para evitar repetição
-const whatsappSchema = z.string().regex(/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/, "Formato de WhatsApp inválido.");
+const whatsappSchema = z.string().trim().regex(/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/, "Formato de WhatsApp inválido.");
 
-// Validação com Zod
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
-  nomeCompleto: z.string().min(3, "O nome completo é obrigatório."),
+  nomeCompleto: z.string().trim().min(3, "O nome completo é obrigatório."),
   sexo: z.string().nonempty("Por favor, selecione o sexo."),
   idade: z.string().nonempty("A idade é obrigatória.").refine((val) => {
     const idadeNum = parseInt(val, 10);
@@ -40,14 +36,13 @@ const inscriptionSchema = z.object({
   discipuladores: z.string().optional(),
   lider: z.string().optional(),
   anjoGuarda: z.string().optional(),
-  nomeResponsavel1: z.string().optional(),
+  nomeResponsavel1: z.string().trim().optional(),
   whatsappResponsavel1: whatsappSchema.optional(),
-  nomeResponsavel2: z.string().optional(),
+  nomeResponsavel2: z.string().trim().optional(),
   whatsappResponsavel2: whatsappSchema.optional(),
-  nomeResponsavel3: z.string().optional(),
+  nomeResponsavel3: z.string().trim().optional(),
   whatsappResponsavel3: whatsappSchema.optional(),
 }).refine((data) => {
-  // Validação condicional para discipulador/líder
   if (data.situacao !== "Pastor, obreiro ou discipulador") {
     return !!data.discipuladores && !!data.lider;
   }
@@ -56,7 +51,6 @@ const inscriptionSchema = z.object({
   message: "Discipulador e Líder são obrigatórios para esta situação.",
   path: ['discipuladores'],
 }).refine((data) => {
-  // Validação condicional para o primeiro responsável
   if (data.situacao === "Encontrista") {
     return !!data.nomeResponsavel1 && !!data.whatsappResponsavel1;
   }
@@ -82,10 +76,9 @@ export const useInscriptionFormLogic = () => {
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mover as listas para fora do hook ou importar do arquivo de config
-  const discipuladoresOptions = DISCIPULADORES_OPTIONS.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  const lideresMap = LIDERES_MAP;
-  const situacaoOptions = IRMAO_VOCE_E_OPTIONS;
+  const discipuladoresOptions = useMemo(() => DISCIPULADORES_OPTIONS.sort((a, b) => a.localeCompare(b, 'pt-BR')), []);
+  const lideresMap = useMemo(() => LIDERES_MAP, []);
+  const situacaoOptions = useMemo(() => IRMAO_VOCE_E_OPTIONS, []);
 
   const filteredLideresOptions = useMemo(() => {
     return formData.discipuladores ? lideresMap[formData.discipuladores] : [];
@@ -140,11 +133,11 @@ export const useInscriptionFormLogic = () => {
       setIsLoading(false);
       return;
     }
-
+    
     // Validação com Zod
-    const parseResult = inscriptionSchema.safeParse(formData);
-    if (!parseResult.success) {
-      const firstError = parseResult.error.errors[0];
+    const parsedData = inscriptionSchema.safeParse(formData);
+    if (!parsedData.success) {
+      const firstError = parsedData.error.errors[0];
       toast({
         title: "Erro de validação",
         description: firstError.message,
