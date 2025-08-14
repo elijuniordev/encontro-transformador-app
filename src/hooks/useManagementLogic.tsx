@@ -156,17 +156,28 @@ export const useManagementLogic = () => {
   ]);
 
   const situationCounts = useMemo(() => {
-    const counts: { [key: string]: number } = {};
-    FUNCAO_OPTIONS.forEach(option => counts[option] = 0);
-    filteredInscriptions.forEach(inscription => {
-      if (inscription.irmao_voce_e && Object.hasOwn(counts, inscription.irmao_voce_e)) {
-        counts[inscription.irmao_voce_e]++;
-      } else if (inscription.irmao_voce_e) {
-        counts[inscription.irmao_voce_e] = (counts[inscription.irmao_voce_e] || 0) + 1;
-      }
-    });
-    return counts;
-  }, [filteredInscriptions]);
+      const counts: { [key: string]: number } = {};
+      counts['Total'] = filteredInscriptions.length;
+
+      // Inicializa a contagem para todas as categorias para garantir que apareçam
+      FUNCAO_OPTIONS.forEach(option => counts[option] = 0);
+
+      filteredInscriptions.forEach(inscription => {
+        if (inscription.irmao_voce_e === "Pastor, obreiro ou discipulador") {
+          // Adiciona à contagem de Equipe, conforme a regra de negócio
+          counts["Equipe"] = (counts["Equipe"] || 0) + 1;
+        } else if (inscription.irmao_voce_e) {
+          // Conta as outras categorias normalmente
+          counts[inscription.irmao_voce_e] = (counts[inscription.irmao_voce_e] || 0) + 1;
+        }
+      });
+
+      // Oculta a categoria de Pastor no card, mas mantém sua contagem interna
+      // para não quebrar a lógica de filtragem, se necessário.
+      delete counts["Pastor, obreiro ou discipulador"]; 
+
+      return counts;
+    }, [filteredInscriptions]);
 
   const paymentMethodCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
