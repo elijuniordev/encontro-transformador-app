@@ -431,7 +431,7 @@ const InscriptionForm = () => {
                   </div>
 
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full" variant="divine" size="lg" disabled={loading}>
                     {loading ? "Enviando..." : <><Send className="mr-2 h-4 w-4" /> Enviar Inscrição</>}
                   </Button>
                 </form>
