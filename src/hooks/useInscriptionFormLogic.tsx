@@ -2,27 +2,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/config/options";
+import { useNavigate } from "react-router-dom";
 
-// Definindo as opções e o mapeamento FORA do hook para que não sejam recriados a cada render
-const DISCIPULADORES_OPTIONS = [
-  "Arthur e Beatriz",
-  "José Gomes e Edna",
-  "Rosana",
-  "Isaac e Andrea",
-  "Rafael Ângelo e Ingrid",
-  "Sou Obreiro, Discipulador ou Pastor"
-];
-
-const LIDERES_MAP = {
-  "Arthur e Beatriz": ["Maria e Mauro", "Welligton e Nathalia", "Rafael Vicente e Fabiana", "Lucas e Gabriela Tangerino"],
-  "José Gomes e Edna": ["Celina", "Junior e Patricia", "José Gomes e Edna", "Eliana", "Vinicius e Eliane"],
-  "Rosana": ["Deusa", "Maria Sandrimara"],
-  "Isaac e Andrea": ["Marcio e Rita", "Alexandre e Carol"],
-  "Rafael Ângelo e Ingrid": ["Renan e Edziane", "Vladimir e Elaine", "Rafael Ângelo e Ingrid", "Hugo e Luciane"],
-  "Sou Obreiro, Discipulador ou Pastor": ["Sou Obreiro, Discipulador ou Pastor"]
-};
-
-interface FormState {
+// Tipagem mais forte para o formulário
+interface InscriptionFormData {
   discipuladores: string;
   lider: string;
   nomeCompleto: string;
@@ -31,21 +16,60 @@ interface FormState {
   idade: string;
   whatsapp: string;
   situacao: string;
-  nomeResponsavel1: string;
-  whatsappResponsavel1: string;
-  nomeResponsavel2: string;
-  whatsappResponsavel2: string;
-  nomeResponsavel3: string;
-  whatsappResponsavel3: string;
+  nomeResponsavel1?: string;
+  whatsappResponsavel1?: string;
+  nomeResponsavel2?: string;
+  whatsappResponsavel2?: string;
+  nomeResponsavel3?: string;
+  whatsappResponsavel3?: string;
 }
 
-interface DiscipuladoresMap {
-  [key: string]: string[];
-}
+// Crie um schema para o WhatsApp reutilizável para evitar repetição
+const whatsappSchema = z.string().regex(/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/, "Formato de WhatsApp inválido.");
+
+// Validação com Zod
+const inscriptionSchema = z.object({
+  situacao: z.string().nonempty("Por favor, selecione sua situação."),
+  nomeCompleto: z.string().min(3, "O nome completo é obrigatório."),
+  sexo: z.string().nonempty("Por favor, selecione o sexo."),
+  idade: z.string().nonempty("A idade é obrigatória.").refine((val) => {
+    const idadeNum = parseInt(val, 10);
+    return !isNaN(idadeNum) && idadeNum >= 12 && idadeNum <= 100;
+  }, "Idade inválida (entre 12 e 100 anos)."),
+  whatsapp: whatsappSchema.nonempty("O WhatsApp é obrigatório."),
+  discipuladores: z.string().optional(),
+  lider: z.string().optional(),
+  anjoGuarda: z.string().optional(),
+  nomeResponsavel1: z.string().optional(),
+  whatsappResponsavel1: whatsappSchema.optional(),
+  nomeResponsavel2: z.string().optional(),
+  whatsappResponsavel2: whatsappSchema.optional(),
+  nomeResponsavel3: z.string().optional(),
+  whatsappResponsavel3: whatsappSchema.optional(),
+}).refine((data) => {
+  // Validação condicional para discipulador/líder
+  if (data.situacao !== "Pastor, obreiro ou discipulador") {
+    return !!data.discipuladores && !!data.lider;
+  }
+  return true;
+}, {
+  message: "Discipulador e Líder são obrigatórios para esta situação.",
+  path: ['discipuladores'],
+}).refine((data) => {
+  // Validação condicional para o primeiro responsável
+  if (data.situacao === "Encontrista") {
+    return !!data.nomeResponsavel1 && !!data.whatsappResponsavel1;
+  }
+  return true;
+}, {
+  message: "Para encontristas, o nome e WhatsApp do primeiro responsável são obrigatórios.",
+  path: ['nomeResponsavel1'],
+});
 
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState<FormState>({
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "",
     lider: "",
     nomeCompleto: "",
@@ -54,22 +78,18 @@ export const useInscriptionFormLogic = () => {
     idade: "",
     whatsapp: "",
     situacao: "",
-    nomeResponsavel1: "",
-    whatsappResponsavel1: "",
-    nomeResponsavel2: "",
-    whatsappResponsavel2: "",
-    nomeResponsavel3: "",
-    whatsappResponsavel3: ""
   });
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  const filteredDiscipuladoresOptions = useMemo(() => {
-    if (formData.situacao === "Encontrista" || formData.situacao === "Cozinha") {
-      return DISCIPULADORES_OPTIONS.filter(option => option !== "Sou Obreiro, Discipulador ou Pastor");
-    }
-    return DISCIPULADORES_OPTIONS;
-  }, [formData.situacao]);
+  // Mover as listas para fora do hook ou importar do arquivo de config
+  const discipuladoresOptions = DISCIPULADORES_OPTIONS.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const lideresMap = LIDERES_MAP;
+  const situacaoOptions = IRMAO_VOCE_E_OPTIONS;
+
+  const filteredLideresOptions = useMemo(() => {
+    return formData.discipuladores ? lideresMap[formData.discipuladores] : [];
+  }, [formData.discipuladores, lideresMap]);
 
   useEffect(() => {
     const fetchRegistrationStatus = async () => {
@@ -88,59 +108,24 @@ export const useInscriptionFormLogic = () => {
     fetchRegistrationStatus();
   }, []);
 
-  const validateForm = useCallback(() => {
-    if (!formData.discipuladores || !formData.nomeCompleto || !formData.sexo || !formData.idade || !formData.whatsapp || !formData.situacao) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos marcados com *.",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    if (formData.discipuladores !== "Sou Obreiro, Discipulador ou Pastor" && !formData.lider) {
-      toast({
-        title: "Campo 'Seu líder é' obrigatório",
-        description: "Por favor, selecione seu líder.",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    if (formData.situacao === "Encontrista") {
-      if (!formData.nomeResponsavel1 || !formData.whatsappResponsavel1) {
-        toast({
-          title: "Campos obrigatórios para Encontrista",
-          description: "Para encontristas, o nome e WhatsApp do primeiro responsável são obrigatórios.",
-          variant: "destructive"
-        });
-        return false;
-      }
-    }
-
-    const idadeNum = parseInt(formData.idade);
-    if (isNaN(idadeNum) || idadeNum < 12 || idadeNum > 100) {
-        toast({
-            title: "Idade inválida",
-            description: "Por favor, insira uma idade válida (entre 12 e 100 anos).",
-            variant: "destructive"
-        });
-        return false;
-    }
-
-    const whatsappRegex = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
-    if (!whatsappRegex.test(formData.whatsapp)) {
-      toast({
-        title: "WhatsApp inválido",
-        description: "Por favor, insira um número de WhatsApp válido (ex: (DD) 9XXXX-XXXX).",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    return true;
-  }, [formData, toast]);
-
+  const resetForm = useCallback(() => {
+    setFormData({
+      discipuladores: "",
+      lider: "",
+      nomeCompleto: "",
+      anjoGuarda: "",
+      sexo: "",
+      idade: "",
+      whatsapp: "",
+      situacao: "",
+      nomeResponsavel1: "",
+      whatsappResponsavel1: "",
+      nomeResponsavel2: "",
+      whatsappResponsavel2: "",
+      nomeResponsavel3: "",
+      whatsappResponsavel3: ""
+    });
+  }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,13 +141,21 @@ export const useInscriptionFormLogic = () => {
       return;
     }
 
-    if (!validateForm()) {
+    // Validação com Zod
+    const parseResult = inscriptionSchema.safeParse(formData);
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0];
+      toast({
+        title: "Erro de validação",
+        description: firstError.message,
+        variant: "destructive",
+      });
       setIsLoading(false);
       return;
     }
 
     try {
-      // ** VALIDAÇÃO DE WHATSAPP DUPLICADO **
+      // VALIDAÇÃO DE WHATSAPP DUPLICADO
       const { data: existingInscriptions, error: queryError } = await supabase
         .from('inscriptions')
         .select('whatsapp')
@@ -188,44 +181,30 @@ export const useInscriptionFormLogic = () => {
         setIsLoading(false);
         return;
       }
-      // ** FIM DA VALIDAÇÃO DE WHATSAPP DUPLICADO **
+      // FIM DA VALIDAÇÃO DE WHATSAPP DUPLICADO
 
-
-      const finalLider = formData.discipuladores === "Sou Obreiro, Discipulador ou Pastor"
-                         ? "Sou Obreiro, Discipulador ou Pastor"
-                         : formData.lider;
-
-      const finalAnjoGuarda = formData.anjoGuarda || (
-          formData.situacao === "Equipe" ? "Equipe" :
-          formData.situacao === "Cozinha" ? "Cozinha" : ''
-      );
-
-      // Definir status e forma de pagamento com base na situação
-      let initialStatusPagamento = 'Pendente';
-      let initialFormaPagamento = 'Pendente';
-
-      if (formData.situacao === "Cozinha") {
-        initialStatusPagamento = 'Isento';
-        initialFormaPagamento = 'Isento';
-      }
-
+      const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
       const inscriptionData = {
         nome_completo: formData.nomeCompleto,
-        anjo_guarda: finalAnjoGuarda,
+        anjo_guarda: isPastorObreiro ? formData.nomeCompleto : (formData.anjoGuarda || null),
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
-        discipuladores: formData.discipuladores,
-        lider: finalLider,
+        discipuladores: isPastorObreiro ? formData.nomeCompleto : (formData.discipuladores || null),
+        lider: isPastorObreiro ? formData.nomeCompleto : (formData.lider || null),
         irmao_voce_e: formData.situacao,
-        status_pagamento: initialStatusPagamento,
-        forma_pagamento: initialFormaPagamento,
+        responsavel_1_nome: formData.nomeResponsavel1 || null,
+        responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
+        responsavel_2_nome: formData.nomeResponsavel2 || null,
+        responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
+        responsavel_3_nome: formData.nomeResponsavel3 || null,
+        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
+        status_pagamento: formData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
+        forma_pagamento: formData.situacao === "Cozinha" ? 'Isento' : null,
         valor: 200.00
       };
 
-      // REMOVIDO: console.log("Dados da inscrição:", inscriptionData);
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('inscriptions')
         .insert([inscriptionData])
         .select();
@@ -235,29 +214,12 @@ export const useInscriptionFormLogic = () => {
         throw error;
       }
 
-      // REMOVIDO: console.log('Inscrição salva com sucesso:', data);
-
       toast({
         title: "Inscrição realizada com sucesso!",
         description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento.",
       });
 
-      setFormData({
-        discipuladores: "",
-        lider: "",
-        nomeCompleto: "",
-        anjoGuarda: "",
-        sexo: "",
-        idade: "",
-        whatsapp: "",
-        situacao: "",
-        nomeResponsavel1: "",
-        whatsappResponsavel1: "",
-        nomeResponsavel2: "",
-        whatsappResponsavel2: "",
-        nomeResponsavel3: "",
-        whatsappResponsavel3: ""
-      });
+      resetForm();
 
     } catch (error) {
       console.error('Erro completo:', error);
@@ -269,7 +231,7 @@ export const useInscriptionFormLogic = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [formData, isRegistrationsOpen, validateForm, toast]);
+  }, [formData, isRegistrationsOpen, toast, resetForm]);
 
   return {
     formData,
@@ -277,8 +239,8 @@ export const useInscriptionFormLogic = () => {
     handleSubmit,
     isRegistrationsOpen,
     isLoading,
-    discipuladoresOptions: DISCIPULADORES_OPTIONS,
-    lideresMap: LIDERES_MAP,
-    filteredDiscipuladoresOptions,
+    discipuladoresOptions,
+    filteredLideresOptions,
+    situacaoOptions,
   };
 };

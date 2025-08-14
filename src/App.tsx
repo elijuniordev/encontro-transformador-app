@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
-import WhatsAppConfirmation from "./pages/WhatsAppConfirmation";
 import InscriptionForm from "./pages/InscriptionForm";
 import Login from "./pages/Login";
 import Management from "./pages/Management";
@@ -24,7 +23,6 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/whatsapp-confirmation" element={<WhatsAppConfirmation />} />
             <Route path="/inscription" element={<InscriptionForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/management" element={<Management />} />

@@ -5,19 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import * as XLSX from 'xlsx';
-
-// Definindo opções para filtros que são constantes
-const FUNCAO_OPTIONS = ["Encontrista", "Equipe", "Acompanhante", "Cozinha"];
-const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Cancelado", "Isento"];
-
-const DISCIPULADORES_OPTIONS_FOR_FILTER = [
-  "Arthur e Beatriz",
-  "José Gomes e Edna",
-  "Rosana",
-  "Isaac e Andrea",
-  "Rafael Ângelo e Ingrid"
-];
-
+import {
+  DISCIPULADORES_OPTIONS as DISCIPULADORES_OPTIONS_FOR_FILTER,
+  STATUS_PAGAMENTO_OPTIONS,
+  IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS,
+  FORMA_PAGAMENTO_OPTIONS,
+} from "@/config/options"; // Importar do arquivo de configuração
 
 interface Inscription {
   id: string;
@@ -47,7 +40,7 @@ export const useManagementLogic = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDiscipulado, setFilterDiscipulado] = useState(false);
-  
+
   const [filterByFuncao, setFilterByFuncao] = useState("all");
   const [filterByStatusPagamento, setFilterByStatusPagamento] = useState("all");
   const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState("all");
@@ -115,7 +108,7 @@ export const useManagementLogic = () => {
     const newStatus = !isRegistrationsOpen;
     setIsRegistrationsOpen(newStatus);
 
-    const settingsId = '8ff1cff8-2c26-4cc4-b2bf-7faa5612b747'; // <<< ID REAL DA SUA TABELA event_settings
+    const settingsId = '8ff1cff8-2c26-4cc4-b2bf-7faa5612b747';
 
     const { error } = await supabase
       .from('event_settings')
@@ -141,11 +134,11 @@ export const useManagementLogic = () => {
   const filteredInscriptions = useMemo(() => {
     return inscriptions.filter(inscription => {
       const matchesSearch = inscription.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           inscription.whatsapp.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           inscription.discipuladores.toLowerCase().includes(searchTerm.toLowerCase());
+                          inscription.whatsapp.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          inscription.discipuladores.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesDiscipuladoByLoggedInUser = !filterDiscipulado || (userDiscipulado && inscription.discipuladores === userDiscipulado);
-      
+
       const matchesFuncao = filterByFuncao === "all" || inscription.irmao_voce_e === filterByFuncao;
       const matchesStatusPagamento = filterByStatusPagamento === "all" || inscription.status_pagamento === filterByStatusPagamento;
       const matchesDiscipuladoGroup = filterByDiscipuladoGroup === "all" || inscription.discipuladores === filterByDiscipuladoGroup;
@@ -163,12 +156,8 @@ export const useManagementLogic = () => {
   ]);
 
   const situationCounts = useMemo(() => {
-    const counts: { [key: string]: number } = {
-      Encontrista: 0,
-      Equipe: 0,
-      Acompanhante: 0,
-      Cozinha: 0,
-    };
+    const counts: { [key: string]: number } = {};
+    FUNCAO_OPTIONS.forEach(option => counts[option] = 0);
     filteredInscriptions.forEach(inscription => {
       if (inscription.irmao_voce_e && Object.hasOwn(counts, inscription.irmao_voce_e)) {
         counts[inscription.irmao_voce_e]++;
@@ -180,19 +169,9 @@ export const useManagementLogic = () => {
   }, [filteredInscriptions]);
 
   const paymentMethodCounts = useMemo(() => {
-    const counts: { [key: string]: number } = {
-      Pix: 0,
-      'Cartão de Crédito': 0,
-      'CartaoCredito2x': 0,
-      'CartaoDebito': 0,
-      'Dinheiro': 0,
-      'Pendente': 0,
-      'Confirmado': 0,
-      'Cancelado': 0,
-      'Isento': 0,
-    };
+    const counts: { [key: string]: number } = {};
+    [...FORMA_PAGAMENTO_OPTIONS, ...STATUS_PAGAMENTO_OPTIONS].forEach(option => counts[option] = 0);
     filteredInscriptions.forEach(inscription => {
-      // Conta as formas de pagamento para pagamentos confirmados
       if (inscription.status_pagamento === 'Confirmado' && inscription.forma_pagamento) {
         const key = inscription.forma_pagamento;
         if (Object.hasOwn(counts, key)) {
@@ -201,8 +180,7 @@ export const useManagementLogic = () => {
           counts[key] = (counts[key] || 0) + 1;
         }
       }
-      
-      // Conta os status de pagamento (Pendente, Cancelado, Isento)
+
       const statusKey = inscription.status_pagamento;
       if (statusKey && Object.hasOwn(counts, statusKey)) {
         counts[statusKey]++;
@@ -258,7 +236,7 @@ export const useManagementLogic = () => {
     setEditingId(null);
     setEditData({});
   }, [editingId, editData, fetchInscriptions, toast]);
-  
+
   const handleDelete = useCallback(async (id: string) => {
     if (window.confirm("Tem certeza que deseja excluir esta inscrição? Esta ação não pode ser desfeita.")) {
       const { error } = await supabase
@@ -309,42 +287,35 @@ export const useManagementLogic = () => {
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
 
-    // 1. Definir larguras de coluna
     const wscols = [
-        {wch: 10}, // ID
-        {wch: 25}, // Nome Completo
-        {wch: 20}, // Discipuladores
-        {wch: 20}, // Líder
-        {wch: 20}, // Anjo da Guarda
-        {wch: 8},  // Sexo
-        {wch: 6},  // Idade
-        {wch: 15}, // WhatsApp
-        {wch: 12}, // Função
-        {wch: 25}, // Resp. 1 Nome
-        {wch: 18}, // Resp. 1 WhatsApp
-        {wch: 25}, // Resp. 2 Nome
-        {wch: 18}, // Resp. 2 WhatsApp
-        {wch: 25}, // Resp. 3 Nome
-        {wch: 18}, // Resp. 3 WhatsApp
-        {wch: 18}, // Status Pagamento
-        {wch: 18}, // Forma Pagamento
-        {wch: 10}, // Valor
-        {wch: 30}, // Observação
-        {wch: 15}, // Data Inscrição
+        {wch: 10},
+        {wch: 25},
+        {wch: 20},
+        {wch: 20},
+        {wch: 20},
+        {wch: 8},
+        {wch: 6},
+        {wch: 15},
+        {wch: 12},
+        {wch: 25},
+        {wch: 18},
+        {wch: 25},
+        {wch: 18},
+        {wch: 25},
+        {wch: 18},
+        {wch: 18},
+        {wch: 18},
+        {wch: 10},
+        {wch: 30},
+        {wch: 15},
     ];
     ws['!cols'] = wscols;
 
-    // 2. Adicionar auto-filtro aos cabeçalhos
     if (dataToExport.length > 0) {
-        // Obter o range atual da planilha (ex: "A1:T" + (dataToExport.length + 1))
         const range = XLSX.utils.decode_range(ws['!ref'] || "A1");
-        // Ajustar o range para incluir apenas a linha do cabeçalho
         ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: range.s.r, c: range.s.c }, e: { r: range.s.r, c: range.e.c } }) };
-        // Para aplicar o filtro a todas as linhas de dados, o ref deve incluir a última linha de dados.
-        // O ref completo para autoFilter deve ser A1:LastColumnLastRow
         ws['!autofilter'] = { ref: ws['!ref'] };
     }
-
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Inscrições");
@@ -355,7 +326,6 @@ export const useManagementLogic = () => {
       description: "Os dados foram exportados para inscricoes_encontro_com_deus.xlsx",
     });
   }, [filteredInscriptions, toast]);
-
 
   return {
     searchTerm,
@@ -392,5 +362,6 @@ export const useManagementLogic = () => {
     funcaoOptions: FUNCAO_OPTIONS,
     statusPagamentoOptions: STATUS_PAGAMENTO_OPTIONS,
     discipuladoGroupOptions: DISCIPULADORES_OPTIONS_FOR_FILTER,
+    formaPagamentoOptions: FORMA_PAGAMENTO_OPTIONS,
   };
 };

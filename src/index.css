@@ -70,6 +70,11 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Adicionar cores para alerta informativo */
+    --alert-info-background: 215 20% 90%;
+    --alert-info-foreground: 215 25% 35%;
+    --alert-info-border: 215 15% 80%;
   }
 
   .dark {
@@ -108,6 +113,11 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Adicionar cores para alerta informativo no modo escuro */
+    --alert-info-background: 217.2 32.6% 17.5%;
+    --alert-info-foreground: 215 40% 98%;
+    --alert-info-border: 217.2 32.6% 25%;
   }
 }
 
