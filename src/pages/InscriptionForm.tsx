@@ -40,6 +40,34 @@ const inscriptionSchema = z.object({
   whatsappResponsavel1: z.string().optional()
 });
 
+// Componente para inputs de responsáveis
+interface ResponsavelInputProps {
+  index: 1 | 2 | 3;
+  valueNome?: string;
+  onChangeNome?: (val: string) => void;
+  valueWhats?: string;
+  onChangeWhats?: (val: string) => void;
+}
+
+const ResponsavelInput = ({ index, valueNome, onChangeNome, valueWhats, onChangeWhats }: ResponsavelInputProps) => (
+  <div className="space-y-2">
+    <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:</Label>
+    <Input
+      id={`nomeResponsavel${index}`}
+      type="text"
+      value={valueNome || ""}
+      onChange={(e) => onChangeNome?.(e.target.value)}
+    />
+    <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:</Label>
+    <Input
+      id={`whatsappResponsavel${index}`}
+      type="tel"
+      value={valueWhats || ""}
+      onChange={(e) => onChangeWhats?.(e.target.value)}
+    />
+  </div>
+);
+
 const InscriptionForm = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<InscriptionFormData>({
@@ -91,26 +119,6 @@ const InscriptionForm = () => {
     fetchRegistrationStatus();
   }, []);
 
-  // Componente reutilizável para campos de responsável
-  const ResponsavelInput = ({ index }: { index: 1 | 2 | 3 }) => (
-    <div className="space-y-2">
-      <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:</Label>
-      <Input
-        id={`nomeResponsavel${index}`}
-        type="text"
-        value={formData[`nomeResponsavel${index}` as keyof InscriptionFormData] as string}
-        onChange={(e) => setFormData({ ...formData, [`nomeResponsavel${index}`]: e.target.value })}
-      />
-      <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:</Label>
-      <Input
-        id={`whatsappResponsavel${index}`}
-        type="tel"
-        value={formData[`whatsappResponsavel${index}` as keyof InscriptionFormData] as string}
-        onChange={(e) => setFormData({ ...formData, [`whatsappResponsavel${index}`]: e.target.value })}
-      />
-    </div>
-  );
-
   // Função centralizada para definir anjoGuarda
   const getAnjoGuardaValue = () => {
     if (formData.situacao === "Encontrista") return formData.anjoGuarda;
@@ -142,7 +150,7 @@ const InscriptionForm = () => {
     if (formData.situacao === "Encontrista" && (!formData.nomeResponsavel1 || !formData.whatsappResponsavel1)) {
       toast({
         title: "Campos obrigatórios para Encontrista",
-        description: "O responsável principal precisa ser preenchido com contato de familiares para caso seja necessário acioná-los.",
+        description: "É necessário preencher pelo menos o primeiro responsável. Estes contatos precisam ser de familiares para caso seja necessário acionar.",
         variant: "destructive"
       });
       return;
@@ -181,7 +189,7 @@ const InscriptionForm = () => {
 
       toast({
         title: "Inscrição realizada com sucesso!",
-        description: "Sua inscrição foi registrada. Por favor, realize o pagamento via PIX e envie o comprovante para seu discipulador ou líder.",
+        description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento."
       });
 
       setFormData({
@@ -255,7 +263,6 @@ const InscriptionForm = () => {
                     </Select>
                   </div>
 
-                  {/* Aviso de Acompanhante */}
                   {formData.situacao === 'Acompanhante' && (
                     <p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
                       <strong>Aviso:</strong> A opção de Acompanhante é para quem vai servir como equipe pela primeira vez.
@@ -274,7 +281,7 @@ const InscriptionForm = () => {
                     />
                   </div>
 
-                  {/* Anjo da Guarda */}
+                  {/* Anjo da guarda */}
                   {formData.situacao === 'Encontrista' && (
                     <div className="space-y-2">
                       <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
@@ -364,45 +371,56 @@ const InscriptionForm = () => {
                     />
                   </div>
 
-                  {/* Blocos de responsáveis */}
+                  {/* Responsável principal (Obrigatório) */}
                   {formData.situacao === "Encontrista" && (
-                    <>
-                      {/* Bloco 1 - Responsável 1 (obrigatório) */}
-                      <div className="bg-accent/30 p-6 rounded-lg space-y-2">
-                        <h3 className="text-lg font-semibold text-primary">Responsável Principal *</h3>
-                        <ResponsavelInput index={1} />
-                        <p className="text-sm text-red-600 mt-2">
-                          Este contato é obrigatório. Informe um familiar ou responsável direto, para que possamos contatá-lo caso seja necessário.
-                        </p>
-                      </div>
-
-                      {/* Bloco 2 - Responsáveis 2 e 3 (opcionais) */}
-                      <div className="bg-accent/30 p-6 rounded-lg space-y-2 mt-4">
-                        <h3 className="text-lg font-semibold text-primary">Responsáveis Adicionais (opcionais)</h3>
-                        {[2, 3].map((i) => <ResponsavelInput key={i} index={i as 2 | 3} />)}
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Estes contatos são opcionais e servem como adicionais caso o responsável principal não esteja disponível.
-                        </p>
-                      </div>
-                    </>
+                    <div className="bg-accent/30 p-6 rounded-lg space-y-6">
+                      <h3 className="text-lg font-semibold text-primary">Contato de Responsável Principal *</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Este contato é obrigatório e deve ser de familiares, para caso seja necessário acionar.
+                      </p>
+                      <ResponsavelInput
+                        index={1}
+                        valueNome={formData.nomeResponsavel1}
+                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel1: val })}
+                        valueWhats={formData.whatsappResponsavel1}
+                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel1: val })}
+                      />
+                    </div>
                   )}
 
-                  {/* Aviso de PIX */}
+                  {/* Responsáveis adicionais (Opcional) */}
+                  {formData.situacao === "Encontrista" && (
+                    <div className="bg-accent/30 p-6 rounded-lg space-y-4 mt-4">
+                      <h3 className="text-lg font-semibold text-primary">Responsáveis Adicionais (opcionais)</h3>
+                      <ResponsavelInput
+                        index={2}
+                        valueNome={formData.nomeResponsavel2}
+                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel2: val })}
+                        valueWhats={formData.whatsappResponsavel2}
+                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel2: val })}
+                      />
+                      <ResponsavelInput
+                        index={3}
+                        valueNome={formData.nomeResponsavel3}
+                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel3: val })}
+                        valueWhats={formData.whatsappResponsavel3}
+                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel3: val })}
+                      />
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Estes contatos são opcionais e servem como adicionais caso o responsável principal não esteja disponível.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Lembrete PIX */}
                   <div className="bg-accent/30 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-2">
-                      <strong>Lembre-se:</strong> Após enviar sua inscrição, realize o pagamento via PIX para:
-                    </p>
-                    <p className="font-mono text-sm font-bold text-primary">
-                      videiraosascoencontro@gmail.com
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      E envie o comprovante para seu discipulador ou líder.
+                      <strong>Atenção:</strong> Após a inscrição, você receberá instruções para efetuar o pagamento via PIX.
                     </p>
                   </div>
 
-                  <Button type="submit" variant="divine" size="lg" className="w-full" disabled={loading}>
-                    <Send className="mr-2 h-5 w-5" />
-                    {loading ? "Enviando..." : "Finalizar Inscrição"}
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Enviando..." : <><Send className="mr-2 h-4 w-4" /> Enviar Inscrição</>}
                   </Button>
                 </form>
               )}
