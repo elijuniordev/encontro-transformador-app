@@ -1,6 +1,5 @@
 // src/pages/InscriptionForm.tsx
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -92,16 +91,17 @@ const InscriptionForm = () => {
     fetchRegistrationStatus();
   }, []);
 
+  // Componente reutilizável para campos de responsável
   const ResponsavelInput = ({ index }: { index: 1 | 2 | 3 }) => (
     <div className="space-y-2">
-      <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:{index === 1 ? " *" : ""}</Label>
+      <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:</Label>
       <Input
         id={`nomeResponsavel${index}`}
         type="text"
         value={formData[`nomeResponsavel${index}` as keyof InscriptionFormData] as string}
         onChange={(e) => setFormData({ ...formData, [`nomeResponsavel${index}`]: e.target.value })}
       />
-      <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:{index === 1 ? " *" : ""}</Label>
+      <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:</Label>
       <Input
         id={`whatsappResponsavel${index}`}
         type="tel"
@@ -111,6 +111,7 @@ const InscriptionForm = () => {
     </div>
   );
 
+  // Função centralizada para definir anjoGuarda
   const getAnjoGuardaValue = () => {
     if (formData.situacao === "Encontrista") return formData.anjoGuarda;
     if (formData.situacao === "Pastor, obreiro ou discipulador") return formData.nomeCompleto;
@@ -141,7 +142,7 @@ const InscriptionForm = () => {
     if (formData.situacao === "Encontrista" && (!formData.nomeResponsavel1 || !formData.whatsappResponsavel1)) {
       toast({
         title: "Campos obrigatórios para Encontrista",
-        description: "Por favor, preencha ao menos o primeiro contato responsável.",
+        description: "O responsável principal precisa ser preenchido com contato de familiares para caso seja necessário acioná-los.",
         variant: "destructive"
       });
       return;
@@ -180,7 +181,7 @@ const InscriptionForm = () => {
 
       toast({
         title: "Inscrição realizada com sucesso!",
-        description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento."
+        description: "Sua inscrição foi registrada. Por favor, realize o pagamento via PIX e envie o comprovante para seu discipulador ou líder.",
       });
 
       setFormData({
@@ -214,7 +215,7 @@ const InscriptionForm = () => {
   return (
     <div className="min-h-screen bg-gradient-peaceful flex flex-col">
       <div className="flex-grow flex items-center justify-center p-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <Card className="shadow-divine bg-white">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 w-16 h-16 bg-gradient-glow rounded-full flex items-center justify-center">
@@ -225,14 +226,15 @@ const InscriptionForm = () => {
             </CardHeader>
             <CardContent>
               {!isRegistrationsOpen ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center p-8 bg-red-50 border border-red-300 rounded-lg text-red-800">
+                <div className="flex flex-col items-center justify-center p-8 bg-red-50 border border-red-300 rounded-lg text-red-800">
                   <AlertTriangle className="h-12 w-12 mb-4" />
                   <h3 className="text-2xl font-bold mb-2">Inscrições Encerradas!</h3>
                   <p className="text-center">As inscrições para o Encontro com Deus estão encerradas no momento.</p>
                   <p className="text-center mt-2">Fique atento para futuras oportunidades!</p>
-                </motion.div>
+                </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Situação */}
                   <div className="space-y-2">
                     <Label htmlFor="situacao">Irmão, você é: *</Label>
                     <Select value={formData.situacao} onValueChange={(value) => setFormData({
@@ -253,12 +255,14 @@ const InscriptionForm = () => {
                     </Select>
                   </div>
 
+                  {/* Aviso de Acompanhante */}
                   {formData.situacao === 'Acompanhante' && (
                     <p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
                       <strong>Aviso:</strong> A opção de Acompanhante é para quem vai servir como equipe pela primeira vez.
                     </p>
                   )}
 
+                  {/* Nome completo */}
                   <div className="space-y-2">
                     <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
                     <Input
@@ -270,6 +274,7 @@ const InscriptionForm = () => {
                     />
                   </div>
 
+                  {/* Anjo da Guarda */}
                   {formData.situacao === 'Encontrista' && (
                     <div className="space-y-2">
                       <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
@@ -283,6 +288,7 @@ const InscriptionForm = () => {
                     </div>
                   )}
 
+                  {/* Discipuladores e líderes */}
                   {!(formData.situacao === "Pastor, obreiro ou discipulador") && (
                     <>
                       <div className="space-y-2">
@@ -318,16 +324,17 @@ const InscriptionForm = () => {
                     </>
                   )}
 
+                  {/* Sexo e idade */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="sexo">Sexo: *</Label>
                       <Select value={formData.sexo} onValueChange={(value) => setFormData({ ...formData, sexo: value })}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione seu sexo" />
+                          <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Masculino">Masculino</SelectItem>
-                          <SelectItem value="Feminino">Feminino</SelectItem>
+                          <SelectItem value="masculino">Masculino</SelectItem>
+                          <SelectItem value="feminino">Feminino</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -336,44 +343,72 @@ const InscriptionForm = () => {
                       <Input
                         id="idade"
                         type="number"
-                        min={0}
                         value={formData.idade}
                         onChange={(e) => setFormData({ ...formData, idade: e.target.value })}
+                        placeholder="Sua idade"
+                        min="1"
+                        max="120"
                       />
                     </div>
                   </div>
 
+                  {/* WhatsApp */}
                   <div className="space-y-2">
-                    <Label htmlFor="whatsapp">WhatsApp: *</Label>
+                    <Label htmlFor="whatsapp">Compartilhe seu WhatsApp: *</Label>
                     <Input
                       id="whatsapp"
                       type="tel"
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                      placeholder="(00) 0 0000-0000"
+                      placeholder="(11) 99999-9999"
                     />
                   </div>
 
-                  {formData.situacao === 'Encontrista' && (
+                  {/* Blocos de responsáveis */}
+                  {formData.situacao === "Encontrista" && (
                     <>
-                      <ResponsavelInput index={1} />
-                      <ResponsavelInput index={2} />
-                      <ResponsavelInput index={3} />
+                      {/* Bloco 1 - Responsável 1 (obrigatório) */}
+                      <div className="bg-accent/30 p-6 rounded-lg space-y-2">
+                        <h3 className="text-lg font-semibold text-primary">Responsável Principal *</h3>
+                        <ResponsavelInput index={1} />
+                        <p className="text-sm text-red-600 mt-2">
+                          Este contato é obrigatório. Informe um familiar ou responsável direto, para que possamos contatá-lo caso seja necessário.
+                        </p>
+                      </div>
+
+                      {/* Bloco 2 - Responsáveis 2 e 3 (opcionais) */}
+                      <div className="bg-accent/30 p-6 rounded-lg space-y-2 mt-4">
+                        <h3 className="text-lg font-semibold text-primary">Responsáveis Adicionais (opcionais)</h3>
+                        {[2, 3].map((i) => <ResponsavelInput key={i} index={i as 2 | 3} />)}
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Estes contatos são opcionais e servem como adicionais caso o responsável principal não esteja disponível.
+                        </p>
+                      </div>
                     </>
                   )}
 
-                  <p className="text-sm text-muted-foreground">
-                    Após o preenchimento, favor enviar o comprovante de pagamento para o WhatsApp do discipulador ou líder informado.
-                  </p>
+                  {/* Aviso de PIX */}
+                  <div className="bg-accent/30 p-4 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Lembre-se:</strong> Após enviar sua inscrição, realize o pagamento via PIX para:
+                    </p>
+                    <p className="font-mono text-sm font-bold text-primary">
+                      videiraosascoencontro@gmail.com
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      E envie o comprovante para seu discipulador ou líder.
+                    </p>
+                  </div>
 
-                  <Button type="submit" className="w-full flex justify-center items-center" disabled={loading}>
-                    {loading ? "Enviando..." : <><Send className="mr-2" /> Enviar Inscrição</>}
+                  <Button type="submit" variant="divine" size="lg" className="w-full" disabled={loading}>
+                    <Send className="mr-2 h-5 w-5" />
+                    {loading ? "Enviando..." : "Finalizar Inscrição"}
                   </Button>
                 </form>
               )}
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       </div>
       <Footer />
     </div>
