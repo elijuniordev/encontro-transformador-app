@@ -26,64 +26,58 @@ interface DormitoryReportProps {
   inscriptions: Participant[];
 }
 
-// Estrutura dos quartos definida fora do componente
+// Estrutura dos quartos, sem a Capela e ordenada do maior para o menor.
 const getInitialRooms = (): Room[] => [
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
-    { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
-    { nome: 'Quarto 3', capacidade: 4, ocupantes: [] },
-    { nome: 'Quarto 4', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 5', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 6', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 7', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 8', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 9', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 10', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 11', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 12', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 13', capacidade: 8, ocupantes: [] },
+    { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
+    { nome: 'Quarto 4', capacidade: 6, ocupantes: [] },
+    { nome: 'Quarto 6', capacidade: 6, ocupantes: [] },
+    { nome: 'Quarto 9', capacidade: 6, ocupantes: [] },
+    { nome: 'Quarto 3', capacidade: 4, ocupantes: [] },
 ];
 
-// Função de alocação rigorosa
+// Algoritmo de alocação final
 const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
   const quartos = JSON.parse(JSON.stringify(quartosTemplate)) as Room[];
   const alocados = new Set<string>();
-  const naoAlocadosTemp: Participant[] = [];
-
-  // Agrupa participantes por célula (líder)
+  
+  // 1. Agrupar participantes por célula (líder)
   const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
-    if (p.lider) { // Apenas agrupa quem tem líder definido
+    // Ignora pessoas sem líder definido para agrupamento por célula
+    if (p.lider && p.lider.trim() !== "") {
         if (!acc[p.lider]) acc[p.lider] = [];
         acc[p.lider].push(p);
     }
     return acc;
   }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
-  
-  // 1. Prioridade Máxima: Alocar células inteiras
-  for (const celula of gruposPorCelula) {
-    let quartoIdeal: Room | null = null;
-    let menorEspacoLivre = Infinity;
 
-    // Encontra o quarto com o encaixe mais justo (Best-Fit)
+  // 2. Tentar alocar CÉLULAS INTEIRAS
+  for (const celula of gruposPorCelula) {
+    let quartoEncontrado: Room | null = null;
+    
+    // Tenta encontrar um quarto que comporte a célula inteira
     for (const quarto of quartos) {
-      const espacoLivre = quarto.capacidade - quarto.ocupantes.length;
-      if (espacoLivre >= celula.length && espacoLivre < menorEspacoLivre) {
-        quartoIdeal = quarto;
-        menorEspacoLivre = espacoLivre;
+      if (quarto.capacidade - quarto.ocupantes.length >= celula.length) {
+        quartoEncontrado = quarto;
+        break; // Encontrou um quarto, aloca e para de procurar
       }
     }
 
-    if (quartoIdeal) {
-      quartoIdeal.ocupantes.push(...celula);
+    if (quartoEncontrado) {
+      quartoEncontrado.ocupantes.push(...celula);
       celula.forEach(p => alocados.add(p.id));
-    } else {
-      // Se a célula inteira não cabe, todos os seus membros vão para a lista de não alocados por enquanto
-      naoAlocadosTemp.push(...celula);
     }
   }
 
-  // 2. Alocar indivíduos restantes (que não pertencem a uma célula ou cuja célula não coube)
-  const restantes = pessoas.filter(p => !alocados.has(p.id) && !naoAlocadosTemp.find(na => na.id === p.id) );
-  
+  // 3. Alocar indivíduos restantes que não foram alocados com suas células
+  const restantes = pessoas.filter(p => !alocados.has(p.id));
   for (const pessoa of restantes) {
     let alocado = false;
     for (const quarto of quartos) {
@@ -94,13 +88,10 @@ const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
         break;
       }
     }
-    if (!alocado) {
-      naoAlocadosTemp.push(pessoa);
-    }
   }
 
-  const naoAlocadosFinal = pessoas.filter(p => !alocados.has(p.id));
-  return { quartosAlocados: quartos.filter(q => q.ocupantes.length > 0), naoAlocados: naoAlocadosFinal };
+  const naoAlocados = pessoas.filter(p => !alocados.has(p.id));
+  return { quartosAlocados: quartos.filter(q => q.ocupantes.length > 0), naoAlocados };
 };
 
 
@@ -171,7 +162,9 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                 <Card className="mt-6 border-red-500 bg-red-50">
                     <CardHeader><CardTitle className="text-red-700">Homens Não Alocados ({reportData.homensNaoAlocados.length})</CardTitle></CardHeader>
                     <CardContent>
-                        <ul>{reportData.homensNaoAlocados.map(p => <li key={p.id} className='font-semibold'>{p.nome_completo} <span className='text-xs text-muted-foreground'> (Líder: {p.lider})</span></li>)}</ul>
+                        <ul className="pt-4 space-y-2">
+                            {reportData.homensNaoAlocados.map(p => <li key={p.id} className='font-semibold'>{p.nome_completo} <span className='text-xs text-muted-foreground'> (Líder: {p.lider || 'N/A'})</span></li>)}
+                        </ul>
                     </CardContent>
                 </Card>
             )}
@@ -206,7 +199,9 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                 <Card className="mt-6 border-red-500 bg-red-50">
                     <CardHeader><CardTitle className="text-red-700">Mulheres Não Alocadas ({reportData.mulheresNaoAlocados.length})</CardTitle></CardHeader>
                     <CardContent>
-                        <ul>{reportData.mulheresNaoAlocados.map(p => <li key={p.id} className='font-semibold'>{p.nome_completo} <span className='text-xs text-muted-foreground'> (Líder: {p.lider})</span></li>)}</ul>
+                        <ul className="pt-4 space-y-2">
+                            {reportData.mulheresNaoAlocados.map(p => <li key={p.id} className='font-semibold'>{p.nome_completo} <span className='text-xs text-muted-foreground'> (Líder: {p.lider || 'N/A'})</span></li>)}
+                        </ul>
                     </CardContent>
                 </Card>
             )}
