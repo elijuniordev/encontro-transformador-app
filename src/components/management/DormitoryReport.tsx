@@ -14,7 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 
 // Interface para as props do participante
 interface DraggableParticipantProps {
-  participant: Participant; roomName: string; borderColorClass: string;
+  participant: Participant;
+  roomName: string;
+  borderColorClass: string;
 }
 
 // Sub-componente para o participante arrastável
@@ -34,7 +36,8 @@ function DraggableParticipant({ participant, roomName, borderColorClass }: Dragg
 
 // Interface para as props do card de dormitório
 interface DroppableDormitoryCardProps {
-    quarto: Room; borderColorClass: string;
+    quarto: Room;
+    borderColorClass: string;
 }
 
 // Sub-componente para o card do dormitório, usando forwardRef para capturar o elemento DOM
@@ -44,7 +47,7 @@ const DroppableDormitoryCard = React.forwardRef<HTMLDivElement, DroppableDormito
         const style = { backgroundColor: isOver ? '#e0f7fa' : undefined };
         
         return (
-            <div ref={ref} className="break-inside-avoid"> {/* A ref é aplicada aqui */}
+            <div ref={ref} className="break-inside-avoid">
                 <Card ref={setNodeRef} style={style} className="flex flex-col transition-colors h-full">
                     <CardHeader>
                         <CardTitle className="flex justify-between items-center">
@@ -77,7 +80,7 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
   const [roomsState, setRoomsState] = useState<{ [key: string]: Room }>({});
 
   useEffect(() => {
-    roomRefs.current = {}; // Limpa as refs ao regerar o relatório
+    roomRefs.current = {};
     if (initialReportData) {
       const allRooms = [...initialReportData.mulheresAlocadas, ...initialReportData.homensAlocados];
       const roomsMap = allRooms.reduce((acc, room) => {
@@ -92,15 +95,32 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
   }, [initialReportData]);
 
   const handleDragEnd = (event: DragEndEvent) => {
-    // ... (lógica do handleDragEnd permanece a mesma)
+    const { active, over } = event;
+    if (!over) return;
+    const participant = active.data.current?.participant as Participant;
+    const fromRoomName = active.data.current?.fromRoom as string;
+    const toRoom = over.data.current?.room as Room;
+    if (!participant || !fromRoomName || !toRoom || fromRoomName === toRoom.nome || !roomsState[fromRoomName] || !roomsState[toRoom.nome]) return;
+
+    if (roomsState[fromRoomName].genero !== roomsState[toRoom.nome].genero) {
+      toast({ title: "Movimento Inválido", description: "Não é possível mover participantes entre blocos de sexo diferente.", variant: "destructive" });
+      return;
+    }
+
+    setRoomsState(prev => {
+      const newRooms = { ...prev };
+      newRooms[fromRoomName].ocupantes = newRooms[fromRoomName].ocupantes.filter(p => p.id !== participant.id);
+      newRooms[toRoom.nome].ocupantes.push(participant);
+      return newRooms;
+    });
   };
 
   const handleGeneratePdf = () => {
     const elementsToPrint = Object.values(roomRefs.current).filter(Boolean) as HTMLElement[];
     if (elementsToPrint.length > 0) {
-      generatePdfFromElements(elementsToPrint, 'relatorio-dormitorios.pdf');
+        generatePdfFromElements(elementsToPrint, 'relatorio-dormitorios.pdf');
     } else {
-      toast({ title: "Nenhum quarto para imprimir", description: "O relatório não contém quartos para gerar o PDF.", variant: "destructive" });
+      toast({ title: "Nenhum quarto para imprimir.", variant: "destructive" });
     }
   };
 
@@ -127,12 +147,7 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
                 <h3 className="text-2xl font-bold text-pink-600 mb-4 border-b-2 border-pink-200 pb-2">Bloco Feminino</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {mulheresAlocadas.map(quarto => (
-                    <DroppableDormitoryCard 
-                        key={`mulheres-${quarto.nome}`} 
-                        ref={el => (roomRefs.current[quarto.nome] = el)}
-                        quarto={quarto} 
-                        borderColorClass="border-pink-300" 
-                    />
+                    <DroppableDormitoryCard key={`mulheres-${quarto.nome}`} ref={el => (roomRefs.current[quarto.nome] = el)} quarto={quarto} borderColorClass="border-pink-300" />
                   ))}
                 </div>
               </div>
@@ -142,12 +157,7 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
                 <h3 className="text-2xl font-bold text-blue-600 mb-4 border-b-2 border-blue-200 pb-2">Bloco Masculino</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {homensAlocados.map(quarto => (
-                    <DroppableDormitoryCard 
-                        key={`homens-${quarto.nome}`}
-                        ref={el => (roomRefs.current[quarto.nome] = el)}
-                        quarto={quarto} 
-                        borderColorClass="border-blue-300" 
-                    />
+                    <DroppableDormitoryCard key={`homens-${quarto.nome}`} ref={el => (roomRefs.current[quarto.nome] = el)} quarto={quarto} borderColorClass="border-blue-300" />
                   ))}
                 </div>
               </div>
