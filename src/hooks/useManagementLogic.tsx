@@ -120,10 +120,7 @@ export const useManagementLogic = () => {
 
       // A busca agora é feita em mais campos e ignora acentos/maiúsculas
       const matchesSearch = normalizedSearchTerm === '' ? true : (
-        normalizeText(inscription.nome_completo).includes(normalizedSearchTerm) ||
-        normalizeText(inscription.anjo_guarda).includes(normalizedSearchTerm) ||
-        normalizeText(inscription.discipuladores).includes(normalizedSearchTerm) ||
-        normalizeText(inscription.lider).includes(normalizedSearchTerm)
+        normalizeText(inscription.nome_completo).includes(normalizedSearchTerm)
       );
       // <<< FIM DA MELHORIA >>>
 
