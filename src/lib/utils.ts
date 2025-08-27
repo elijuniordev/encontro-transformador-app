@@ -31,3 +31,11 @@ export function formatPhoneNumber(value: string): string {
   // Retorna (XX) XXXXX-XXXX
   return `(${clippedValue.slice(0, 2)}) ${clippedValue.slice(2, 7)}-${clippedValue.slice(7)}`;
 }
+
+export const normalizeText = (text?: string | null): string => {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .normalize('NFD') // Normaliza para decompor os acentos dos caracteres
+    .replace(/[\u0300-\u036f]/g, ''); // Remove os acentos
+};
