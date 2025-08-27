@@ -1,26 +1,23 @@
 // src/config/rooms.ts
-import { Inscription } from '@/types/supabase'; // Importe o tipo Inscription
+import { Inscription } from '@/types/supabase';
 
-// A interface agora usa Inscription para os ocupantes
+// A interface agora inclui um campo opcional para o gênero, que será definido dinamicamente
 export interface Room {
   nome: string;
   capacidade: number;
   ocupantes: Inscription[];
+  genero?: 'masculino' | 'feminino';
 }
 
-// Estrutura dos quartos femininos (1 a 4), ordenada do maior para o menor
-export const getFemaleRooms = (): Room[] => [
+// Lista única com TODOS os quartos disponíveis, ordenados pela capacidade
+export const getAllRooms = (): Room[] => [
+    { nome: 'Quarto 8', capacidade: 12, ocupantes: [] },
+    { nome: 'Quarto 9', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 6', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 1', capacidade: 10, ocupantes: [] },
     { nome: 'Quarto 2', capacidade: 10, ocupantes: [] },
     { nome: 'Quarto 3', capacidade: 10, ocupantes: [] },
     { nome: 'Quarto 5', capacidade: 10, ocupantes: [] },
-    { nome: 'Quarto 4', capacidade: 8, ocupantes: [] },
-];
-
-// Estrutura dos quartos masculinos (5 a 9), ordenada do maior para o menor
-export const getMaleRooms = (): Room[] => [
-    { nome: 'Quarto 8', capacidade: 12, ocupantes: [] },
-    { nome: 'Quarto 9', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 7', capacidade: 8, ocupantes: [] },
+    { nome: 'Quarto 4', capacidade: 8, ocupantes: [] },
 ];
