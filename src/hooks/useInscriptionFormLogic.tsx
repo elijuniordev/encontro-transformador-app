@@ -120,7 +120,6 @@ export const useInscriptionFormLogic = () => {
       return;
     }
     
-    // <<< INÍCIO DA CORREÇÃO >>>
     // Cria uma cópia dos dados do formulário para processamento
     const processedData = { ...formData };
 
@@ -130,7 +129,6 @@ export const useInscriptionFormLogic = () => {
     processedData.nomeResponsavel1 = processedData.nomeResponsavel1?.toUpperCase();
     processedData.nomeResponsavel2 = processedData.nomeResponsavel2?.toUpperCase();
     processedData.nomeResponsavel3 = processedData.nomeResponsavel3?.toUpperCase();
-    // <<< FIM DA CORREÇÃO >>>
 
     const parsedData = inscriptionSchema.safeParse(processedData);
     if (!parsedData.success) {
@@ -143,15 +141,16 @@ export const useInscriptionFormLogic = () => {
       const { data: existing } = await supabase.from('inscriptions').select('whatsapp').eq('whatsapp', processedData.whatsapp);
       if (existing && existing.length > 0) throw new Error("Este número de WhatsApp já está cadastrado.");
 
-      const isPastorObreiro = processedData.situacao === "Pastor, obreiro ou discipulador";
-      const { error } = await supabase.from('inscriptions').insert([{
+      const isEncontrista = processedData.situacao === "Encontrista";
+      
+      const inscriptionData = {
         nome_completo: processedData.nomeCompleto,
-        anjo_guarda: isPastorObreiro ? processedData.nomeCompleto : (processedData.anjoGuarda || null),
+        anjo_guarda: isEncontrista ? (processedData.anjoGuarda || processedData.nomeCompleto) : processedData.nomeCompleto,
         sexo: processedData.sexo,
         idade: processedData.idade,
         whatsapp: processedData.whatsapp,
-        discipuladores: isPastorObreiro ? processedData.nomeCompleto : (processedData.discipuladores || null),
-        lider: isPastorObreiro ? processedData.nomeCompleto : (processedData.lider || null),
+        discipuladores: processedData.situacao === "Pastor, obreiro ou discipulador" ? processedData.nomeCompleto : (processedData.discipuladores || null),
+        lider: processedData.situacao === "Pastor, obreiro ou discipulador" ? processedData.nomeCompleto : (processedData.lider || null),
         irmao_voce_e: processedData.situacao,
         responsavel_1_nome: processedData.nomeResponsavel1 || null,
         responsavel_1_whatsapp: processedData.whatsappResponsavel1 || null,
@@ -162,7 +161,9 @@ export const useInscriptionFormLogic = () => {
         status_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
         forma_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : null,
         valor: 200.00
-      }]);
+      };
+
+      const { error } = await supabase.from('inscriptions').insert([inscriptionData]);
 
       if (error) throw new Error(error.message);
 
