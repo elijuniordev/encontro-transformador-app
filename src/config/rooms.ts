@@ -1,7 +1,6 @@
 // src/config/rooms.ts
 import { Inscription } from '@/types/supabase';
 
-// A interface agora inclui um campo opcional para o gênero, que será definido dinamicamente
 export interface Room {
   nome: string;
   capacidade: number;
@@ -9,15 +8,15 @@ export interface Room {
   genero?: 'masculino' | 'feminino';
 }
 
-// Lista única com TODOS os quartos disponíveis, ordenados pela capacidade
+// Lista única com TODOS os quartos, agora ordenada pelo nome para garantir a sequência
 export const getAllRooms = (): Room[] => [
-    { nome: 'Quarto 8', capacidade: 12, ocupantes: [] },
-    { nome: 'Quarto 9', capacidade: 12, ocupantes: [] },
-    { nome: 'Quarto 6', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 1', capacidade: 10, ocupantes: [] },
     { nome: 'Quarto 2', capacidade: 10, ocupantes: [] },
     { nome: 'Quarto 3', capacidade: 10, ocupantes: [] },
-    { nome: 'Quarto 5', capacidade: 10, ocupantes: [] },
-    { nome: 'Quarto 7', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 4', capacidade: 8, ocupantes: [] },
+    { nome: 'Quarto 5', capacidade: 10, ocupantes: [] },
+    { nome: 'Quarto 6', capacidade: 12, ocupantes: [] },
+    { nome: 'Quarto 7', capacidade: 8, ocupantes: [] },
+    { nome: 'Quarto 8', capacidade: 12, ocupantes: [] },
+    { nome: 'Quarto 9', capacidade: 12, ocupantes: [] },
 ];

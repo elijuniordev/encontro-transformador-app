@@ -5,15 +5,11 @@ import { Inscription } from '@/types/supabase';
 
 type Participant = Inscription;
 
-/**
- * Aloca um grupo de pessoas em um bloco específico de quartos.
- * Esta função permanece a mesma, pois a lógica de preenchimento dos quartos é eficiente.
- */
+// A função de alocação interna para um bloco de quartos permanece a mesma
 const alocarPessoasEmBloco = (pessoas: Participant[], quartosDoBloco: Room[]): { quartosAlocados: Room[], naoAlocados: Participant[] } => {
     const quartos = JSON.parse(JSON.stringify(quartosDoBloco)) as Room[];
     const alocados = new Set<string>();
 
-    // Tenta alocar por célula
     const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
         const key = p.lider || `sem-celula-${p.id}`;
         if (!acc[key]) acc[key] = [];
@@ -38,7 +34,6 @@ const alocarPessoasEmBloco = (pessoas: Participant[], quartosDoBloco: Room[]): {
         }
     }
 
-    // Aloca os restantes individualmente
     const restantes = pessoas.filter(p => !alocados.has(p.id));
     for (const pessoa of restantes) {
         for (const quarto of quartos) {
@@ -59,44 +54,37 @@ export const useDormitoryReportLogic = (inscriptions: Participant[], showReport:
     if (!showReport || inscriptions.length === 0) return null;
 
     const allRoomsTemplate = getAllRooms();
-    const totalCapacidade = allRoomsTemplate.reduce((sum, room) => sum + room.capacidade, 0);
 
     const participantes = inscriptions.filter(p => p.irmao_voce_e !== 'Cozinha');
     const homens = participantes.filter(p => p.sexo.toLowerCase() === 'masculino');
     const mulheres = participantes.filter(p => p.sexo.toLowerCase() === 'feminino');
 
-    // Determina qual grupo (homens ou mulheres) é maior
-    const grupoMaior = mulheres.length >= homens.length ? 'feminino' : 'masculino';
-
-    // Calcula a proporção de vagas necessárias para o grupo maior
-    const proporcaoGrupoMaior = participantes.length > 0 ? (grupoMaior === 'feminino' ? mulheres.length : homens.length) / participantes.length : 0;
-    
     let capacidadeAcumulada = 0;
     let indiceDivisao = 0;
-    
-    // Encontra o ponto de divisão dos quartos com base na proporção
+
+    // Calcula a capacidade total necessária para as mulheres
+    const capacidadeNecessariaMulheres = mulheres.length;
+
+    // Itera sobre os quartos em sequência para encontrar o ponto de divisão
     for (let i = 0; i < allRoomsTemplate.length; i++) {
       capacidadeAcumulada += allRoomsTemplate[i].capacidade;
-      if (capacidadeAcumulada / totalCapacidade >= proporcaoGrupoMaior) {
-        indiceDivisao = i + 1;
+      if (capacidadeAcumulada >= capacidadeNecessariaMulheres) {
+        indiceDivisao = i + 1; // O próximo quarto pertencerá ao outro bloco
         break;
       }
     }
-    
-    // Garante que a divisão não deixe um grupo sem quartos se ambos existirem
-    if (homens.length > 0 && mulheres.length > 0) {
-        if (indiceDivisao === 0) indiceDivisao = 1;
-        if (indiceDivisao === allRoomsTemplate.length) indiceDivisao = allRoomsTemplate.length - 1;
+
+    // Se a capacidade acumulada nunca atingiu o necessário, todas as mulheres ficam no primeiro bloco
+    // e os homens (se houver) não terão quartos. Ou o inverso, se não houver mulheres.
+    if (capacidadeAcumulada < capacidadeNecessariaMulheres) {
+        indiceDivisao = allRoomsTemplate.length;
     }
 
-    // Divide os quartos nos dois blocos
-    const bloco1 = allRoomsTemplate.slice(0, indiceDivisao);
-    const bloco2 = allRoomsTemplate.slice(indiceDivisao);
+    // Cria os blocos sequenciais
+    const blocoFeminino = allRoomsTemplate.slice(0, indiceDivisao);
+    const blocoMasculino = allRoomsTemplate.slice(indiceDivisao);
 
-    const blocoFeminino = grupoMaior === 'feminino' ? bloco1 : bloco2;
-    const blocoMasculino = grupoMaior === 'masculino' ? bloco1 : bloco2;
-
-    // Roda o algoritmo de alocação para cada bloco
+    // Roda o algoritmo de alocação para cada grupo em seu respectivo bloco
     const alocacaoMulheres = alocarPessoasEmBloco(mulheres, blocoFeminino);
     const alocacaoHomens = alocarPessoasEmBloco(homens, blocoMasculino);
 
