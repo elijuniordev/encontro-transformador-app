@@ -31,7 +31,6 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
 
   // Define a estrutura e capacidade dos quartos conforme especificado
   const getInitialRooms = (): Room[] => [
-    { nome: 'Capela', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 3', capacidade: 4, ocupantes: [] },
