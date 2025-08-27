@@ -1,122 +1,88 @@
 // src/components/management/PaymentMethodStatistics.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, CreditCard, Banknote, QrCode } from "lucide-react";
+import { CreditCard, Ban, CircleDollarSign, CheckCircle, Clock, AlertCircle } from 'lucide-react'; // Adicionado AlertCircle
 
 interface PaymentMethodStatisticsProps {
   paymentMethodCounts: { [key: string]: number };
 }
 
+// Mapeamento de ícones para cada status e forma de pagamento
+const iconMap: { [key: string]: React.ElementType } = {
+  'Pix': CircleDollarSign,
+  'Cartão de Crédito': CreditCard,
+  'CartaoCredito2x': CreditCard,
+  'CartaoDebito': CreditCard,
+  'Dinheiro': CircleDollarSign,
+  'Transferência': CircleDollarSign,
+  'Confirmado': CheckCircle,
+  'Pendente': Clock,
+  'Cancelado': Ban,
+  'Pagamento Incompleto': AlertCircle, // Ícone para o novo status
+};
+
+// Mapeamento de cores para os ícones
+const colorMap: { [key: string]: string } = {
+  'Confirmado': 'text-green-600',
+  'Pendente': 'text-gray-500',
+  'Cancelado': 'text-red-600',
+  'Pagamento Incompleto': 'text-yellow-600', // Cor para o novo status
+};
+
 const PaymentMethodStatistics = ({ paymentMethodCounts }: PaymentMethodStatisticsProps) => {
+  const paymentStatuses = ['Confirmado', 'Pendente', 'Pagamento Incompleto', 'Cancelado'];
+  const paymentMethods = ['Pix', 'Cartão de Crédito', 'Dinheiro']; // Principais a serem exibidos
+
   return (
-    <Card className="shadow-peaceful mb-6">
+    <Card className="shadow-peaceful">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
-          Inscrições por Forma de Pagamento
+        <CardTitle className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5" />
+          Resumo Financeiro
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card: Pix */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <QrCode className="h-7 w-7 text-green-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-green-700">{paymentMethodCounts.Pix || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Via Pix</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Cards de Status de Pagamento */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {paymentStatuses.map(status => {
+            const count = paymentMethodCounts[status] || 0;
+            const Icon = iconMap[status] || CircleDollarSign;
+            const color = colorMap[status] || 'text-gray-500';
 
-          {/* Card: Cartão de Crédito (geral) */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <CreditCard className="h-7 w-7 text-blue-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-blue-700">{paymentMethodCounts['Cartão de Crédito'] || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Via Cartão de Crédito</p>
-              </div>
-            </CardContent>
-          </Card>
+            return (
+              <Card key={status} className="shadow-sm border">
+                <CardContent className="pt-6 flex items-center gap-3">
+                  <Icon className={`h-7 w-7 ${color}`} />
+                  <div>
+                    <p className="text-2xl font-bold">{count}</p>
+                    <p className="text-sm text-muted-foreground">{status}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
-          {/* Card: Cartão de Crédito 2x */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <CreditCard className="h-7 w-7 text-purple-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-purple-700">{paymentMethodCounts['CartaoCredito2x'] || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Via Cartão de Crédito 2x</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Detalhamento das Formas de Pagamento (para pagamentos confirmados) */}
+        <div className="border-t pt-4">
+          <h4 className="text-md font-semibold mb-2 text-primary">Formas de Pagamento (Confirmados)</h4>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {paymentMethods.map(method => {
+              const count = paymentMethodCounts[method] || 0;
+              const Icon = iconMap[method] || CircleDollarSign;
 
-          {/* Card: Cartão de Débito */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <CreditCard className="h-7 w-7 text-orange-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-orange-700">{paymentMethodCounts['CartaoDebito'] || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Via Cartão de Débito</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card: Dinheiro */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <Banknote className="h-7 w-7 text-yellow-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-yellow-700">{paymentMethodCounts.Dinheiro || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Via Dinheiro</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Cards para os Status de Pagamento (Pendente, Cancelado, Isento) */}
-          {/* Eles sempre aparecerão, pois são inicializados no useManagementLogic.tsx */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <DollarSign className="h-7 w-7 text-yellow-500" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-yellow-600">{paymentMethodCounts.Pendente || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Pagamento Pendente</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <DollarSign className="h-7 w-7 text-red-500" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-red-600">{paymentMethodCounts.Cancelado || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Pagamento Cancelado</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <DollarSign className="h-7 w-7 text-gray-500" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-gray-600">{paymentMethodCounts.Isento || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Pagamento Isento</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card para "Transferência" (aparece apenas se houver dados com essa forma de pagamento) */}
-          {paymentMethodCounts.Transferência !== undefined && paymentMethodCounts.Transferência > 0 && (
-            <Card className="shadow-sm border">
-              <CardContent className="pt-6 flex items-center gap-3">
-                <Banknote className="h-7 w-7 text-indigo-600" />
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-indigo-700">{paymentMethodCounts.Transferência || 0}</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Via Transferência</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
+              return (
+                <Card key={method} className="shadow-sm border bg-gray-50">
+                  <CardContent className="pt-6 flex items-center gap-3">
+                    <Icon className="h-6 w-6 text-gray-600" />
+                    <div>
+                      <p className="text-xl font-bold">{count}</p>
+                      <p className="text-xs text-muted-foreground">{method}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>
