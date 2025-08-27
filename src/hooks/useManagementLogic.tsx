@@ -59,7 +59,7 @@ export const useManagementLogic = () => {
 
     if (error) {
       console.error("Erro ao buscar status das inscrições:", error);
-      setIsRegistrationsOpen(true); // Default to true if fetch fails
+      setIsRegistrationsOpen(true);
     } else {
       setIsRegistrationsOpen(data.registrations_open);
     }
@@ -98,7 +98,7 @@ export const useManagementLogic = () => {
       console.error("Erro ao atualizar status das inscrições:", error);
       toast({
         title: "Erro ao atualizar",
-        description: "Não foi possível alterar o status das inscrições. Verifique as permissões e o ID.",
+        description: "Não foi possível alterar o status das inscrições.",
         variant: "destructive"
       });
       setIsRegistrationsOpen(!newStatus);
@@ -112,15 +112,19 @@ export const useManagementLogic = () => {
 
   const filteredInscriptions = useMemo(() => {
     return inscriptions.filter(inscription => {
-      const matchesSearch = inscription.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          inscription.whatsapp.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          inscription.discipuladores.toLowerCase().includes(searchTerm.toLowerCase());
+      // <<< INÍCIO DA CORREÇÃO >>>
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      const matchesSearch = inscription.nome_completo.toLowerCase().includes(lowerCaseSearchTerm) ||
+                          inscription.whatsapp.toLowerCase().includes(lowerCaseSearchTerm) ||
+                          inscription.discipuladores.toLowerCase().includes(lowerCaseSearchTerm);
 
-      const matchesDiscipuladoByLoggedInUser = !filterDiscipulado || (userDiscipulado && inscription.discipuladores === userDiscipulado);
+      const matchesDiscipuladoByLoggedInUser = !filterDiscipulado || (userDiscipulado && inscription.discipuladores.toLowerCase() === userDiscipulado.toLowerCase());
 
       const matchesFuncao = filterByFuncao === "all" || inscription.irmao_voce_e === filterByFuncao;
       const matchesStatusPagamento = filterByStatusPagamento === "all" || inscription.status_pagamento === filterByStatusPagamento;
-      const matchesDiscipuladoGroup = filterByDiscipuladoGroup === "all" || inscription.discipuladores === filterByDiscipuladoGroup;
+      
+      const matchesDiscipuladoGroup = filterByDiscipuladoGroup === "all" || inscription.discipuladores.toLowerCase() === filterByDiscipuladoGroup.toLowerCase();
+      // <<< FIM DA CORREÇÃO >>>
 
       return matchesSearch && matchesDiscipuladoByLoggedInUser && matchesFuncao && matchesStatusPagamento && matchesDiscipuladoGroup;
     });
@@ -206,84 +210,39 @@ export const useManagementLogic = () => {
   }, [fetchInscriptions, toast]);
   
   const handleExportXLSX = useCallback(() => {
-    // ... (função de exportação continua a mesma)
     const dataToExport = filteredInscriptions.map(inscription => ({
-        "ID": inscription.id,
-        "Nome Completo": inscription.nome_completo,
-        "Discipuladores": inscription.discipuladores,
-        "Líder": inscription.lider,
-        "Anjo da Guarda": inscription.anjo_guarda,
-        "Sexo": inscription.sexo,
-        "Idade": inscription.idade,
-        "WhatsApp": inscription.whatsapp,
-        "Função": inscription.irmao_voce_e,
-        "Resp. 1 Nome": inscription.responsavel_1_nome,
-        "Resp. 1 WhatsApp": inscription.responsavel_1_whatsapp,
-        "Resp. 2 Nome": inscription.responsavel_2_nome,
-        "Resp. 2 WhatsApp": inscription.responsavel_2_whatsapp,
-        "Resp. 3 Nome": inscription.responsavel_3_nome,
-        "Resp. 3 WhatsApp": inscription.responsavel_3_whatsapp,
-        "Status Pagamento": inscription.status_pagamento,
-        "Forma Pagamento": inscription.forma_pagamento,
-        "Valor": inscription.valor,
-        "Observação": inscription.observacao,
-        "Data Inscrição": new Date(inscription.created_at).toLocaleDateString('pt-BR'),
+        "ID": inscription.id, "Nome Completo": inscription.nome_completo, "Discipuladores": inscription.discipuladores, "Líder": inscription.lider,
+        "Anjo da Guarda": inscription.anjo_guarda, "Sexo": inscription.sexo, "Idade": inscription.idade, "WhatsApp": inscription.whatsapp,
+        "Função": inscription.irmao_voce_e, "Resp. 1 Nome": inscription.responsavel_1_nome, "Resp. 1 WhatsApp": inscription.responsavel_1_whatsapp,
+        "Resp. 2 Nome": inscription.responsavel_2_nome, "Resp. 2 WhatsApp": inscription.responsavel_2_whatsapp, "Resp. 3 Nome": inscription.responsavel_3_nome,
+        "Resp. 3 WhatsApp": inscription.responsavel_3_whatsapp, "Status Pagamento": inscription.status_pagamento, "Forma Pagamento": inscription.forma_pagamento,
+        "Valor": inscription.valor, "Observação": inscription.observacao, "Data Inscrição": new Date(inscription.created_at).toLocaleDateString('pt-BR'),
       }));
   
       const ws = XLSX.utils.json_to_sheet(dataToExport);
   
       const wscols = [
-          {wch: 10}, {wch: 25}, {wch: 20}, {wch: 20}, {wch: 20},
-          {wch: 8}, {wch: 6}, {wch: 15}, {wch: 12}, {wch: 25},
-          {wch: 18}, {wch: 25}, {wch: 18}, {wch: 25}, {wch: 18},
-          {wch: 18}, {wch: 18}, {wch: 10}, {wch: 30}, {wch: 15},
+          {wch: 10}, {wch: 25}, {wch: 20}, {wch: 20}, {wch: 20}, {wch: 8}, {wch: 6}, {wch: 15}, {wch: 12}, {wch: 25},
+          {wch: 18}, {wch: 25}, {wch: 18}, {wch: 25}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 10}, {wch: 30}, {wch: 15},
       ];
       ws['!cols'] = wscols;
   
-      if (dataToExport.length > 0) {
-          ws['!autofilter'] = { ref: ws['!ref'] };
-      }
+      if (dataToExport.length > 0) { ws['!autofilter'] = { ref: ws['!ref'] }; }
   
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Inscrições");
       XLSX.writeFile(wb, "inscricoes_encontro_com_deus.xlsx");
   
-      toast({
-        title: "Exportação concluída",
-        description: "Os dados foram exportados para inscricoes_encontro_com_deus.xlsx",
-      });
+      toast({ title: "Exportação concluída", description: "Os dados foram exportados." });
   }, [filteredInscriptions, toast]);
 
   return {
-    searchTerm,
-    setSearchTerm,
-    filterDiscipulado,
-    setFilterDiscipulado,
-    filterByFuncao,
-    setFilterByFuncao,
-    filterByStatusPagamento,
-    setFilterByStatusPagamento,
-    filterByDiscipuladoGroup,
-    setFilterByDiscipuladoGroup,
-    inscriptions,
-    filteredInscriptions,
-    situationCounts,
-    paymentMethodCounts,
-    isRegistrationsOpen,
-    userRole,
-    userEmail,
-    userDiscipulado,
-    isAuthenticated,
-    isLoading,
-    handleLogout,
-    handleToggleRegistrations,
-    getStatusBadge,
-    handleDelete,
-    handleExportXLSX,
-    fetchInscriptions,
-    funcaoOptions: FUNCAO_OPTIONS,
-    statusPagamentoOptions: STATUS_PAGAMENTO_OPTIONS,
-    discipuladoGroupOptions: DISCIPULADORES_OPTIONS_FOR_FILTER,
+    searchTerm, setSearchTerm, filterDiscipulado, setFilterDiscipulado, filterByFuncao, setFilterByFuncao,
+    filterByStatusPagamento, setFilterByStatusPagamento, filterByDiscipuladoGroup, setFilterByDiscipuladoGroup,
+    inscriptions, filteredInscriptions, situationCounts, paymentMethodCounts, isRegistrationsOpen, userRole,
+    userEmail, userDiscipulado, isAuthenticated, isLoading, handleLogout, handleToggleRegistrations,
+    getStatusBadge, handleDelete, handleExportXLSX, fetchInscriptions, funcaoOptions: FUNCAO_OPTIONS,
+    statusPagamentoOptions: STATUS_PAGAMENTO_OPTIONS, discipuladoGroupOptions: DISCIPULADORES_OPTIONS_FOR_FILTER,
     formaPagamentoOptions: FORMA_PAGAMENTO_OPTIONS,
   };
 };
