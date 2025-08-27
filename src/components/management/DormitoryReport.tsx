@@ -1,36 +1,94 @@
 // src/components/management/DormitoryReport.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BedDouble, Download, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BedDouble, Download, AlertTriangle, User } from "lucide-react";
 import { generatePdfFromElement } from '@/lib/pdfGenerator';
 import { useDormitoryReportLogic } from '@/hooks/useDormitoryReportLogic';
-import DormitoryCard from './DormitoryCard';
 import { Inscription as Participant } from '@/types/supabase';
 import { Room } from '@/config/rooms';
 import { useToast } from "@/hooks/use-toast";
 
-interface DormitoryReportProps {
-  inscriptions: Participant[];
+// <<< INÍCIO DA CORREÇÃO >>>
+
+// Interface para as props do participante arrastável
+interface DraggableParticipantProps {
+  participant: Participant;
+  roomName: string;
+  borderColorClass: string;
 }
 
-const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
+// Sub-componente para o participante arrastável
+function DraggableParticipant({ participant, roomName, borderColorClass }: DraggableParticipantProps) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: `participant-${participant.id}`,
+    data: { participant, fromRoom: roomName },
+  });
+  const style = { transform: CSS.Translate.toString(transform) };
+  return (
+    <li ref={setNodeRef} style={style} {...listeners} {...attributes} className={`text-sm mb-2 p-2 rounded bg-white border-l-4 touch-none ${borderColorClass} shadow-sm cursor-grab`}>
+      <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{participant.nome_completo}</p>
+      <p className="text-xs text-muted-foreground pl-6">Líder: {participant.lider || 'N/A'}</p>
+    </li>
+  );
+}
+
+// Interface para as props do card de dormitório
+interface DroppableDormitoryCardProps {
+    quarto: Room;
+    borderColorClass: string;
+}
+
+// Sub-componente para o card do dormitório que pode receber itens
+function DroppableDormitoryCard({ quarto, borderColorClass }: DroppableDormitoryCardProps) {
+  const { isOver, setNodeRef } = useDroppable({ id: `droppable-${quarto.nome}`, data: { room: quarto } });
+  const style = { backgroundColor: isOver ? '#e0f7fa' : undefined };
+  return (
+    <Card ref={setNodeRef} style={style} className="flex flex-col transition-colors">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span>{quarto.nome}</span>
+          <Badge variant={quarto.ocupantes.length > quarto.capacidade ? "destructive" : "secondary"}>
+            {quarto.ocupantes.length} / {quarto.capacidade}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-grow bg-gray-50 p-2 rounded-b-lg">
+        <ul className="min-h-[100px]">
+          {quarto.ocupantes.map((p) => (
+            <DraggableParticipant key={p.id} participant={p} roomName={quarto.nome} borderColorClass={borderColorClass} />
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+// <<< FIM DA CORREÇÃO >>>
+
+
+// Componente principal do relatório
+const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptions }) => {
   const { toast } = useToast();
   const [showReport, setShowReport] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   const initialReportData = useDormitoryReportLogic(inscriptions, showReport);
-
+  
   const [roomsState, setRoomsState] = useState<{ [key: string]: Room }>({});
 
   useEffect(() => {
     if (initialReportData) {
       const allRooms = [...initialReportData.mulheresAlocadas, ...initialReportData.homensAlocados];
       const roomsMap = allRooms.reduce((acc, room) => {
-        acc[room.nome] = room;
+        const gender = room.ocupantes[0]?.sexo.toLowerCase() as 'masculino' | 'feminino' | undefined;
+        acc[room.nome] = { ...room, genero: gender };
         return acc;
       }, {} as { [key: string]: Room });
       setRoomsState(roomsMap);
+    } else {
+        setRoomsState({});
     }
   }, [initialReportData]);
 
@@ -42,38 +100,31 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
     const fromRoomName = active.data.current?.fromRoom as string;
     const toRoom = over.data.current?.room as Room;
 
-    if (!participant || !fromRoomName || !toRoom || fromRoomName === toRoom.nome) {
+    if (!participant || !fromRoomName || !toRoom || fromRoomName === toRoom.nome) return;
+    
+    if (!roomsState[fromRoomName] || !roomsState[toRoom.nome]) return;
+    
+    const fromRoomGenero = roomsState[fromRoomName].genero;
+    const toRoomGenero = roomsState[toRoom.nome].genero;
+
+    if (fromRoomGenero !== toRoomGenero) {
+      toast({ title: "Movimento Inválido", description: "Não é possível mover participantes entre blocos de sexo diferente.", variant: "destructive" });
       return;
     }
 
-    // Validação de Gênero
-    if (participant.sexo !== toRoom.genero) {
-      toast({ title: "Movimento Inválido", description: "Não é possível mover um participante para um quarto do sexo oposto.", variant: "destructive" });
-      return;
-    }
-
-    // Validação de Capacidade
-    if (toRoom.ocupantes.length >= toRoom.capacidade) {
-      toast({ title: "Quarto Cheio", description: `O quarto ${toRoom.nome} já atingiu sua capacidade máxima.`, variant: "destructive" });
-      return;
-    }
-
-    // Atualiza o estado
     setRoomsState(prev => {
       const newRooms = { ...prev };
-      // Remove o participante do quarto antigo
-      newRooms[fromRoomName].ocupantes = newRooms[fromRoomName].ocupantes.filter(p => p.id !== participant.id);
-      // Adiciona o participante ao novo quarto
-      newRooms[toRoom.nome].ocupantes.push(participant);
+      const oldRoomOcupantes = newRooms[fromRoomName].ocupantes.filter(p => p.id !== participant.id);
+      const newRoomOcupantes = [...newRooms[toRoom.nome].ocupantes, participant];
+
+      newRooms[fromRoomName] = { ...newRooms[fromRoomName], ocupantes: oldRoomOcupantes };
+      newRooms[toRoom.nome] = { ...newRooms[toRoom.nome], ocupantes: newRoomOcupantes };
+      
       return newRooms;
     });
   };
 
-  const handleGeneratePdf = () => {
-    if (reportRef.current) {
-      generatePdfFromElement(reportRef.current, 'relatorio-dormitorios-encontro.pdf');
-    }
-  };
+  const handleGeneratePdf = () => { if (reportRef.current) generatePdfFromElement(reportRef.current, 'relatorio-dormitorios-encontro.pdf'); };
 
   const mulheresAlocadas = Object.values(roomsState).filter(r => r.genero === 'feminino');
   const homensAlocados = Object.values(roomsState).filter(r => r.genero === 'masculino');
@@ -83,50 +134,35 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
     <Card className="shadow-peaceful mb-6">
       <CardHeader>
         <CardTitle className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <BedDouble className="h-5 w-5" />
-            Relatório Dinâmico de Dormitórios
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setShowReport(!showReport)} variant="outline">
-              {showReport ? "Ocultar Relatório" : "Gerar Relatório"}
-            </Button>
-            {showReport && (
-              <Button onClick={handleGeneratePdf}>
-                <Download className="mr-2 h-4 w-4" /> Baixar PDF
-              </Button>
-            )}
-          </div>
+            <div className="flex items-center gap-2"><BedDouble className="h-5 w-5" />Relatório Dinâmico de Dormitórios</div>
+            <div className="flex items-center gap-2">
+                <Button onClick={() => setShowReport(!showReport)} variant="outline">{showReport ? "Ocultar Relatório" : "Gerar Relatório"}</Button>
+                {showReport && initialReportData && (<Button onClick={handleGeneratePdf}><Download className="mr-2 h-4 w-4" /> Baixar PDF</Button>)}
+            </div>
         </CardTitle>
       </CardHeader>
-      {showReport && (
+      {showReport && initialReportData && (
         <DndContext onDragEnd={handleDragEnd}>
           <CardContent ref={reportRef}>
             {mulheresAlocadas.length > 0 && (
-              <div className="mb-8">
+              <div className="mb-8 break-inside-avoid">
                 <h3 className="text-2xl font-bold text-pink-600 mb-4 border-b-2 border-pink-200 pb-2">Bloco Feminino</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {mulheresAlocadas.map(quarto => (
-                    <DormitoryCard key={`mulheres-${quarto.nome}`} quarto={quarto} borderColorClass="border-pink-300" />
-                  ))}
+                  {mulheresAlocadas.map(quarto => (<DroppableDormitoryCard key={`mulheres-${quarto.nome}`} quarto={quarto} borderColorClass="border-pink-300" />))}
                 </div>
               </div>
             )}
-            
             {homensAlocados.length > 0 && (
-              <div>
+              <div className="break-inside-avoid">
                 <h3 className="text-2xl font-bold text-blue-600 mb-4 border-b-2 border-blue-200 pb-2">Bloco Masculino</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {homensAlocados.map(quarto => (
-                    <DormitoryCard key={`homens-${quarto.nome}`} quarto={quarto} borderColorClass="border-blue-300" />
-                  ))}
+                  {homensAlocados.map(quarto => (<DroppableDormitoryCard key={`homens-${quarto.nome}`} quarto={quarto} borderColorClass="border-blue-300" />))}
                 </div>
               </div>
             )}
-
             {naoAlocados.length > 0 && (
-               <Card className="mt-6 border-orange-500 bg-orange-50">
-                  <CardHeader><CardTitle className="text-orange-700 flex items-center gap-2"><AlertTriangle /> Participantes Não Alocados</CardTitle></CardHeader>
+               <Card className="mt-6 border-orange-500 bg-orange-50 break-inside-avoid">
+                  <CardHeader><CardTitle className="text-orange-700 flex items-center gap-2"><AlertTriangle /> Participantes Não Alocados (Sem Vagas)</CardTitle></CardHeader>
                   <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {naoAlocados.map(p => <p key={p.id} className='font-semibold'>{p.nome_completo}</p>)}
                   </CardContent>
