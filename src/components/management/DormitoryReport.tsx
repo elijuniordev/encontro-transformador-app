@@ -28,7 +28,6 @@ interface DormitoryReportProps {
 
 // Define a estrutura e capacidade dos quartos fora do componente para não ser recriada
 const getInitialRooms = (): Room[] => [
-    { nome: 'Capela', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 3', capacidade: 4, ocupantes: [] },
