@@ -26,7 +26,7 @@ interface DormitoryReportProps {
   inscriptions: Participant[];
 }
 
-// Estrutura dos quartos, ordenada do maior para o menor
+// Estrutura dos quartos, ordenada do maior para o menor.
 const getInitialRooms = (): Room[] => [
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 5', capacidade: 8, ocupantes: [] },
@@ -43,61 +43,44 @@ const getInitialRooms = (): Room[] => [
     { nome: 'Quarto 3', capacidade: 4, ocupantes: [] },
 ];
 
-// Algoritmo de alocação final e rigoroso
+// Algoritmo de alocação final com coesão de célula garantida
 const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
   const quartos = JSON.parse(JSON.stringify(quartosTemplate)) as Room[];
   const alocados = new Set<string>();
+  const pessoasSemLider: Participant[] = [];
 
-  // Função auxiliar para tentar alocar um grupo inteiro
-  const tentarAlocarGrupo = (grupo: Participant[]) => {
-    if (grupo.length === 0 || alocados.has(grupo[0].id)) {
-      return; // Pula se o grupo já foi alocado
+  // 1. Agrupar participantes por célula (líder)
+  const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
+    if (p.lider && p.lider.trim() !== "") {
+        if (!acc[p.lider]) acc[p.lider] = [];
+        acc[p.lider].push(p);
+    } else {
+        pessoasSemLider.push(p);
     }
-    
+    return acc;
+  }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
+
+  // 2. Tentar alocar CÉLULAS INTEIRAS. Se não couber, ninguém da célula é alocado.
+  for (const celula of gruposPorCelula) {
     let quartoEncontrado: Room | null = null;
+    
+    // Tenta encontrar um quarto que comporte a célula inteira, começando pelos maiores
     for (const quarto of quartos) {
-      if (quarto.capacidade - quarto.ocupantes.length >= grupo.length) {
+      if (quarto.capacidade - quarto.ocupantes.length >= celula.length) {
         quartoEncontrado = quarto;
         break;
       }
     }
 
     if (quartoEncontrado) {
-      quartoEncontrado.ocupantes.push(...grupo);
-      grupo.forEach(p => alocados.add(p.id));
+      quartoEncontrado.ocupantes.push(...celula);
+      celula.forEach(p => alocados.add(p.id));
     }
-  };
-
-  // 1. Agrupar e alocar por Célula (Líder)
-  const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
-    if (p.lider && p.lider.trim() !== "") {
-        if (!acc[p.lider]) acc[p.lider] = [];
-        acc[p.lider].push(p);
-    }
-    return acc;
-  }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
-
-  for (const celula of gruposPorCelula) {
-    tentarAlocarGrupo(celula);
   }
 
-  // 2. Agrupar e alocar os restantes por Discipulado
+  // 3. Alocar indivíduos restantes (sem célula ou de células que não couberam)
   const restantes = pessoas.filter(p => !alocados.has(p.id));
-  const gruposPorDiscipulado = Object.values(restantes.reduce((acc, p) => {
-    if (p.discipuladores && p.discipuladores.trim() !== "") {
-        if (!acc[p.discipuladores]) acc[p.discipuladores] = [];
-        acc[p.discipuladores].push(p);
-    }
-    return acc;
-  }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
-
-  for (const discipulado of gruposPorDiscipulado) {
-    tentarAlocarGrupo(discipulado);
-  }
-
-  // 3. Alocar indivíduos que sobraram (sem grupo ou cujos grupos não couberam)
-  const individuosFinais = pessoas.filter(p => !alocados.has(p.id));
-  for (const pessoa of individuosFinais) {
+  for (const pessoa of restantes) {
     for (const quarto of quartos) {
       if (quarto.ocupantes.length < quarto.capacidade) {
         quarto.ocupantes.push(pessoa);
