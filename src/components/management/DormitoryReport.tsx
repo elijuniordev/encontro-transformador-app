@@ -1,5 +1,5 @@
 // src/components/management/DormitoryReport.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,11 +26,8 @@ interface DormitoryReportProps {
   inscriptions: Participant[];
 }
 
-const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
-  const [showReport, setShowReport] = useState(false);
-
-  // Define a estrutura e capacidade dos quartos
-  const getInitialRooms = (): Room[] => [
+// Define a estrutura e capacidade dos quartos fora do componente para não ser recriada
+const getInitialRooms = (): Room[] => [
     { nome: 'Capela', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
@@ -45,87 +42,92 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
     { nome: 'Quarto 11', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 12', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 13', capacidade: 8, ocupantes: [] },
-  ];
+];
 
-  const { homensAlocados, mulheresAlocadas, homensNaoAlocados, mulheresNaoAlocadas } = useMemo(() => {
+// Função de alocação movida para fora para ser uma função pura e estável
+const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
+  const quartos = JSON.parse(JSON.stringify(quartosTemplate));
+  const alocados = new Set<string>();
+
+  const alocarGrupo = (grupo: Participant[]) => {
+    let melhorQuarto: Room | null = null;
+    let menorEspacoLivre = Infinity;
+
+    for (const quarto of quartos) {
+      const espacoLivre = quarto.capacidade - quarto.ocupantes.length;
+      if (espacoLivre >= grupo.length && espacoLivre < menorEspacoLivre) {
+        melhorQuarto = quarto;
+        menorEspacoLivre = espacoLivre;
+      }
+    }
+
+    if (melhorQuarto) {
+      melhorQuarto.ocupantes.push(...grupo);
+      grupo.forEach(p => alocados.add(p.id));
+      return true;
+    }
+    return false;
+  };
+
+  const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
+    if (!acc[p.lider]) acc[p.lider] = [];
+    acc[p.lider].push(p);
+    return acc;
+  }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
+
+  for (const celula of gruposPorCelula) {
+    alocarGrupo(celula);
+  }
+  
+  const restantesPorDiscipulado = Object.values(
+    pessoas.filter(p => !alocados.has(p.id)).reduce((acc, p) => {
+      if (!acc[p.discipuladores]) acc[p.discipuladores] = [];
+      acc[p.discipuladores].push(p);
+      return acc;
+    }, {} as Record<string, Participant[]>)
+  ).sort((a, b) => b.length - a.length);
+
+  for (const discipulado of restantesPorDiscipulado) {
+    alocarGrupo(discipulado);
+  }
+
+  const restantes = pessoas.filter(p => !alocados.has(p.id));
+  for (const pessoa of restantes) {
+    for (const quarto of quartos) {
+      if (quarto.ocupantes.length < quarto.capacidade) {
+        quarto.ocupantes.push(pessoa);
+        alocados.add(pessoa.id);
+        break;
+      }
+    }
+  }
+
+  const naoAlocados = pessoas.filter(p => !alocados.has(p.id));
+  return { quartosAlocados: quartos.filter(q => q.ocupantes.length > 0), naoAlocados };
+};
+
+
+const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
+  const [showReport, setShowReport] = useState(false);
+
+  const reportData = useMemo(() => {
     if (!showReport) {
-      return { homensAlocados: [], mulheresAlocadas: [], homensNaoAlocados: [], mulheresNaoAlocadas: [] };
+      return null;
     }
 
     const participants = inscriptions.filter(p => p.irmao_voce_e !== 'Cozinha');
     const homens = participants.filter(p => p.sexo === 'masculino');
     const mulheres = participants.filter(p => p.sexo === 'feminino');
 
-    // Função de alocação aprimorada
-    const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
-      const quartos = JSON.parse(JSON.stringify(quartosTemplate)); // Cópia profunda para evitar mutação
-      const alocados = new Set<string>();
+    const alocacaoHomens = alocarPessoas(homens, getInitialRooms());
+    const alocacaoMulheres = alocarPessoas(mulheres, getInitialRooms());
 
-      const alocarGrupo = (grupo: Participant[]) => {
-        // Tenta encontrar o quarto com o menor espaço livre que ainda comporte o grupo (Best-Fit)
-        let melhorQuarto: Room | null = null;
-        let menorEspacoLivre = Infinity;
-
-        for (const quarto of quartos) {
-          const espacoLivre = quarto.capacidade - quarto.ocupantes.length;
-          if (espacoLivre >= grupo.length && espacoLivre < menorEspacoLivre) {
-            melhorQuarto = quarto;
-            menorEspacoLivre = espacoLivre;
-          }
-        }
-
-        if (melhorQuarto) {
-          melhorQuarto.ocupantes.push(...grupo);
-          grupo.forEach(p => alocados.add(p.id));
-          return true;
-        }
-        return false;
-      };
-
-      // 1. Agrupar e alocar por Célula (Líder)
-      const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
-        if (!acc[p.lider]) acc[p.lider] = [];
-        acc[p.lider].push(p);
-        return acc;
-      }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
-
-      for (const celula of gruposPorCelula) {
-        alocarGrupo(celula);
-      }
-      
-      // 2. Agrupar e alocar por Discipulado os restantes
-      const restantesPorDiscipulado = Object.values(
-        pessoas.filter(p => !alocados.has(p.id)).reduce((acc, p) => {
-          if (!acc[p.discipuladores]) acc[p.discipuladores] = [];
-          acc[p.discipuladores].push(p);
-          return acc;
-        }, {} as Record<string, Participant[]>)
-      ).sort((a, b) => b.length - a.length);
-
-      for (const discipulado of restantesPorDiscipulado) {
-        alocarGrupo(discipulado);
-      }
-
-      // 3. Alocar indivíduos restantes em qualquer vaga
-      const restantes = pessoas.filter(p => !alocados.has(p.id));
-      for (const pessoa of restantes) {
-        for (const quarto of quartos) {
-          if (quarto.ocupantes.length < quarto.capacidade) {
-            quarto.ocupantes.push(pessoa);
-            alocados.add(pessoa.id);
-            break;
-          }
-        }
-      }
-
-      const naoAlocados = pessoas.filter(p => !alocados.has(p.id));
-      return { quartosAlocados: quartos.filter(q => q.ocupantes.length > 0), naoAlocados };
+    return {
+      homensAlocados: alocacaoHomens.quartosAlocados,
+      mulheresAlocadas: alocacaoMulheres.quartosAlocados,
+      homensNaoAlocados: alocacaoHomens.naoAlocados,
+      mulheresNaoAlocados: alocacaoMulheres.naoAlocados,
     };
-
-    const { quartosAlocados: homensAlocados, naoAlocados: homensNaoAlocados } = alocarPessoas(homens, getInitialRooms());
-    const { quartosAlocados: mulheresAlocadas, naoAlocados: mulheresNaoAlocados } = alocarPessoas(mulheres, getInitialRooms());
-
-    return { homensAlocados, mulheresAlocadas, homensNaoAlocados, mulheresNaoAlocadas };
   }, [inscriptions, showReport]);
 
   return (
@@ -141,13 +143,13 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
           </Button>
         </CardTitle>
       </CardHeader>
-      {showReport && (
+      {showReport && reportData && (
         <CardContent>
           {/* SEÇÃO MASCULINA */}
           <div className="mb-8">
             <h3 className="text-2xl font-bold text-blue-600 mb-4 border-b-2 border-blue-200 pb-2">Dormitórios Masculinos</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {homensAlocados.map(quarto => (
+              {reportData.homensAlocados.map(quarto => (
                 <Card key={`homens-${quarto.nome}`} className="flex flex-col">
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
@@ -169,11 +171,11 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                 </Card>
               ))}
             </div>
-            {homensNaoAlocados.length > 0 && (
+            {reportData.homensNaoAlocados.length > 0 && (
                 <Card className="mt-6 border-red-500 bg-red-50">
-                    <CardHeader><CardTitle className="text-red-700">Homens Não Alocados ({homensNaoAlocados.length})</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-red-700">Homens Não Alocados ({reportData.homensNaoAlocados.length})</CardTitle></CardHeader>
                     <CardContent>
-                        <ul>{homensNaoAlocados.map(p => <li key={p.id}>{p.nome_completo}</li>)}</ul>
+                        <ul>{reportData.homensNaoAlocados.map(p => <li key={p.id}>{p.nome_completo}</li>)}</ul>
                     </CardContent>
                 </Card>
             )}
@@ -183,7 +185,7 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
           <div>
             <h3 className="text-2xl font-bold text-pink-600 mb-4 border-b-2 border-pink-200 pb-2">Dormitórios Femininos</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mulheresAlocadas.map(quarto => (
+              {reportData.mulheresAlocadas.map(quarto => (
                 <Card key={`mulheres-${quarto.nome}`} className="flex flex-col">
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
@@ -205,11 +207,11 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                 </Card>
               ))}
             </div>
-            {mulheresNaoAlocadas.length > 0 && (
+            {reportData.mulheresNaoAlocados.length > 0 && (
                 <Card className="mt-6 border-red-500 bg-red-50">
-                    <CardHeader><CardTitle className="text-red-700">Mulheres Não Alocadas ({mulheresNaoAlocadas.length})</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-red-700">Mulheres Não Alocadas ({reportData.mulheresNaoAlocados.length})</CardTitle></CardHeader>
                     <CardContent>
-                        <ul>{mulheresNaoAlocadas.map(p => <li key={p.id}>{p.nome_completo}</li>)}</ul>
+                        <ul>{reportData.mulheresNaoAlocados.map(p => <li key={p.id}>{p.nome_completo}</li>)}</ul>
                     </CardContent>
                 </Card>
             )}
