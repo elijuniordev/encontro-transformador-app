@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/config/options";
-import { formatPhoneNumber } from "@/lib/utils"; // Importa a função da máscara
+import { formatPhoneNumber } from "@/lib/utils";
 
-// Define a interface para o estado do formulário localmente para uso no hook
+// A interface para o estado do formulário, permitindo chaves de string
 interface InscriptionFormData {
+  [key: string]: string | undefined;
   discipuladores: string;
   lider: string;
   nomeCompleto: string;
@@ -23,8 +24,8 @@ interface InscriptionFormData {
   whatsappResponsavel3?: string;
 }
 
+// Schema de validação com Zod
 const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
-
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
   nomeCompleto: z.string().trim().min(3, "O nome completo é obrigatório."),
@@ -72,6 +73,12 @@ export const useInscriptionFormLogic = () => {
     idade: "",
     whatsapp: "",
     situacao: "",
+    nomeResponsavel1: "",
+    whatsappResponsavel1: "",
+    nomeResponsavel2: "",
+    whatsappResponsavel2: "",
+    nomeResponsavel3: "",
+    whatsappResponsavel3: "",
   });
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,10 +109,17 @@ export const useInscriptionFormLogic = () => {
     fetchRegistrationStatus();
   }, []);
 
-  const handleChangeWithMask = (e: React.ChangeEvent<HTMLInputElement>, fieldName: keyof InscriptionFormData) => {
-    const { value } = e.target;
-    const maskedValue = formatPhoneNumber(value);
-    setFormData(prev => ({ ...prev, [fieldName]: maskedValue }));
+  // Manipulador de eventos unificado para todos os inputs
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    
+    // Aplica a máscara condicionalmente se o campo for de WhatsApp
+    if (id.toLowerCase().includes('whatsapp')) {
+      const maskedValue = formatPhoneNumber(value);
+      setFormData(prev => ({ ...prev, [id]: maskedValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [id]: value }));
+    }
   };
 
   const resetForm = useCallback(() => {
@@ -230,6 +244,6 @@ export const useInscriptionFormLogic = () => {
     discipuladoresOptions,
     filteredLideresOptions,
     situacaoOptions,
-    handleChangeWithMask,
+    handleChange,
   };
 };
