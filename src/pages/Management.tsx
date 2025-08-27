@@ -8,6 +8,7 @@ import PaymentMethodStatistics from "@/components/management/PaymentMethodStatis
 import InscriptionsTable from "@/components/management/InscriptionsTable";
 import Footer from "@/components/Footer";
 import { useManagementLogic } from "@/hooks/useManagementLogic";
+import DormitoryReport from "@/components/management/DormitoryReport";
 
 const Management = () => {
   const {
@@ -21,6 +22,7 @@ const Management = () => {
     setFilterByStatusPagamento,
     filterByDiscipuladoGroup,
     setFilterByDiscipuladoGroup,
+    inscriptions,
     filteredInscriptions,
     situationCounts,
     paymentMethodCounts,
@@ -49,7 +51,7 @@ const Management = () => {
   }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) {
-    return null;
+    return null; // Renderiza nada enquanto redireciona para evitar piscar de conteúdo
   }
 
   return (
@@ -89,6 +91,11 @@ const Management = () => {
           />
           <PaymentMethodStatistics paymentMethodCounts={paymentMethodCounts} />
         </div>
+
+        {/* Relatório de Dormitórios (apenas para admin) */}
+        {userRole === "admin" && (
+          <DormitoryReport inscriptions={inscriptions} />
+        )}
 
         <InscriptionsTable
           filteredInscriptions={filteredInscriptions}
