@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Users, ChevronRight, Trash2 } from "lucide-react";
+import { Eye, Edit, Trash2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog,
@@ -27,7 +27,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { FORMA_PAGAMENTO_OPTIONS, STATUS_PAGAMENTO_OPTIONS } from "@/config/options"; // Importar do arquivo de configuração
+import { FORMA_PAGAMENTO_OPTIONS, STATUS_PAGAMENTO_OPTIONS } from "@/config/options";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Inscription {
   id: string;
@@ -57,13 +59,8 @@ interface InscriptionsTableProps {
   userRole: string | null;
   userDiscipulado: string | null;
   getStatusBadge: (status: string) => JSX.Element;
-  editingId: string | null;
-  setEditingId: (id: string | null) => void;
-  editData: Partial<Inscription>;
-  setEditData: React.Dispatch<React.SetStateAction<Partial<Inscription>>>;
-  handleEdit: (inscription: Inscription) => void;
-  handleSaveEdit: () => void;
   handleDelete: (id: string) => void;
+  fetchInscriptions: () => void;
 }
 
 const DeleteButtonWithDialog = ({ id, name, handleDelete }: { id: string, name: string, handleDelete: (id: string) => void }) => (
@@ -95,16 +92,51 @@ const InscriptionsTable = ({
   userRole,
   userDiscipulado,
   getStatusBadge,
-  editingId,
-  setEditingId,
-  editData,
-  setEditData,
-  handleEdit,
-  handleSaveEdit,
   handleDelete,
+  fetchInscriptions
 }: InscriptionsTableProps) => {
 
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<Partial<Inscription>>({});
+
+  const handleEdit = useCallback((inscription: Inscription) => {
+    setEditingId(inscription.id);
+    setEditData({
+      status_pagamento: inscription.status_pagamento,
+      forma_pagamento: inscription.forma_pagamento,
+      valor: inscription.valor,
+      observacao: inscription.observacao
+    });
+  }, []);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!editingId) return;
+
+    const { error } = await supabase
+      .from('inscriptions')
+      .update(editData)
+      .eq('id', editingId);
+
+    if (error) {
+      console.error("Erro ao salvar edição:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível atualizar a inscrição no banco de dados.",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Dados atualizados",
+        description: "As informações foram salvas com sucesso.",
+      });
+      fetchInscriptions();
+    }
+
+    setEditingId(null);
+    setEditData({});
+  }, [editingId, editData, fetchInscriptions, toast]);
 
   const MobileInscriptionCard = ({ inscription }: { inscription: Inscription }) => (
     <Card className="shadow-sm border mb-4">
@@ -255,7 +287,7 @@ const InscriptionsTable = ({
               </TableHeader>
               <TableBody>
                 {filteredInscriptions.map((inscription) => (
-                  <TableRow key={inscription.id}>
+                  <TableRow key={inscription.id} className={editingId === inscription.id ? "bg-accent" : ""}>
                     <TableCell className="font-medium text-sm">{inscription.nome_completo}</TableCell>
                     <TableCell className="text-sm">{inscription.discipuladores}</TableCell>
                     <TableCell className="text-sm">{inscription.lider}</TableCell>

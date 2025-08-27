@@ -47,7 +47,6 @@ export const useManagementLogic = () => {
 
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<Inscription>>({});
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
 
   const userRole = localStorage.getItem("userRole");
@@ -211,43 +210,6 @@ export const useManagementLogic = () => {
     return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
   }, []);
 
-  const handleEdit = useCallback((inscription: Inscription) => {
-    setEditingId(inscription.id);
-    setEditData({
-      status_pagamento: inscription.status_pagamento,
-      forma_pagamento: inscription.forma_pagamento,
-      valor: inscription.valor,
-      observacao: inscription.observacao
-    });
-  }, []);
-
-  const handleSaveEdit = useCallback(async () => {
-    if (!editingId) return;
-
-    const { error } = await supabase
-      .from('inscriptions')
-      .update(editData)
-      .eq('id', editingId);
-
-    if (error) {
-      console.error("Erro ao salvar edição:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível atualizar a inscrição no banco de dados.",
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Dados atualizados",
-        description: "As informações foram salvas com sucesso.",
-      });
-      fetchInscriptions();
-    }
-
-    setEditingId(null);
-    setEditData({});
-  }, [editingId, editData, fetchInscriptions, toast]);
-
   const handleDelete = useCallback(async (id: string) => {
     if (window.confirm("Tem certeza que deseja excluir esta inscrição? Esta ação não pode ser desfeita.")) {
       const { error } = await supabase
@@ -355,8 +317,6 @@ export const useManagementLogic = () => {
     paymentMethodCounts,
     editingId,
     setEditingId,
-    editData,
-    setEditData,
     isRegistrationsOpen,
     userRole,
     userEmail,
@@ -365,8 +325,6 @@ export const useManagementLogic = () => {
     handleLogout,
     handleToggleRegistrations,
     getStatusBadge,
-    handleEdit,
-    handleSaveEdit,
     handleDelete,
     handleExportXLSX,
     fetchInscriptions,
