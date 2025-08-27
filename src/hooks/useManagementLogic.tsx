@@ -188,9 +188,11 @@ export const useManagementLogic = () => {
       "Confirmado": "default",
       "Pendente": "secondary",
       "Cancelado": "destructive",
-      "Isento": "outline"
+      "Isento": "outline",
+      "Pagamento Incompleto": "outline", // <-- ADICIONE ESTA LINHA
     };
-    return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
+    const colorClass = status === "Pagamento Incompleto" ? "border-yellow-500 text-yellow-700" : "";
+    return <Badge variant={variants[status] || "outline"} className={colorClass}>{status}</Badge>;
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {

@@ -20,8 +20,9 @@ export const IRMAO_VOCE_E_OPTIONS = [
   "Pastor, obreiro ou discipulador"
 ];
 
-export const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Cancelado", "Isento"];
+export const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Pagamento Incompleto", "Cancelado", "Isento"];
 
-export const FORMA_PAGAMENTO_OPTIONS = ["Pix", "Cartão de Crédito", "CartaoCredito2x", "CartaoDebito", "Dinheiro", "Transferência"];
+// ATUALIZE A LINHA ABAIXO
+export const FORMA_PAGAMENTO_OPTIONS = ["Pix", "Cartão de Crédito", "CartaoCredito2x", "CartaoDebito", "Dinheiro", "Transferência", "Pagamento Incompleto"];
 
 export const SEXO_OPTIONS = ["Masculino", "Feminino"];
