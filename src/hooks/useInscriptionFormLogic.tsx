@@ -93,17 +93,11 @@ export const useInscriptionFormLogic = () => {
     fetchRegistrationStatus();
   }, []);
 
-  // <<< CORREÇÃO APLICADA AQUI >>>
   const handleInputChange = (field: string, value: string) => {
-    const fieldsToUppercase = ['nomeCompleto', 'anjoGuarda', 'nomeResponsavel1', 'nomeResponsavel2', 'nomeResponsavel3'];
     let processedValue = value;
-
     if (field.toLowerCase().includes('whatsapp')) {
       processedValue = formatPhoneNumber(value);
-    } else if (fieldsToUppercase.includes(field)) {
-      processedValue = value.toUpperCase();
     }
-    
     setFormData(prev => ({ ...prev, [field]: processedValue }));
   };
 
@@ -121,12 +115,24 @@ export const useInscriptionFormLogic = () => {
     setIsLoading(true);
 
     if (!isRegistrationsOpen) {
-      toast({ title: "Inscrições Encerradas", description: "As inscrições para o Encontro com Deus estão encerradas no momento.", variant: "destructive" });
+      toast({ title: "Inscrições Encerradas", description: "As inscrições para o Encontro com Deus estão encerradas.", variant: "destructive" });
       setIsLoading(false);
       return;
     }
     
-    const parsedData = inscriptionSchema.safeParse(formData);
+    // <<< INÍCIO DA CORREÇÃO >>>
+    // Cria uma cópia dos dados do formulário para processamento
+    const processedData = { ...formData };
+
+    // Converte os campos de texto para maiúsculas ANTES da validação e do envio
+    processedData.nomeCompleto = processedData.nomeCompleto?.toUpperCase();
+    processedData.anjoGuarda = processedData.anjoGuarda?.toUpperCase();
+    processedData.nomeResponsavel1 = processedData.nomeResponsavel1?.toUpperCase();
+    processedData.nomeResponsavel2 = processedData.nomeResponsavel2?.toUpperCase();
+    processedData.nomeResponsavel3 = processedData.nomeResponsavel3?.toUpperCase();
+    // <<< FIM DA CORREÇÃO >>>
+
+    const parsedData = inscriptionSchema.safeParse(processedData);
     if (!parsedData.success) {
       toast({ title: "Erro de validação", description: parsedData.error.errors[0].message, variant: "destructive" });
       setIsLoading(false);
@@ -134,27 +140,27 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      const { data: existing } = await supabase.from('inscriptions').select('whatsapp').eq('whatsapp', formData.whatsapp);
+      const { data: existing } = await supabase.from('inscriptions').select('whatsapp').eq('whatsapp', processedData.whatsapp);
       if (existing && existing.length > 0) throw new Error("Este número de WhatsApp já está cadastrado.");
 
-      const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
+      const isPastorObreiro = processedData.situacao === "Pastor, obreiro ou discipulador";
       const { error } = await supabase.from('inscriptions').insert([{
-        nome_completo: formData.nomeCompleto,
-        anjo_guarda: isPastorObreiro ? formData.nomeCompleto : (formData.anjoGuarda || null),
-        sexo: formData.sexo,
-        idade: formData.idade,
-        whatsapp: formData.whatsapp,
-        discipuladores: isPastorObreiro ? formData.nomeCompleto : (formData.discipuladores || null),
-        lider: isPastorObreiro ? formData.nomeCompleto : (formData.lider || null),
-        irmao_voce_e: formData.situacao,
-        responsavel_1_nome: formData.nomeResponsavel1 || null,
-        responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
-        responsavel_2_nome: formData.nomeResponsavel2 || null,
-        responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
-        responsavel_3_nome: formData.nomeResponsavel3 || null,
-        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
-        status_pagamento: formData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
-        forma_pagamento: formData.situacao === "Cozinha" ? 'Isento' : null,
+        nome_completo: processedData.nomeCompleto,
+        anjo_guarda: isPastorObreiro ? processedData.nomeCompleto : (processedData.anjoGuarda || null),
+        sexo: processedData.sexo,
+        idade: processedData.idade,
+        whatsapp: processedData.whatsapp,
+        discipuladores: isPastorObreiro ? processedData.nomeCompleto : (processedData.discipuladores || null),
+        lider: isPastorObreiro ? processedData.nomeCompleto : (processedData.lider || null),
+        irmao_voce_e: processedData.situacao,
+        responsavel_1_nome: processedData.nomeResponsavel1 || null,
+        responsavel_1_whatsapp: processedData.whatsappResponsavel1 || null,
+        responsavel_2_nome: processedData.nomeResponsavel2 || null,
+        responsavel_2_whatsapp: processedData.whatsappResponsavel2 || null,
+        responsavel_3_nome: processedData.nomeResponsavel3 || null,
+        responsavel_3_whatsapp: processedData.whatsappResponsavel3 || null,
+        status_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
+        forma_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : null,
         valor: 200.00
       }]);
 
