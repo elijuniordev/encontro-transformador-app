@@ -23,3 +23,5 @@ export const IRMAO_VOCE_E_OPTIONS = [
 export const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Cancelado", "Isento"];
 
 export const FORMA_PAGAMENTO_OPTIONS = ["Pix", "Cartão de Crédito", "CartaoCredito2x", "CartaoDebito", "Dinheiro", "Transferência"];
+
+export const SEXO_OPTIONS = ["Masculino", "Feminino"];

@@ -11,6 +11,7 @@ import {
   STATUS_PAGAMENTO_OPTIONS,
   IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS,
   FORMA_PAGAMENTO_OPTIONS,
+  SEXO_OPTIONS,
 } from "@/config/options";
 
 export const useManagementLogic = () => {
@@ -22,6 +23,7 @@ export const useManagementLogic = () => {
   const [filterByFuncao, setFilterByFuncao] = useState("all");
   const [filterByStatusPagamento, setFilterByStatusPagamento] = useState("all");
   const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState("all");
+  const [filterBySexo, setFilterBySexo] = useState("all");
 
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -126,7 +128,9 @@ export const useManagementLogic = () => {
       const matchesDiscipuladoGroup = filterByDiscipuladoGroup === "all" || inscription.discipuladores.toLowerCase() === filterByDiscipuladoGroup.toLowerCase();
       // <<< FIM DA CORREÇÃO >>>
 
-      return matchesSearch && matchesDiscipuladoByLoggedInUser && matchesFuncao && matchesStatusPagamento && matchesDiscipuladoGroup;
+      const matchesSexo = filterBySexo === "all" || inscription.sexo === filterBySexo.toLowerCase();
+
+      return matchesSearch && matchesDiscipuladoByLoggedInUser && matchesFuncao && matchesStatusPagamento && matchesDiscipuladoGroup && matchesSexo;
     });
   }, [
     inscriptions,
@@ -135,7 +139,8 @@ export const useManagementLogic = () => {
     userDiscipulado,
     filterByFuncao,
     filterByStatusPagamento,
-    filterByDiscipuladoGroup
+    filterByDiscipuladoGroup,
+    filterBySexo
   ]);
 
   const situationCounts = useMemo(() => {
@@ -243,6 +248,6 @@ export const useManagementLogic = () => {
     userEmail, userDiscipulado, isAuthenticated, isLoading, handleLogout, handleToggleRegistrations,
     getStatusBadge, handleDelete, handleExportXLSX, fetchInscriptions, funcaoOptions: FUNCAO_OPTIONS,
     statusPagamentoOptions: STATUS_PAGAMENTO_OPTIONS, discipuladoGroupOptions: DISCIPULADORES_OPTIONS_FOR_FILTER,
-    formaPagamentoOptions: FORMA_PAGAMENTO_OPTIONS,
+    formaPagamentoOptions: FORMA_PAGAMENTO_OPTIONS,sexoOptions: SEXO_OPTIONS, filterBySexo, setFilterBySexo,
   };
 };

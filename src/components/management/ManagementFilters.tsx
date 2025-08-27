@@ -26,6 +26,9 @@ interface ManagementFiltersProps {
   funcaoOptions: string[];
   statusPagamentoOptions: string[];
   discipuladoGroupOptions: string[];
+  sexoOptions: string[]; // <-- ADICIONE ESTA LINHA
+  filterBySexo: string; // <-- ADICIONE ESTA LINHA
+  setFilterBySexo: (value: string) => void; // <-- ADICIONE ESTA LINHA
 }
 
 const ManagementFilters = ({
@@ -46,6 +49,9 @@ const ManagementFilters = ({
   funcaoOptions,
   statusPagamentoOptions,
   discipuladoGroupOptions,
+  sexoOptions, // <-- ADICIONE ESTA LINHA
+  filterBySexo, // <-- ADICIONE ESTA LINHA
+  setFilterBySexo, // <-- ADICIONE ESTA LINHA
 }: ManagementFiltersProps) => {
   return (
     <Card className="shadow-peaceful mb-6">
@@ -73,7 +79,24 @@ const ManagementFilters = ({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>
           </div>
-
+          
+          {/* Filtro por Sexo */}
+          <div className="flex flex-col">
+            <Label htmlFor="filter-sexo" className="text-sm font-medium mb-1">Sexo</Label>
+            <Select value={filterBySexo} onValueChange={setFilterBySexo}>
+              <SelectTrigger id="filter-sexo" className="w-full md:w-[130px]">
+                <SelectValue placeholder="Sexo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {sexoOptions.map(option => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* <<< FIM DA ADIÇÃO >>> */}
+          
           {/* Filtro por Função */}
           <div className="flex flex-col">
             <Label htmlFor="filter-funcao" className="text-sm font-medium mb-1">Função</Label>

@@ -43,6 +43,9 @@ const Management = () => {
     funcaoOptions,
     statusPagamentoOptions,
     discipuladoGroupOptions,
+    sexoOptions, // <-- ADICIONE ESTA LINHA
+    filterBySexo, // <-- ADICIONE ESTA LINHA
+    setFilterBySexo, // <-- ADICIONE ESTA LINHA
   } = useManagementLogic();
 
   const navigate = useNavigate();
@@ -84,6 +87,9 @@ const Management = () => {
           funcaoOptions={funcaoOptions}
           statusPagamentoOptions={statusPagamentoOptions}
           discipuladoGroupOptions={discipuladoGroupOptions}
+          sexoOptions={sexoOptions} // <-- ADICIONE ESTA LINHA
+          filterBySexo={filterBySexo} // <-- ADICIONE ESTA LINHA
+          setFilterBySexo={setFilterBySexo} // <-- ADICIONE ESTA LINHA
         />
         
         {isLoading ? (
