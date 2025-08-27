@@ -1,5 +1,5 @@
 // src/components/management/DormitoryReport.tsx
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,53 +43,39 @@ const getInitialRooms = (): Room[] => [
     { nome: 'Quarto 13', capacidade: 8, ocupantes: [] },
 ];
 
-// Função de alocação movida para fora para ser uma função pura e estável
+// Função de alocação simplificada
 const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
   const quartos = JSON.parse(JSON.stringify(quartosTemplate));
   const alocados = new Set<string>();
 
-  const alocarGrupo = (grupo: Participant[]) => {
-    let melhorQuarto: Room | null = null;
-    let menorEspacoLivre = Infinity;
-
-    for (const quarto of quartos) {
-      const espacoLivre = quarto.capacidade - quarto.ocupantes.length;
-      if (espacoLivre >= grupo.length && espacoLivre < menorEspacoLivre) {
-        melhorQuarto = quarto;
-        menorEspacoLivre = espacoLivre;
-      }
-    }
-
-    if (melhorQuarto) {
-      melhorQuarto.ocupantes.push(...grupo);
-      grupo.forEach(p => alocados.add(p.id));
-      return true;
-    }
-    return false;
-  };
-
+  // Agrupar por Célula (Líder)
   const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
     if (!acc[p.lider]) acc[p.lider] = [];
     acc[p.lider].push(p);
     return acc;
   }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
 
+  // 1ª Prioridade: Alocar células inteiras no melhor quarto possível
   for (const celula of gruposPorCelula) {
-    alocarGrupo(celula);
+    let melhorQuarto: Room | null = null;
+    let menorEspacoLivre = Infinity;
+
+    // Encontra o quarto "best-fit"
+    for (const quarto of quartos) {
+      const espacoLivre = quarto.capacidade - quarto.ocupantes.length;
+      if (espacoLivre >= celula.length && espacoLivre < menorEspacoLivre) {
+        melhorQuarto = quarto;
+        menorEspacoLivre = espacoLivre;
+      }
+    }
+
+    if (melhorQuarto) {
+      melhorQuarto.ocupantes.push(...celula);
+      celula.forEach(p => alocados.add(p.id));
+    }
   }
   
-  const restantesPorDiscipulado = Object.values(
-    pessoas.filter(p => !alocados.has(p.id)).reduce((acc, p) => {
-      if (!acc[p.discipuladores]) acc[p.discipuladores] = [];
-      acc[p.discipuladores].push(p);
-      return acc;
-    }, {} as Record<string, Participant[]>)
-  ).sort((a, b) => b.length - a.length);
-
-  for (const discipulado of restantesPorDiscipulado) {
-    alocarGrupo(discipulado);
-  }
-
+  // 2. Alocar indivíduos restantes em qualquer vaga
   const restantes = pessoas.filter(p => !alocados.has(p.id));
   for (const pessoa of restantes) {
     for (const quarto of quartos) {
@@ -162,7 +148,6 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                         <li key={p.id} className="text-sm mb-2 p-2 rounded bg-gray-50 border-l-4 border-blue-300">
                           <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{p.nome_completo}</p>
                           <p className="text-xs text-muted-foreground pl-6">Líder: {p.lider}</p>
-                          <p className="text-xs text-muted-foreground pl-6">Discipulado: {p.discipuladores}</p>
                         </li>
                       ))}
                     </ul>
@@ -198,7 +183,6 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                         <li key={p.id} className="text-sm mb-2 p-2 rounded bg-gray-50 border-l-4 border-pink-300">
                           <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{p.nome_completo}</p>
                           <p className="text-xs text-muted-foreground pl-6">Líder: {p.lider}</p>
-                          <p className="text-xs text-muted-foreground pl-6">Discipulado: {p.discipuladores}</p>
                         </li>
                       ))}
                     </ul>
