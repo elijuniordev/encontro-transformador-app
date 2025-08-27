@@ -11,8 +11,7 @@ import { useDormitoryReportLogic } from '@/hooks/useDormitoryReportLogic';
 import { Inscription as Participant } from '@/types/supabase';
 import { Room } from '@/config/rooms';
 import { useToast } from "@/hooks/use-toast";
-
-// <<< INÍCIO DA CORREÇÃO >>>
+import { generatePdfFromElements } from '@/lib/button-variants';
 
 // Interface para as props do participante arrastável
 interface DraggableParticipantProps {
@@ -42,38 +41,41 @@ interface DroppableDormitoryCardProps {
     borderColorClass: string;
 }
 
-// Sub-componente para o card do dormitório que pode receber itens
-function DroppableDormitoryCard({ quarto, borderColorClass }: DroppableDormitoryCardProps) {
-  const { isOver, setNodeRef } = useDroppable({ id: `droppable-${quarto.nome}`, data: { room: quarto } });
-  const style = { backgroundColor: isOver ? '#e0f7fa' : undefined };
-  return (
-    <Card ref={setNodeRef} style={style} className="flex flex-col transition-colors">
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          <span>{quarto.nome}</span>
-          <Badge variant={quarto.ocupantes.length > quarto.capacidade ? "destructive" : "secondary"}>
-            {quarto.ocupantes.length} / {quarto.capacidade}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow bg-gray-50 p-2 rounded-b-lg">
-        <ul className="min-h-[100px]">
-          {quarto.ocupantes.map((p) => (
-            <DraggableParticipant key={p.id} participant={p} roomName={quarto.nome} borderColorClass={borderColorClass} />
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-}
-// <<< FIM DA CORREÇÃO >>>
-
+// Sub-componente para o card do dormitório que pode receber itens, usando forwardRef
+const DroppableDormitoryCard = React.forwardRef<HTMLDivElement, DroppableDormitoryCardProps>(
+    ({ quarto, borderColorClass }, ref) => {
+        const { isOver, setNodeRef } = useDroppable({ id: `droppable-${quarto.nome}`, data: { room: quarto } });
+        const style = { backgroundColor: isOver ? '#e0f7fa' : undefined };
+        
+        return (
+            <div ref={ref}> {/* Div externa para a ref que o html2canvas usará */}
+                <Card ref={setNodeRef} style={style} className="flex flex-col transition-colors h-full">
+                    <CardHeader>
+                        <CardTitle className="flex justify-between items-center">
+                            <span>{quarto.nome}</span>
+                            <Badge variant={quarto.ocupantes.length > quarto.capacidade ? "destructive" : "secondary"}>
+                                {quarto.ocupantes.length} / {quarto.capacidade}
+                            </Badge>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-grow bg-gray-50 p-2 rounded-b-lg">
+                        <ul className="min-h-[100px]">
+                        {quarto.ocupantes.map((p) => (
+                            <DraggableParticipant key={p.id} participant={p} roomName={quarto.nome} borderColorClass={borderColorClass} />
+                        ))}
+                        </ul>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+);
 
 // Componente principal do relatório
 const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptions }) => {
   const { toast } = useToast();
   const [showReport, setShowReport] = useState(false);
-  const reportRef = useRef<HTMLDivElement>(null);
+  const roomRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const initialReportData = useDormitoryReportLogic(inscriptions, showReport);
   
   const [roomsState, setRoomsState] = useState<{ [key: string]: Room }>({});
@@ -124,7 +126,12 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
     });
   };
 
-  const handleGeneratePdf = () => { if (reportRef.current) generatePdfFromElement(reportRef.current, 'relatorio-dormitorios-encontro.pdf'); };
+  const handleGeneratePdf = () => {
+    const elementsToPrint = Object.values(roomRefs.current).filter(el => el !== null) as HTMLElement[];
+    if (elementsToPrint.length > 0) {
+        generatePdfFromElements(elementsToPrint, 'relatorio-dormitorios.pdf');
+    }
+  };
 
   const mulheresAlocadas = Object.values(roomsState).filter(r => r.genero === 'feminino');
   const homensAlocados = Object.values(roomsState).filter(r => r.genero === 'masculino');
@@ -143,12 +150,19 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
       </CardHeader>
       {showReport && initialReportData && (
         <DndContext onDragEnd={handleDragEnd}>
-          <CardContent ref={reportRef}>
+          <CardContent>
             {mulheresAlocadas.length > 0 && (
               <div className="mb-8 break-inside-avoid">
                 <h3 className="text-2xl font-bold text-pink-600 mb-4 border-b-2 border-pink-200 pb-2">Bloco Feminino</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {mulheresAlocadas.map(quarto => (<DroppableDormitoryCard key={`mulheres-${quarto.nome}`} quarto={quarto} borderColorClass="border-pink-300" />))}
+                  {mulheresAlocadas.map(quarto => (
+                    <DroppableDormitoryCard 
+                        key={`mulheres-${quarto.nome}`} 
+                        ref={el => (roomRefs.current[`mulheres-${quarto.nome}`] = el)}
+                        quarto={quarto} 
+                        borderColorClass="border-pink-300" 
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -156,7 +170,14 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
               <div className="break-inside-avoid">
                 <h3 className="text-2xl font-bold text-blue-600 mb-4 border-b-2 border-blue-200 pb-2">Bloco Masculino</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {homensAlocados.map(quarto => (<DroppableDormitoryCard key={`homens-${quarto.nome}`} quarto={quarto} borderColorClass="border-blue-300" />))}
+                  {homensAlocados.map(quarto => (
+                    <DroppableDormitoryCard 
+                        key={`homens-${quarto.nome}`}
+                        ref={el => (roomRefs.current[`homens-${quarto.nome}`] = el)}
+                        quarto={quarto} 
+                        borderColorClass="border-blue-300" 
+                    />
+                  ))}
                 </div>
               </div>
             )}
