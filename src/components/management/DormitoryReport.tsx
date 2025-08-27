@@ -30,6 +30,8 @@ interface DormitoryReportProps {
 const getFemaleRooms = (): Room[] => [
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 5', capacidade: 8, ocupantes: [] },
+    { nome: 'Quarto 7', capacidade: 8, ocupantes: [] },
+    { nome: 'Quarto 8', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 4', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 6', capacidade: 6, ocupantes: [] },
@@ -38,8 +40,6 @@ const getFemaleRooms = (): Room[] => [
 
 // Estrutura dos quartos masculinos (7 a 13), ordenada do maior para o menor
 const getMaleRooms = (): Room[] => [
-    { nome: 'Quarto 7', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 8', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 10', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 11', capacidade: 8, ocupantes: [] },
     { nome: 'Quarto 12', capacidade: 8, ocupantes: [] },
