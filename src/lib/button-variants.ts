@@ -1,8 +1,7 @@
-// src/lib/button-variants.ts
 import { cva } from "class-variance-authority";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -15,7 +14,9 @@ export const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        divine: "bg-gradient-divine text-white font-bold shadow-lg hover:shadow-xl transition-shadow",
+        divine: "bg-gradient-divine text-primary-foreground hover:shadow-divine transition-all duration-300 transform hover:scale-105 font-semibold",
+        'divine-glow': "bg-primary text-primary-foreground shadow-glow animate-divine-glow",
+        peaceful: "bg-accent text-accent-foreground hover:bg-accent/80 shadow-peaceful",
       },
       size: {
         default: "h-10 px-4 py-2",
