@@ -26,7 +26,7 @@ interface DormitoryReportProps {
   inscriptions: Participant[];
 }
 
-// Define a estrutura e capacidade dos quartos fora do componente para não ser recriada
+// Estrutura dos quartos definida fora do componente
 const getInitialRooms = (): Room[] => [
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
@@ -43,52 +43,64 @@ const getInitialRooms = (): Room[] => [
     { nome: 'Quarto 13', capacidade: 8, ocupantes: [] },
 ];
 
-// Função de alocação simplificada
+// Função de alocação rigorosa
 const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
-  const quartos = JSON.parse(JSON.stringify(quartosTemplate));
+  const quartos = JSON.parse(JSON.stringify(quartosTemplate)) as Room[];
   const alocados = new Set<string>();
+  const naoAlocadosTemp: Participant[] = [];
 
-  // Agrupar por Célula (Líder)
+  // Agrupa participantes por célula (líder)
   const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
-    if (!acc[p.lider]) acc[p.lider] = [];
-    acc[p.lider].push(p);
+    if (p.lider) { // Apenas agrupa quem tem líder definido
+        if (!acc[p.lider]) acc[p.lider] = [];
+        acc[p.lider].push(p);
+    }
     return acc;
   }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
-
-  // 1ª Prioridade: Alocar células inteiras no melhor quarto possível
+  
+  // 1. Prioridade Máxima: Alocar células inteiras
   for (const celula of gruposPorCelula) {
-    let melhorQuarto: Room | null = null;
+    let quartoIdeal: Room | null = null;
     let menorEspacoLivre = Infinity;
 
-    // Encontra o quarto "best-fit"
+    // Encontra o quarto com o encaixe mais justo (Best-Fit)
     for (const quarto of quartos) {
       const espacoLivre = quarto.capacidade - quarto.ocupantes.length;
       if (espacoLivre >= celula.length && espacoLivre < menorEspacoLivre) {
-        melhorQuarto = quarto;
+        quartoIdeal = quarto;
         menorEspacoLivre = espacoLivre;
       }
     }
 
-    if (melhorQuarto) {
-      melhorQuarto.ocupantes.push(...celula);
+    if (quartoIdeal) {
+      quartoIdeal.ocupantes.push(...celula);
       celula.forEach(p => alocados.add(p.id));
+    } else {
+      // Se a célula inteira não cabe, todos os seus membros vão para a lista de não alocados por enquanto
+      naoAlocadosTemp.push(...celula);
     }
   }
+
+  // 2. Alocar indivíduos restantes (que não pertencem a uma célula ou cuja célula não coube)
+  const restantes = pessoas.filter(p => !alocados.has(p.id) && !naoAlocadosTemp.find(na => na.id === p.id) );
   
-  // 2. Alocar indivíduos restantes em qualquer vaga
-  const restantes = pessoas.filter(p => !alocados.has(p.id));
   for (const pessoa of restantes) {
+    let alocado = false;
     for (const quarto of quartos) {
       if (quarto.ocupantes.length < quarto.capacidade) {
         quarto.ocupantes.push(pessoa);
         alocados.add(pessoa.id);
+        alocado = true;
         break;
       }
     }
+    if (!alocado) {
+      naoAlocadosTemp.push(pessoa);
+    }
   }
 
-  const naoAlocados = pessoas.filter(p => !alocados.has(p.id));
-  return { quartosAlocados: quartos.filter(q => q.ocupantes.length > 0), naoAlocados };
+  const naoAlocadosFinal = pessoas.filter(p => !alocados.has(p.id));
+  return { quartosAlocados: quartos.filter(q => q.ocupantes.length > 0), naoAlocados: naoAlocadosFinal };
 };
 
 
@@ -159,7 +171,7 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                 <Card className="mt-6 border-red-500 bg-red-50">
                     <CardHeader><CardTitle className="text-red-700">Homens Não Alocados ({reportData.homensNaoAlocados.length})</CardTitle></CardHeader>
                     <CardContent>
-                        <ul>{reportData.homensNaoAlocados.map(p => <li key={p.id}>{p.nome_completo}</li>)}</ul>
+                        <ul>{reportData.homensNaoAlocados.map(p => <li key={p.id} className='font-semibold'>{p.nome_completo} <span className='text-xs text-muted-foreground'> (Líder: {p.lider})</span></li>)}</ul>
                     </CardContent>
                 </Card>
             )}
@@ -194,7 +206,7 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                 <Card className="mt-6 border-red-500 bg-red-50">
                     <CardHeader><CardTitle className="text-red-700">Mulheres Não Alocadas ({reportData.mulheresNaoAlocados.length})</CardTitle></CardHeader>
                     <CardContent>
-                        <ul>{reportData.mulheresNaoAlocados.map(p => <li key={p.id}>{p.nome_completo}</li>)}</ul>
+                        <ul>{reportData.mulheresNaoAlocados.map(p => <li key={p.id} className='font-semibold'>{p.nome_completo} <span className='text-xs text-muted-foreground'> (Líder: {p.lider})</span></li>)}</ul>
                     </CardContent>
                 </Card>
             )}
