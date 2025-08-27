@@ -1,137 +1,28 @@
 // src/components/management/DormitoryReport.tsx
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BedDouble, User, Download } from "lucide-react";
-import { generatePdfFromElement } from '@/lib/pdfGenerator'; // Importa a nova função
-
-// Tipagem para os participantes
-interface Participant {
-  id: string;
-  nome_completo: string;
-  sexo: string;
-  lider: string;
-  discipuladores: string;
-  irmao_voce_e: string;
-}
-
-// Tipagem para a estrutura dos quartos
-interface Room {
-  nome: string;
-  capacidade: number;
-  ocupantes: Participant[];
-}
+import { BedDouble, Download, User } from "lucide-react";
+import { generatePdfFromElement } from '@/lib/pdfGenerator';
+import { useDormitoryReportLogic } from '@/hooks/useDormitoryReportLogic';
+import DormitoryCard from './DormitoryCard';
+import { Participant } from '@/types/dormitory'; // Importa o tipo centralizado
 
 interface DormitoryReportProps {
   inscriptions: Participant[];
 }
 
-// Estrutura dos quartos
-const getFemaleRooms = (): Room[] => [
-    { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
-    { nome: 'Quarto 5', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
-    { nome: 'Quarto 4', capacidade: 6, ocupantes: [] },
-    { nome: 'Quarto 6', capacidade: 6, ocupantes: [] },
-    { nome: 'Quarto 3', capacidade: 4, ocupantes: [] },
-];
-
-const getMaleRooms = (): Room[] => [
-    { nome: 'Quarto 7', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 8', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 10', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 11', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 12', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 13', capacidade: 8, ocupantes: [] },
-    { nome: 'Quarto 9', capacidade: 6, ocupantes: [] },
-];
-
-// Algoritmo de alocação
-const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
-  const quartos = JSON.parse(JSON.stringify(quartosTemplate)) as Room[];
-  const alocados = new Set<string>();
-
-  const tentarAlocarGrupo = (grupo: Participant[]) => {
-    if (grupo.length === 0 || alocados.has(grupo[0].id)) return;
-    let melhorQuarto: Room | null = null;
-    let menorEspacoLivre = Infinity;
-    for (const quarto of quartos) {
-      const espacoLivre = quarto.capacidade - quarto.ocupantes.length;
-      if (espacoLivre >= grupo.length && espacoLivre < menorEspacoLivre) {
-        melhorQuarto = quarto;
-        menorEspacoLivre = espacoLivre;
-      }
-    }
-    if (melhorQuarto) {
-      melhorQuarto.ocupantes.push(...grupo);
-      grupo.forEach(p => alocados.add(p.id));
-    }
-  };
-
-  const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
-    const key = p.lider || `sem-celula-${p.id}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(p);
-    return acc;
-  }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
-
-  for (const celula of gruposPorCelula.filter(c => c.length > 1)) {
-    tentarAlocarGrupo(celula);
-  }
-
-  const restantes = pessoas.filter(p => !alocados.has(p.id));
-  const gruposPorDiscipulado = Object.values(restantes.reduce((acc, p) => {
-    const key = p.discipuladores || `sem-discipulado-${p.id}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(p);
-    return acc;
-  }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
-
-  for (const discipulado of gruposPorDiscipulado.filter(d => d.length > 1)) {
-    tentarAlocarGrupo(discipulado);
-  }
-
-  const individuosFinais = pessoas.filter(p => !alocados.has(p.id));
-  for (const pessoa of individuosFinais) {
-    for (const quarto of quartos) {
-      if (quarto.ocupantes.length < quarto.capacidade) {
-        quarto.ocupantes.push(pessoa);
-        alocados.add(pessoa.id);
-        break;
-      }
-    }
-  }
-
-  const naoAlocados = pessoas.filter(p => !alocados.has(p.id));
-  return { quartosAlocados: quartos.filter(q => q.ocupantes.length > 0), naoAlocados };
-};
-
-
 const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
   const [showReport, setShowReport] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const reportData = useDormitoryReportLogic(inscriptions, showReport);
 
   const handleGeneratePdf = () => {
     if (reportRef.current) {
       generatePdfFromElement(reportRef.current, 'relatorio-dormitorios-encontro.pdf');
     }
   };
-
-  const reportData = useMemo(() => {
-    if (!showReport) return null;
-    const participants = inscriptions.filter(p => p.irmao_voce_e !== 'Cozinha');
-    const homens = participants.filter(p => p.sexo === 'masculino');
-    const mulheres = participants.filter(p => p.sexo === 'feminino');
-    const alocacaoHomens = alocarPessoas(homens, getMaleRooms());
-    const alocacaoMulheres = alocarPessoas(mulheres, getFemaleRooms());
-    return {
-      homensAlocados: alocacaoHomens.quartosAlocados,
-      mulheresAlocadas: alocacaoMulheres.quartosAlocados,
-      homensNaoAlocados: alocacaoHomens.naoAlocados,
-      mulheresNaoAlocados: alocacaoMulheres.naoAlocados,
-    };
-  }, [inscriptions, showReport]);
 
   return (
     <Card className="shadow-peaceful mb-6">
@@ -160,25 +51,7 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
             <h3 className="text-2xl font-bold text-pink-600 mb-4 border-b-2 border-pink-200 pb-2">Dormitórios Femininos</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {reportData.mulheresAlocadas.map(quarto => (
-                <Card key={`mulheres-${quarto.nome}`} className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="flex justify-between items-center">
-                      <span>{quarto.nome}</span>
-                      <Badge variant="secondary">{quarto.ocupantes.length} / {quarto.capacidade}</Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <ul>
-                      {quarto.ocupantes.map(p => (
-                        <li key={p.id} className="text-sm mb-2 p-2 rounded bg-gray-50 border-l-4 border-pink-300">
-                          <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{p.nome_completo}</p>
-                          <p className="text-xs text-muted-foreground pl-6">Líder: {p.lider || 'N/A'}</p>
-                          <p className="text-xs text-muted-foreground pl-6">Discipulado: {p.discipuladores}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                <DormitoryCard key={`mulheres-${quarto.nome}`} quarto={quarto} borderColorClass="border-pink-300" />
               ))}
             </div>
             {reportData.mulheresNaoAlocados.length > 0 && (
@@ -198,25 +71,7 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
             <h3 className="text-2xl font-bold text-blue-600 mb-4 border-b-2 border-blue-200 pb-2">Dormitórios Masculinos</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {reportData.homensAlocados.map(quarto => (
-                <Card key={`homens-${quarto.nome}`} className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="flex justify-between items-center">
-                      <span>{quarto.nome}</span>
-                      <Badge variant="secondary">{quarto.ocupantes.length} / {quarto.capacidade}</Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <ul>
-                      {quarto.ocupantes.map(p => (
-                        <li key={p.id} className="text-sm mb-2 p-2 rounded bg-gray-50 border-l-4 border-blue-300">
-                          <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{p.nome_completo}</p>
-                          <p className="text-xs text-muted-foreground pl-6">Líder: {p.lider || 'N/A'}</p>
-                          <p className="text-xs text-muted-foreground pl-6">Discipulado: {p.discipuladores}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                <DormitoryCard key={`homens-${quarto.nome}`} quarto={quarto} borderColorClass="border-blue-300" />
               ))}
             </div>
             {reportData.homensNaoAlocados.length > 0 && (
@@ -230,7 +85,6 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                 </Card>
             )}
           </div>
-
         </CardContent>
       )}
     </Card>
