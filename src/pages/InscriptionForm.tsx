@@ -20,7 +20,7 @@ const InscriptionForm = () => {
     discipuladoresOptions,
     filteredLideresOptions,
     situacaoOptions,
-    handleChange // Pega a nova função unificada
+    handleChange
   } = useInscriptionFormLogic();
 
   if (isSuccess) {
@@ -72,6 +72,7 @@ const InscriptionForm = () => {
                         {formData.situacao === 'Acompanhante' && (<p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg"><strong>Aviso:</strong> A opção de Acompanhante é para quem vai servir como equipe pela primeira vez.</p>)}
                         <div className="space-y-2">
                             <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
+                            {/* CAMPO CORRIGIDO */}
                             <Input id="nomeCompleto" type="text" value={formData.nomeCompleto} onChange={handleChange} placeholder="Digite seu nome completo"/>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -103,6 +104,7 @@ const InscriptionForm = () => {
                             {formData.situacao === 'Encontrista' && (
                                 <div className="space-y-2">
                                 <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
+                                {/* CAMPO CORRIGIDO */}
                                 <Input id="anjoGuarda" type="text" value={formData.anjoGuarda} onChange={handleChange} placeholder="Nome da pessoa que te convidou" />
                                 </div>
                             )}
@@ -133,18 +135,21 @@ const InscriptionForm = () => {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="nomeResponsavel1">Responsável 1: *</Label>
+                                {/* CAMPO CORRIGIDO */}
                                 <Input id="nomeResponsavel1" type="text" value={formData.nomeResponsavel1 || ""} onChange={handleChange} />
                                 <Label htmlFor="whatsappResponsavel1">WhatsApp 1: *</Label>
                                 <Input id="whatsappResponsavel1" type="tel" value={formData.whatsappResponsavel1 || ""} onChange={handleChange} maxLength={15} />
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="nomeResponsavel2">Responsável 2:</Label>
+                                {/* CAMPO CORRIGIDO */}
                                 <Input id="nomeResponsavel2" type="text" value={formData.nomeResponsavel2 || ""} onChange={handleChange} />
                                 <Label htmlFor="whatsappResponsavel2">WhatsApp 2:</Label>
                                 <Input id="whatsappResponsavel2" type="tel" value={formData.whatsappResponsavel2 || ""} onChange={handleChange} maxLength={15} />
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="nomeResponsavel3">Responsável 3:</Label>
+                                {/* CAMPO CORRIGIDO */}
                                 <Input id="nomeResponsavel3" type="text" value={formData.nomeResponsavel3 || ""} onChange={handleChange} />
                                 <Label htmlFor="whatsappResponsavel3">WhatsApp 3:</Label>
                                 <Input id="whatsappResponsavel3" type="tel" value={formData.whatsappResponsavel3 || ""} onChange={handleChange} maxLength={15} />
