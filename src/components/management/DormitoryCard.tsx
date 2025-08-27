@@ -1,42 +1,50 @@
 // src/components/management/DormitoryCard.tsx
 import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User } from "lucide-react";
-import { Inscription } from '@/types/supabase'; // Importe o tipo centralizado
-
-// Definindo o tipo para um quarto, que contém uma lista de Inscription
-interface Room {
-  nome: string;
-  capacidade: number;
-  ocupantes: Inscription[];
-}
+import { Room } from '@/config/rooms';
+import { DraggableParticipant } from './DraggableParticipant';
 
 interface DormitoryCardProps {
   quarto: Room;
   borderColorClass: string;
 }
 
-const DormitoryCard: React.FC<DormitoryCardProps> = ({ quarto, borderColorClass }) => (
-  <Card className="flex flex-col">
-    <CardHeader>
-      <CardTitle className="flex justify-between items-center">
-        <span>{quarto.nome}</span>
-        <Badge variant="secondary">{quarto.ocupantes.length} / {quarto.capacidade}</Badge>
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="flex-grow">
-      <ul>
-        {quarto.ocupantes.map((p) => (
-          <li key={p.id} className={`text-sm mb-2 p-2 rounded bg-gray-50 border-l-4 ${borderColorClass}`}>
-            <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{p.nome_completo}</p>
-            <p className="text-xs text-muted-foreground pl-6">Líder: {p.lider || 'N/A'}</p>
-            <p className="text-xs text-muted-foreground pl-6">Discipulado: {p.discipuladores}</p>
-          </li>
-        ))}
-      </ul>
-    </CardContent>
-  </Card>
-);
+const DormitoryCard: React.FC<DormitoryCardProps> = ({ quarto, borderColorClass }) => {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `droppable-${quarto.nome}`,
+    data: { room: quarto }, // Passa o quarto como dado
+  });
+
+  const style = {
+    backgroundColor: isOver ? '#e0f7fa' : undefined, // Feedback visual ao arrastar sobre
+  };
+
+  return (
+    <Card ref={setNodeRef} style={style} className="flex flex-col transition-colors">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span>{quarto.nome}</span>
+          <Badge variant={quarto.ocupantes.length > quarto.capacidade ? "destructive" : "secondary"}>
+            {quarto.ocupantes.length} / {quarto.capacidade}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-grow bg-gray-50 p-2 rounded-b-lg">
+        <ul className="min-h-[100px]">
+          {quarto.ocupantes.map((p) => (
+            <DraggableParticipant
+              key={p.id}
+              participant={p}
+              roomName={quarto.nome}
+              borderColorClass={borderColorClass}
+            />
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+};
 
 export default DormitoryCard;
