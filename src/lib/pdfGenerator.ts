@@ -3,47 +3,40 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 /**
- * Gera um PDF a partir de um elemento HTML.
- * @param element O elemento HTML a ser convertido em PDF.
+ * Gera um PDF a partir de um array de elementos HTML, colocando cada um em uma nova página.
+ * @param elements Array de elementos HTML a serem convertidos.
  * @param fileName O nome do arquivo PDF a ser salvo.
  */
-export const generatePdfFromElement = (element: HTMLElement, fileName: string) => {
-  // Usa o html2canvas para capturar o elemento como uma imagem com alta resolução
-  html2canvas(element, { 
-    scale: 2, // Aumenta a escala para melhor qualidade de imagem
-    useCORS: true, // Permite carregar imagens de outras origens se houver
-    logging: false, // Desativa logs no console
-  }).then((canvas) => {
+export const generatePdfFromElements = async (elements: HTMLElement[], fileName: string) => {
+  if (elements.length === 0) {
+    console.error("Nenhum elemento fornecido para gerar o PDF.");
+    return;
+  }
+
+  const pdf = new jsPDF('p', 'mm', 'a4'); // Retrato, milímetros, A4
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const margin = 10;
+  const contentWidth = pdfWidth - margin * 2;
+
+  for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    if (!element) continue;
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4'); // Orientação retrato, em milímetros, formato A4
+    const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    
-    // Calcula a proporção para a imagem se ajustar à largura do PDF com margens
-    const ratio = canvasWidth / canvasHeight;
-    const imgWidth = pdfWidth - 20; // Largura da imagem com margem de 10mm de cada lado
-    const imgHeight = imgWidth / ratio;
-    
-    let heightLeft = imgHeight;
-    let position = 10; // Margem superior inicial de 10mm
-
-    // Adiciona a primeira página
-    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-    heightLeft -= (pdfHeight - 20); // Subtrai a altura visível (com margens)
-
-    // Adiciona novas páginas se o conteúdo for maior que uma página
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight - 10; // Ajusta a posição da imagem na nova página
+    if (i > 0) {
       pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= (pdfHeight - 20);
     }
     
-    // Salva o arquivo PDF
-    pdf.save(fileName);
-  });
+    pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
+  }
+  
+  pdf.save(fileName);
 };
