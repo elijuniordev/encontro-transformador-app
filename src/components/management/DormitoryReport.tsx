@@ -26,7 +26,7 @@ interface DormitoryReportProps {
   inscriptions: Participant[];
 }
 
-// Estrutura dos quartos, sem a Capela e ordenada do maior para o menor.
+// Estrutura dos quartos, ordenada do maior para o menor
 const getInitialRooms = (): Room[] => [
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 5', capacidade: 8, ocupantes: [] },
@@ -43,14 +43,33 @@ const getInitialRooms = (): Room[] => [
     { nome: 'Quarto 3', capacidade: 4, ocupantes: [] },
 ];
 
-// Algoritmo de alocação final
+// Algoritmo de alocação final e rigoroso
 const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
   const quartos = JSON.parse(JSON.stringify(quartosTemplate)) as Room[];
   const alocados = new Set<string>();
-  
-  // 1. Agrupar participantes por célula (líder)
+
+  // Função auxiliar para tentar alocar um grupo inteiro
+  const tentarAlocarGrupo = (grupo: Participant[]) => {
+    if (grupo.length === 0 || alocados.has(grupo[0].id)) {
+      return; // Pula se o grupo já foi alocado
+    }
+    
+    let quartoEncontrado: Room | null = null;
+    for (const quarto of quartos) {
+      if (quarto.capacidade - quarto.ocupantes.length >= grupo.length) {
+        quartoEncontrado = quarto;
+        break;
+      }
+    }
+
+    if (quartoEncontrado) {
+      quartoEncontrado.ocupantes.push(...grupo);
+      grupo.forEach(p => alocados.add(p.id));
+    }
+  };
+
+  // 1. Agrupar e alocar por Célula (Líder)
   const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
-    // Ignora pessoas sem líder definido para agrupamento por célula
     if (p.lider && p.lider.trim() !== "") {
         if (!acc[p.lider]) acc[p.lider] = [];
         acc[p.lider].push(p);
@@ -58,33 +77,31 @@ const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
     return acc;
   }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
 
-  // 2. Tentar alocar CÉLULAS INTEIRAS
   for (const celula of gruposPorCelula) {
-    let quartoEncontrado: Room | null = null;
-    
-    // Tenta encontrar um quarto que comporte a célula inteira
-    for (const quarto of quartos) {
-      if (quarto.capacidade - quarto.ocupantes.length >= celula.length) {
-        quartoEncontrado = quarto;
-        break; // Encontrou um quarto, aloca e para de procurar
-      }
-    }
-
-    if (quartoEncontrado) {
-      quartoEncontrado.ocupantes.push(...celula);
-      celula.forEach(p => alocados.add(p.id));
-    }
+    tentarAlocarGrupo(celula);
   }
 
-  // 3. Alocar indivíduos restantes que não foram alocados com suas células
+  // 2. Agrupar e alocar os restantes por Discipulado
   const restantes = pessoas.filter(p => !alocados.has(p.id));
-  for (const pessoa of restantes) {
-    let alocado = false;
+  const gruposPorDiscipulado = Object.values(restantes.reduce((acc, p) => {
+    if (p.discipuladores && p.discipuladores.trim() !== "") {
+        if (!acc[p.discipuladores]) acc[p.discipuladores] = [];
+        acc[p.discipuladores].push(p);
+    }
+    return acc;
+  }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
+
+  for (const discipulado of gruposPorDiscipulado) {
+    tentarAlocarGrupo(discipulado);
+  }
+
+  // 3. Alocar indivíduos que sobraram (sem grupo ou cujos grupos não couberam)
+  const individuosFinais = pessoas.filter(p => !alocados.has(p.id));
+  for (const pessoa of individuosFinais) {
     for (const quarto of quartos) {
       if (quarto.ocupantes.length < quarto.capacidade) {
         quarto.ocupantes.push(pessoa);
         alocados.add(pessoa.id);
-        alocado = true;
         break;
       }
     }
@@ -151,6 +168,7 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                         <li key={p.id} className="text-sm mb-2 p-2 rounded bg-gray-50 border-l-4 border-blue-300">
                           <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{p.nome_completo}</p>
                           <p className="text-xs text-muted-foreground pl-6">Líder: {p.lider}</p>
+                          <p className="text-xs text-muted-foreground pl-6">Discipulado: {p.discipuladores}</p>
                         </li>
                       ))}
                     </ul>
@@ -188,6 +206,7 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
                         <li key={p.id} className="text-sm mb-2 p-2 rounded bg-gray-50 border-l-4 border-pink-300">
                           <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{p.nome_completo}</p>
                           <p className="text-xs text-muted-foreground pl-6">Líder: {p.lider}</p>
+                          <p className="text-xs text-muted-foreground pl-6">Discipulado: {p.discipuladores}</p>
                         </li>
                       ))}
                     </ul>
