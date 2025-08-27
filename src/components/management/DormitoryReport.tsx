@@ -2,8 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; // Importação correta
-import { BedDouble, User } from "lucide-react"; // Apenas ícones usados
+import { Badge } from "@/components/ui/badge";
+import { BedDouble, User } from "lucide-react";
 
 // Tipagem para os participantes
 interface Participant {
@@ -29,8 +29,9 @@ interface DormitoryReportProps {
 const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
   const [showReport, setShowReport] = useState(false);
 
-  // Define a estrutura e capacidade dos quartos conforme especificado
+  // Define a estrutura e capacidade dos quartos
   const getInitialRooms = (): Room[] => [
+    { nome: 'Capela', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 1', capacidade: 12, ocupantes: [] },
     { nome: 'Quarto 2', capacidade: 6, ocupantes: [] },
     { nome: 'Quarto 3', capacidade: 4, ocupantes: [] },
@@ -51,62 +52,61 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
       return { homensAlocados: [], mulheresAlocadas: [], homensNaoAlocados: [], mulheresNaoAlocadas: [] };
     }
 
-    // 1. Filtrar participantes (excluir cozinha)
     const participants = inscriptions.filter(p => p.irmao_voce_e !== 'Cozinha');
     const homens = participants.filter(p => p.sexo === 'masculino');
     const mulheres = participants.filter(p => p.sexo === 'feminino');
 
-    // Função de alocação
-    const alocarPessoas = (pessoas: Participant[], quartos: Room[]) => {
+    // Função de alocação aprimorada
+    const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {
+      const quartos = JSON.parse(JSON.stringify(quartosTemplate)); // Cópia profunda para evitar mutação
       const alocados = new Set<string>();
-      
-      // Agrupar por célula (líder)
-      const gruposPorCelula = pessoas.reduce((acc, p) => {
+
+      const alocarGrupo = (grupo: Participant[]) => {
+        // Tenta encontrar o quarto com o menor espaço livre que ainda comporte o grupo (Best-Fit)
+        let melhorQuarto: Room | null = null;
+        let menorEspacoLivre = Infinity;
+
+        for (const quarto of quartos) {
+          const espacoLivre = quarto.capacidade - quarto.ocupantes.length;
+          if (espacoLivre >= grupo.length && espacoLivre < menorEspacoLivre) {
+            melhorQuarto = quarto;
+            menorEspacoLivre = espacoLivre;
+          }
+        }
+
+        if (melhorQuarto) {
+          melhorQuarto.ocupantes.push(...grupo);
+          grupo.forEach(p => alocados.add(p.id));
+          return true;
+        }
+        return false;
+      };
+
+      // 1. Agrupar e alocar por Célula (Líder)
+      const gruposPorCelula = Object.values(pessoas.reduce((acc, p) => {
         if (!acc[p.lider]) acc[p.lider] = [];
         acc[p.lider].push(p);
         return acc;
-      }, {} as Record<string, Participant[]>);
-      
-      // Ordenar células por tamanho (maior para menor)
-      const celulasOrdenadas = Object.values(gruposPorCelula).sort((a, b) => b.length - a.length);
+      }, {} as Record<string, Participant[]>)).sort((a, b) => b.length - a.length);
 
-      // 1ª Prioridade: Alocar células inteiras
-      for (const celula of celulasOrdenadas) {
-        if (alocados.has(celula[0].id)) continue;
-
-        for (const quarto of quartos) {
-          if (quarto.capacidade - quarto.ocupantes.length >= celula.length) {
-            quarto.ocupantes.push(...celula);
-            celula.forEach(p => alocados.add(p.id));
-            break;
-          }
-        }
+      for (const celula of gruposPorCelula) {
+        alocarGrupo(celula);
       }
-
-      // 2ª Prioridade: Alocar por discipulado para preencher vagas
-      const pessoasNaoAlocadasAinda = pessoas.filter(p => !alocados.has(p.id));
-      const discipuladosOrdenados = Object.values(
-        pessoasNaoAlocadasAinda.reduce((acc, p) => {
+      
+      // 2. Agrupar e alocar por Discipulado os restantes
+      const restantesPorDiscipulado = Object.values(
+        pessoas.filter(p => !alocados.has(p.id)).reduce((acc, p) => {
           if (!acc[p.discipuladores]) acc[p.discipuladores] = [];
           acc[p.discipuladores].push(p);
           return acc;
         }, {} as Record<string, Participant[]>)
       ).sort((a, b) => b.length - a.length);
-      
-      for (const discipulado of discipuladosOrdenados) {
-        for (const pessoa of discipulado) {
-          if (alocados.has(pessoa.id)) continue;
-          for (const quarto of quartos) {
-            if (quarto.ocupantes.length < quarto.capacidade) {
-              quarto.ocupantes.push(pessoa);
-              alocados.add(pessoa.id);
-              break;
-            }
-          }
-        }
+
+      for (const discipulado of restantesPorDiscipulado) {
+        alocarGrupo(discipulado);
       }
 
-      // Alocar restantes em qualquer vaga
+      // 3. Alocar indivíduos restantes em qualquer vaga
       const restantes = pessoas.filter(p => !alocados.has(p.id));
       for (const pessoa of restantes) {
         for (const quarto of quartos) {
@@ -123,7 +123,7 @@ const DormitoryReport: React.FC<DormitoryReportProps> = ({ inscriptions }) => {
     };
 
     const { quartosAlocados: homensAlocados, naoAlocados: homensNaoAlocados } = alocarPessoas(homens, getInitialRooms());
-    const { quartosAlocados: mulheresAlocadas, naoAlocados: mulheresNaoAlocadas } = alocarPessoas(mulheres, getInitialRooms());
+    const { quartosAlocados: mulheresAlocadas, naoAlocados: mulheresNaoAlocados } = alocarPessoas(mulheres, getInitialRooms());
 
     return { homensAlocados, mulheresAlocadas, homensNaoAlocados, mulheresNaoAlocadas };
   }, [inscriptions, showReport]);
