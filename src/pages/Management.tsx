@@ -9,6 +9,8 @@ import InscriptionsTable from "@/components/management/InscriptionsTable";
 import Footer from "@/components/Footer";
 import { useManagementLogic } from "@/hooks/useManagementLogic";
 import DormitoryReport from "@/components/management/DormitoryReport";
+import { StatisticsCardsSkeleton } from "@/components/management/StatisticsCardsSkeleton";
+import { InscriptionsTableSkeleton } from "@/components/management/InscriptionsTableSkeleton";
 
 const Management = () => {
   const {
@@ -31,6 +33,7 @@ const Management = () => {
     userEmail,
     userDiscipulado,
     isAuthenticated,
+    isLoading,
     handleLogout,
     handleToggleRegistrations,
     getStatusBadge,
@@ -51,7 +54,7 @@ const Management = () => {
   }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) {
-    return null; // Renderiza nada enquanto redireciona para evitar piscar de conteúdo
+    return null; 
   }
 
   return (
@@ -83,28 +86,35 @@ const Management = () => {
           discipuladoGroupOptions={discipuladoGroupOptions}
         />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SituationStatistics 
-            situationCounts={situationCounts} 
-            totalInscriptions={filteredInscriptions.length} 
-            isRegistrationsOpen={isRegistrationsOpen}
-          />
-          <PaymentMethodStatistics paymentMethodCounts={paymentMethodCounts} />
-        </div>
+        {isLoading ? (
+          <StatisticsCardsSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SituationStatistics 
+              situationCounts={situationCounts} 
+              totalInscriptions={filteredInscriptions.length} 
+              isRegistrationsOpen={isRegistrationsOpen}
+            />
+            <PaymentMethodStatistics paymentMethodCounts={paymentMethodCounts} />
+          </div>
+        )}
 
-        {/* Relatório de Dormitórios (apenas para admin) */}
-        {userRole === "admin" && (
+        {userRole === "admin" && !isLoading && (
           <DormitoryReport inscriptions={inscriptions} />
         )}
 
-        <InscriptionsTable
-          filteredInscriptions={filteredInscriptions}
-          userRole={userRole}
-          userDiscipulado={userDiscipulado}
-          getStatusBadge={getStatusBadge}
-          handleDelete={handleDelete}
-          fetchInscriptions={fetchInscriptions}
-        />
+        {isLoading ? (
+          <InscriptionsTableSkeleton />
+        ) : (
+          <InscriptionsTable
+            filteredInscriptions={filteredInscriptions}
+            userRole={userRole}
+            userDiscipulado={userDiscipulado}
+            getStatusBadge={getStatusBadge}
+            handleDelete={handleDelete}
+            fetchInscriptions={fetchInscriptions}
+          />
+        )}
       </main>
       <Footer />
     </div>

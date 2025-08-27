@@ -1,5 +1,12 @@
 // src/config/rooms.ts
-import { Room } from '@/types/dormitory'; // Importa o tipo centralizado
+import { Inscription } from '@/types/supabase'; // Importe o tipo Inscription
+
+// A interface agora usa Inscription para os ocupantes
+export interface Room {
+  nome: string;
+  capacidade: number;
+  ocupantes: Inscription[];
+}
 
 // Estrutura dos quartos femininos (1 a 4), ordenada do maior para o menor
 export const getFemaleRooms = (): Room[] => [

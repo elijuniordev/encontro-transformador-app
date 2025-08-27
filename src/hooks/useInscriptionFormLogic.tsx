@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/config/options";
-import { useNavigate } from "react-router-dom";
+import { formatPhoneNumber } from "@/lib/utils"; // Importa a função da máscara
 
+// Define a interface para o estado do formulário localmente para uso no hook
 interface InscriptionFormData {
   discipuladores: string;
   lider: string;
@@ -22,7 +23,7 @@ interface InscriptionFormData {
   whatsappResponsavel3?: string;
 }
 
-const whatsappSchema = z.string().trim().regex(/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/, "Formato de WhatsApp inválido.");
+const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
 
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
@@ -37,11 +38,11 @@ const inscriptionSchema = z.object({
   lider: z.string().optional(),
   anjoGuarda: z.string().optional(),
   nomeResponsavel1: z.string().trim().optional(),
-  whatsappResponsavel1: whatsappSchema.optional(),
+  whatsappResponsavel1: whatsappSchema.optional().or(z.literal('')),
   nomeResponsavel2: z.string().trim().optional(),
-  whatsappResponsavel2: whatsappSchema.optional(),
+  whatsappResponsavel2: whatsappSchema.optional().or(z.literal('')),
   nomeResponsavel3: z.string().trim().optional(),
-  whatsappResponsavel3: whatsappSchema.optional(),
+  whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
 }).refine((data) => {
   if (data.situacao !== "Pastor, obreiro ou discipulador") {
     return !!data.discipuladores && !!data.lider;
@@ -62,7 +63,6 @@ const inscriptionSchema = z.object({
 
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "",
     lider: "",
@@ -75,6 +75,7 @@ export const useInscriptionFormLogic = () => {
   });
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const discipuladoresOptions = useMemo(() => DISCIPULADORES_OPTIONS.sort((a, b) => a.localeCompare(b, 'pt-BR')), []);
   const lideresMap = useMemo(() => LIDERES_MAP, []);
@@ -101,6 +102,12 @@ export const useInscriptionFormLogic = () => {
     fetchRegistrationStatus();
   }, []);
 
+  const handleChangeWithMask = (e: React.ChangeEvent<HTMLInputElement>, fieldName: keyof InscriptionFormData) => {
+    const { value } = e.target;
+    const maskedValue = formatPhoneNumber(value);
+    setFormData(prev => ({ ...prev, [fieldName]: maskedValue }));
+  };
+
   const resetForm = useCallback(() => {
     setFormData({
       discipuladores: "",
@@ -118,6 +125,7 @@ export const useInscriptionFormLogic = () => {
       nomeResponsavel3: "",
       whatsappResponsavel3: ""
     });
+    setIsSuccess(false);
   }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -134,7 +142,6 @@ export const useInscriptionFormLogic = () => {
       return;
     }
     
-    // Validação com Zod
     const parsedData = inscriptionSchema.safeParse(formData);
     if (!parsedData.success) {
       const firstError = parsedData.error.errors[0];
@@ -148,33 +155,18 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      // VALIDAÇÃO DE WHATSAPP DUPLICADO
       const { data: existingInscriptions, error: queryError } = await supabase
         .from('inscriptions')
         .select('whatsapp')
         .eq('whatsapp', formData.whatsapp);
 
       if (queryError) {
-        console.error("Erro ao verificar WhatsApp existente:", queryError);
-        toast({
-          title: "Erro na validação",
-          description: "Não foi possível verificar o WhatsApp. Tente novamente.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
+        throw new Error("Não foi possível verificar o WhatsApp. Tente novamente.");
       }
 
       if (existingInscriptions && existingInscriptions.length > 0) {
-        toast({
-          title: "Inscrição duplicada",
-          description: "Este número de WhatsApp já está cadastrado. Por favor, utilize outro ou entre em contato com a administração.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
+        throw new Error("Este número de WhatsApp já está cadastrado.");
       }
-      // FIM DA VALIDAÇÃO DE WHATSAPP DUPLICADO
 
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
       const inscriptionData = {
@@ -199,12 +191,10 @@ export const useInscriptionFormLogic = () => {
 
       const { error } = await supabase
         .from('inscriptions')
-        .insert([inscriptionData])
-        .select();
+        .insert([inscriptionData]);
 
       if (error) {
-        console.error('Erro ao inserir no Supabase:', error);
-        throw error;
+        throw new Error(error.message || "Ocorreu um erro ao registrar sua inscrição.");
       }
 
       toast({
@@ -212,19 +202,22 @@ export const useInscriptionFormLogic = () => {
         description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento.",
       });
 
-      resetForm();
+      setIsSuccess(true);
 
-    } catch (error) {
-      console.error('Erro completo:', error);
-      toast({
-        title: "Erro na inscrição",
-        description: "Ocorreu um erro ao processar sua inscrição. Tente novamente.",
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+        let errorMessage = "Ocorreu um erro inesperado.";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        toast({
+            title: "Erro na inscrição",
+            description: errorMessage,
+            variant: "destructive"
+        });
     } finally {
       setIsLoading(false);
     }
-  }, [formData, isRegistrationsOpen, toast, resetForm]);
+  }, [formData, isRegistrationsOpen, toast]);
 
   return {
     formData,
@@ -232,8 +225,11 @@ export const useInscriptionFormLogic = () => {
     handleSubmit,
     isRegistrationsOpen,
     isLoading,
+    isSuccess,
+    resetForm,
     discipuladoresOptions,
     filteredLideresOptions,
     situacaoOptions,
+    handleChangeWithMask,
   };
 };

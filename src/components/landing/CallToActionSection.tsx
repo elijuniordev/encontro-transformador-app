@@ -20,18 +20,17 @@ const CallToActionSection = ({ isRegistrationsOpen, handleWhatsappButtonClick }:
         <div className="space-y-5">
           {isRegistrationsOpen ? (
             <>
-              {/* NOVO: Aviso com a nova cor, mais informativo */}
               <Card className="bg-alert-info-background border border-alert-info-border shadow-md text-alert-info-foreground p-4 mb-6 mx-auto max-w-md">
                 <CardContent className="flex items-center gap-3 p-0">
                   <AlertTriangle className="h-6 w-6 flex-shrink-0" />
                   <p className="font-semibold text-base text-left">
-                    Ao clicar, o grupo do WhatsApp será aberto em uma nova aba. Por favor, <strong>retorne a esta página</strong> para continuar sua inscrição após entrar no grupo.
+                    É <strong>essencial</strong> entrar no grupo do WhatsApp para receber todas as informações importantes!
                   </p>
                 </CardContent>
               </Card>
 
               <p className="text-lg text-gray-700 mb-4">
-                Para receber todas as atualizações importantes, informações de logística e participar da nossa comunidade, é essencial que você entre no nosso grupo oficial do WhatsApp.
+                Clique no botão abaixo para entrar no grupo e, em seguida, preencha o formulário de inscrição.
               </p>
               
               <Link to="/inscription">
@@ -41,20 +40,9 @@ const CallToActionSection = ({ isRegistrationsOpen, handleWhatsappButtonClick }:
                   className="w-full max-w-md text-xl py-6 rounded-lg shadow-xl hover:scale-105 transition-transform duration-300"
                   onClick={handleWhatsappButtonClick}
                 >
-                  Entrar no Grupo WhatsApp
+                  Entrar no Grupo e Fazer Inscrição
                 </Button>
               </Link>
-
-              <div className="mt-8">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Já está no grupo ou prefere fazer a inscrição diretamente?
-                </p>
-                <Link to="/inscription">
-                  <Button variant="ghost" size="lg" className="w-full max-w-md text-base py-4 rounded-lg hover:bg-gray-100 transition-colors duration-300">
-                    Fazer minha inscrição agora
-                  </Button>
-                </Link>
-              </div>
             </>
           ) : (
             <Link to="/inscricoes-encerradas">

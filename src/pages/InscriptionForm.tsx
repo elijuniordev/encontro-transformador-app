@@ -1,40 +1,14 @@
 // src/pages/InscriptionForm.tsx
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Footer from "@/components/Footer";
-import { UserPlus, Send, AlertTriangle } from "lucide-react";
+import { UserPlus, Send, AlertTriangle, Users, Heart, Phone } from "lucide-react";
 import { useInscriptionFormLogic } from "@/hooks/useInscriptionFormLogic";
-
-// Componente para inputs de responsáveis
-interface ResponsavelInputProps {
-  index: 1 | 2 | 3;
-  valueNome?: string;
-  onChangeNome?: (val: string) => void;
-  valueWhats?: string;
-  onChangeWhats?: (val: string) => void;
-}
-
-const ResponsavelInput = ({ index, valueNome, onChangeNome, valueWhats, onChangeWhats }: ResponsavelInputProps) => (
-  <div className="space-y-2">
-    <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}:</Label>
-    <Input
-      id={`nomeResponsavel${index}`}
-      type="text"
-      value={valueNome || ""}
-      onChange={(e) => onChangeNome?.(e.target.value)}
-    />
-    <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp {index}:</Label>
-    <Input
-      id={`whatsappResponsavel${index}`}
-      type="tel"
-      value={valueWhats || ""}
-      onChange={(e) => onChangeWhats?.(e.target.value)}
-    />
-  </div>
-);
+import InscriptionSuccess from "@/components/InscriptionSuccess"; // Importe o componente de sucesso
+import { ChangeEvent } from "react";
 
 const InscriptionForm = () => {
   const {
@@ -43,10 +17,28 @@ const InscriptionForm = () => {
     handleSubmit,
     isRegistrationsOpen,
     isLoading,
+    isSuccess,
     discipuladoresOptions,
     filteredLideresOptions,
     situacaoOptions
   } = useInscriptionFormLogic();
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-peaceful flex flex-col">
+        <div className="flex-grow flex items-center justify-center p-4">
+          <div className="max-w-md mx-auto w-full">
+            <InscriptionSuccess />
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  function handleChangeWithMask(e: ChangeEvent<HTMLInputElement>, arg1: string): void {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <div className="min-h-screen bg-gradient-peaceful flex flex-col">
@@ -58,7 +50,7 @@ const InscriptionForm = () => {
                 <UserPlus className="h-8 w-8 text-primary" />
               </div>
               <CardTitle className="text-3xl font-bold text-primary">Formulário de Inscrição</CardTitle>
-              <p className="text-muted-foreground">Encontro com Deus - 29 a 31 de Agosto</p>
+              <CardDescription>Encontro com Deus - 29 a 31 de Agosto</CardDescription>
             </CardHeader>
             <CardContent>
               {!isRegistrationsOpen ? (
@@ -66,196 +58,142 @@ const InscriptionForm = () => {
                   <AlertTriangle className="h-12 w-12 mb-4" />
                   <h3 className="text-2xl font-bold mb-2">Inscrições Encerradas!</h3>
                   <p className="text-center">As inscrições para o Encontro com Deus estão encerradas no momento.</p>
-                  <p className="text-center mt-2">Fique atento para futuras oportunidades!</p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Situação */}
-                  <div className="space-y-2">
-                    <Label htmlFor="situacao">Irmão, você é: *</Label>
-                    <Select value={formData.situacao} onValueChange={(value) => setFormData({
-                      ...formData,
-                      situacao: value,
-                      anjoGuarda: (value === 'Equipe' || value === 'Cozinha' || value === 'Acompanhante' || value === 'Pastor, obreiro ou discipulador') ? value : ''
-                    })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione sua situação" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {situacaoOptions.map((situacao) => (
-                          <SelectItem key={situacao} value={situacao}>{situacao}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-xl"><Heart className="h-5 w-5" />Informações Pessoais</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Situação, Nome, Sexo, Idade, WhatsApp */}
+                       <div className="space-y-2">
+                            <Label htmlFor="situacao">Irmão, você é: *</Label>
+                            <Select value={formData.situacao} onValueChange={(value) => setFormData({
+                              ...formData,
+                              situacao: value,
+                              anjoGuarda: (value === 'Equipe' || value === 'Cozinha' || value === 'Acompanhante' || value === 'Pastor, obreiro ou discipulador') ? value : ''
+                            })}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione sua situação" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {situacaoOptions.map((situacao) => (
+                                  <SelectItem key={situacao} value={situacao}>{situacao}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                        </div>
+                        {formData.situacao === 'Acompanhante' && (
+                            <p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
+                            <strong>Aviso:</strong> A opção de Acompanhante é para quem vai servir como equipe pela primeira vez.
+                            </p>
+                        )}
+                        <div className="space-y-2">
+                            <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
+                            <Input id="nomeCompleto" type="text" value={formData.nomeCompleto} onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })} placeholder="Digite seu nome completo"/>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="sexo">Sexo: *</Label>
+                                <Select value={formData.sexo} onValueChange={(value) => setFormData({ ...formData, sexo: value })}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="masculino">Masculino</SelectItem>
+                                        <SelectItem value="feminino">Feminino</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="idade">Idade: *</Label>
+                                <Input id="idade" type="number" value={formData.idade} onChange={(e) => setFormData({ ...formData, idade: e.target.value })} placeholder="Sua idade" min="1" max="120"/>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="whatsapp">Compartilhe seu WhatsApp: *</Label>
+                            <Input
+                              id="whatsapp"
+                              type="tel"
+                              value={formData.whatsapp}
+                              onChange={(e) => handleChangeWithMask(e, 'whatsapp')} // <-- APLICADO AQUI
+                              placeholder="(11) 99999-9999"
+                              maxLength={15} // Limita o tamanho do campo
+                            />
+                        </div>
+                    </CardContent>
+                  </Card>
 
-                  {formData.situacao === 'Acompanhante' && (
-                    <p className="text-sm text-muted-foreground bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
-                      <strong>Aviso:</strong> A opção de Acompanhante é para quem vai servir como equipe pela primeira vez.
-                    </p>
+                  {formData.situacao !== "Pastor, obreiro ou discipulador" && (
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-xl"><Users className="h-5 w-5" />Sua Liderança na Igreja</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {formData.situacao === 'Encontrista' && (
+                                <div className="space-y-2">
+                                <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
+                                <Input id="anjoGuarda" type="text" value={formData.anjoGuarda} onChange={(e) => setFormData({ ...formData, anjoGuarda: e.target.value })} placeholder="Nome da pessoa que te convidou" />
+                                </div>
+                            )}
+                             <div className="space-y-2">
+                                <Label htmlFor="discipuladores">Seus discipuladores, são: *</Label>
+                                <Select value={formData.discipuladores} onValueChange={(value) => setFormData({ ...formData, discipuladores: value, lider: "" })}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione seus discipuladores" /></SelectTrigger>
+                                    <SelectContent>
+                                        {discipuladoresOptions.map((discipulador) => (<SelectItem key={discipulador} value={discipulador}>{discipulador}</SelectItem>))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lider">Seu líder é: *</Label>
+                                <Select value={formData.lider} onValueChange={(value) => setFormData({ ...formData, lider: value })} disabled={!formData.discipuladores}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione seu líder" /></SelectTrigger>
+                                    <SelectContent>
+                                        {filteredLideresOptions?.map((lider) => (<SelectItem key={lider} value={lider}>{lider}</SelectItem>))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </CardContent>
+                     </Card>
                   )}
 
-                  {/* Nome completo */}
-                  <div className="space-y-2">
-                    <Label htmlFor="nomeCompleto">Seu nome completo: *</Label>
-                    <Input
-                      id="nomeCompleto"
-                      type="text"
-                      value={formData.nomeCompleto}
-                      onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
-                      placeholder="Digite seu nome completo"
-                    />
-                  </div>
-
-                  {/* Anjo da guarda */}
-                  {formData.situacao === 'Encontrista' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="anjoGuarda">Quem é seu Anjo da Guarda (Pessoa que te convidou)?</Label>
-                      <Input
-                        id="anjoGuarda"
-                        type="text"
-                        value={formData.anjoGuarda}
-                        onChange={(e) => setFormData({ ...formData, anjoGuarda: e.target.value })}
-                        placeholder="Nome da pessoa que te convidou"
-                      />
-                    </div>
-                  )}
-
-                  {/* Discipuladores e líderes */}
-                  {!(formData.situacao === "Pastor, obreiro ou discipulador") && (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="discipuladores">Seus discipuladores, são: *</Label>
-                        <Select value={formData.discipuladores} onValueChange={(value) => setFormData({ ...formData, discipuladores: value, lider: "" })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione seus discipuladores" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {discipuladoresOptions.map((discipulador) => (
-                              <SelectItem key={discipulador} value={discipulador}>
-                                {discipulador}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lider">Seu líder é: *</Label>
-                        <Select value={formData.lider} onValueChange={(value) => setFormData({ ...formData, lider: value })} disabled={!formData.discipuladores}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione seu líder" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {filteredLideresOptions?.map((lider) => (
-                              <SelectItem key={lider} value={lider}>
-                                {lider}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Sexo e idade */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="sexo">Sexo: *</Label>
-                      <Select value={formData.sexo} onValueChange={(value) => setFormData({ ...formData, sexo: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="masculino">Masculino</SelectItem>
-                          <SelectItem value="feminino">Feminino</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="idade">Idade: *</Label>
-                      <Input
-                        id="idade"
-                        type="number"
-                        value={formData.idade}
-                        onChange={(e) => setFormData({ ...formData, idade: e.target.value })}
-                        placeholder="Sua idade"
-                        min="1"
-                        max="120"
-                      />
-                    </div>
-                  </div>
-
-                  {/* WhatsApp */}
-                  <div className="space-y-2">
-                    <Label htmlFor="whatsapp">Compartilhe seu WhatsApp: *</Label>
-                    <Input
-                      id="whatsapp"
-                      type="tel"
-                      value={formData.whatsapp}
-                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                      placeholder="(11) 99999-9999"
-                    />
-                  </div>
-
-                  {/* Responsável principal (Obrigatório) */}
                   {formData.situacao === "Encontrista" && (
-                    <div className="bg-accent/30 p-6 rounded-lg space-y-6">
-                      <h3 className="text-lg font-semibold text-primary">Contato de Responsável Principal *</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Este contato é obrigatório e deve ser de familiares, para caso seja necessário acionar.
-                      </p>
-                      <ResponsavelInput
-                        index={1}
-                        valueNome={formData.nomeResponsavel1}
-                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel1: val })}
-                        valueWhats={formData.whatsappResponsavel1}
-                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel1: val })}
-                      />
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-xl"><Phone className="h-5 w-5" />Contatos de Emergência</CardTitle>
+                            <CardDescription>Informe pelo menos um contato de familiar para emergências.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {/* Responsáveis */}
+                            <div className="space-y-2">
+                                <Label htmlFor="nomeResponsavel1">Responsável 1: *</Label>
+                                <Input id="nomeResponsavel1" type="text" value={formData.nomeResponsavel1 || ""} onChange={(e) => setFormData({ ...formData, nomeResponsavel1: e.target.value })} />
+                                <Label htmlFor="whatsappResponsavel1">WhatsApp 1: *</Label>
+                                <Input id="whatsappResponsavel1" type="tel" value={formData.whatsappResponsavel1 || ""} onChange={(e) => handleChangeWithMask(e, 'whatsappResponsavel1')} maxLength={15} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="nomeResponsavel2">Responsável 2:</Label>
+                                <Input id="nomeResponsavel2" type="text" value={formData.nomeResponsavel2 || ""} onChange={(e) => setFormData({ ...formData, nomeResponsavel2: e.target.value })} />
+                                <Label htmlFor="whatsappResponsavel2">WhatsApp 2:</Label>
+                                <Input id="whatsappResponsavel2" type="tel" value={formData.whatsappResponsavel2 || ""} onChange={(e) => handleChangeWithMask(e, 'whatsappResponsavel2')} maxLength={15} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="nomeResponsavel3">Responsável 3:</Label>
+                                <Input id="nomeResponsavel3" type="text" value={formData.nomeResponsavel3 || ""} onChange={(e) => setFormData({ ...formData, nomeResponsavel3: e.target.value })} />
+                                <Label htmlFor="whatsappResponsavel3">WhatsApp 3:</Label>
+                                <Input id="whatsappResponsavel3" type="tel" value={formData.whatsappResponsavel3 || ""} onChange={(e) => handleChangeWithMask(e, 'whatsappResponsavel3')} maxLength={15} />
+                            </div>
+                        </CardContent>
+                    </Card>
                   )}
 
-                  {/* Responsáveis adicionais (Opcional) */}
-                  {formData.situacao === "Encontrista" && (
-                    <div className="bg-accent/30 p-6 rounded-lg space-y-4 mt-4">
-                      <h3 className="text-lg font-semibold text-primary">Responsáveis Adicionais (opcionais)</h3>
-                      <ResponsavelInput
-                        index={2}
-                        valueNome={formData.nomeResponsavel2}
-                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel2: val })}
-                        valueWhats={formData.whatsappResponsavel2}
-                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel2: val })}
-                      />
-                      <ResponsavelInput
-                        index={3}
-                        valueNome={formData.nomeResponsavel3}
-                        onChangeNome={(val) => setFormData({ ...formData, nomeResponsavel3: val })}
-                        valueWhats={formData.whatsappResponsavel3}
-                        onChangeWhats={(val) => setFormData({ ...formData, whatsappResponsavel3: val })}
-                      />
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Estes contatos são opcionais e servem como adicionais caso o responsável principal não esteja disponível.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Lembrete PIX */}
-                  <div className="flex items-start bg-red-100 border-l-4 border-red-600 p-4 rounded-lg shadow-md">
-                    <svg
-                      className="w-6 h-6 text-red-600 mr-3 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  {/* Lembrete de Pagamento */}
+                  <div className="!mt-8 flex items-start bg-red-100 border-l-4 border-red-600 p-4 rounded-lg shadow-md">
+                    <AlertTriangle className="w-8 h-8 text-red-600 mr-3 flex-shrink-0" />
                     <p className="text-sm text-red-800">
-                      <strong>Atenção:</strong> Após a inscrição, realize o pagamento via <strong>PIX</strong> no valor de <strong>R$200,00</strong>.  
-                      Use a chave: <strong>videiraosascoencontro@gmail.com</strong> e envie o comprovante para o WhatsApp do discipulador/líder que você cadastrou ou para a pessoa que te convidou.
+                      <strong>Atenção:</strong> Após a inscrição, realize o pagamento via <strong>PIX</strong> no valor de <strong>R$200,00</strong>. Use a chave: <strong>videiraosascoencontro@gmail.com</strong> e envie o comprovante para seu líder/discipulador.
                     </p>
                   </div>
-
 
                   <Button type="submit" className="w-full" variant="divine" size="lg" disabled={isLoading}>
                     {isLoading ? "Enviando..." : <><Send className="mr-2 h-4 w-4" /> Enviar Inscrição</>}

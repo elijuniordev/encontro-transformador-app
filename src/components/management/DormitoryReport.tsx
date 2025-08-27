@@ -7,7 +7,7 @@ import { BedDouble, Download, User } from "lucide-react";
 import { generatePdfFromElement } from '@/lib/pdfGenerator';
 import { useDormitoryReportLogic } from '@/hooks/useDormitoryReportLogic';
 import DormitoryCard from './DormitoryCard';
-import { Participant } from '@/types/dormitory'; // Importa o tipo centralizado
+import { Inscription as Participant } from '@/types/supabase'; // Renomeia Inscription para Participant para manter a compatibilidade no código
 
 interface DormitoryReportProps {
   inscriptions: Participant[];

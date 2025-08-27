@@ -3,7 +3,14 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User } from "lucide-react";
-import { Participant, Room } from '@/types/dormitory'; // Importa os tipos centralizados
+import { Inscription } from '@/types/supabase'; // Importe o tipo centralizado
+
+// Definindo o tipo para um quarto, que contém uma lista de Inscription
+interface Room {
+  nome: string;
+  capacidade: number;
+  ocupantes: Inscription[];
+}
 
 interface DormitoryCardProps {
   quarto: Room;
@@ -20,7 +27,7 @@ const DormitoryCard: React.FC<DormitoryCardProps> = ({ quarto, borderColorClass 
     </CardHeader>
     <CardContent className="flex-grow">
       <ul>
-        {quarto.ocupantes.map((p: Participant) => ( // Garante a tipagem aqui
+        {quarto.ocupantes.map((p) => (
           <li key={p.id} className={`text-sm mb-2 p-2 rounded bg-gray-50 border-l-4 ${borderColorClass}`}>
             <p className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{p.nome_completo}</p>
             <p className="text-xs text-muted-foreground pl-6">Líder: {p.lider || 'N/A'}</p>

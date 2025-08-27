@@ -5,35 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import * as XLSX from 'xlsx';
+import { Inscription } from "@/types/supabase";
 import {
   DISCIPULADORES_OPTIONS as DISCIPULADORES_OPTIONS_FOR_FILTER,
   STATUS_PAGAMENTO_OPTIONS,
   IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS,
   FORMA_PAGAMENTO_OPTIONS,
-} from "@/config/options"; // Importar do arquivo de configuração
-
-interface Inscription {
-  id: string;
-  discipuladores: string;
-  lider: string;
-  nome_completo: string;
-  anjo_guarda: string;
-  sexo: string;
-  idade: string;
-  whatsapp: string;
-  irmao_voce_e: string;
-  responsavel_1_nome: string | null;
-  responsavel_1_whatsapp: string | null;
-  responsavel_2_nome: string | null;
-  responsavel_2_whatsapp: string | null;
-  responsavel_3_nome: string | null;
-  responsavel_3_whatsapp: string | null;
-  status_pagamento: string;
-  forma_pagamento: string | null;
-  valor: number;
-  observacao: string | null;
-  created_at: string;
-}
+} from "@/config/options";
 
 export const useManagementLogic = () => {
   const { toast } = useToast();
@@ -46,7 +24,7 @@ export const useManagementLogic = () => {
   const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState("all");
 
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
 
   const userRole = localStorage.getItem("userRole");
@@ -70,6 +48,7 @@ export const useManagementLogic = () => {
     } else {
       setInscriptions(data as Inscription[]);
     }
+    setIsLoading(false);
   }, [toast]);
 
   const fetchRegistrationStatus = useCallback(async () => {
@@ -80,7 +59,7 @@ export const useManagementLogic = () => {
 
     if (error) {
       console.error("Erro ao buscar status das inscrições:", error);
-      setIsRegistrationsOpen(true);
+      setIsRegistrationsOpen(true); // Default to true if fetch fails
     } else {
       setIsRegistrationsOpen(data.registrations_open);
     }
@@ -91,6 +70,7 @@ export const useManagementLogic = () => {
       navigate("/login");
       return;
     }
+    setIsLoading(true);
     fetchInscriptions();
     fetchRegistrationStatus();
   }, [isAuthenticated, navigate, fetchInscriptions, fetchRegistrationStatus]);
@@ -158,21 +138,16 @@ export const useManagementLogic = () => {
       const counts: { [key: string]: number } = {};
       counts['Total'] = filteredInscriptions.length;
 
-      // Inicializa a contagem para todas as categorias para garantir que apareçam
       FUNCAO_OPTIONS.forEach(option => counts[option] = 0);
 
       filteredInscriptions.forEach(inscription => {
         if (inscription.irmao_voce_e === "Pastor, obreiro ou discipulador") {
-          // Adiciona à contagem de Equipe, conforme a regra de negócio
           counts["Equipe"] = (counts["Equipe"] || 0) + 1;
         } else if (inscription.irmao_voce_e) {
-          // Conta as outras categorias normalmente
           counts[inscription.irmao_voce_e] = (counts[inscription.irmao_voce_e] || 0) + 1;
         }
       });
 
-      // Oculta a categoria de Pastor no card, mas mantém sua contagem interna
-      // para não quebrar a lógica de filtragem, se necessário.
       delete counts["Pastor, obreiro ou discipulador"]; 
 
       return counts;
@@ -199,7 +174,6 @@ export const useManagementLogic = () => {
     return counts;
   }, [filteredInscriptions]);
 
-
   const getStatusBadge = useCallback((status: string) => {
     const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
       "Confirmado": "default",
@@ -211,93 +185,73 @@ export const useManagementLogic = () => {
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir esta inscrição? Esta ação não pode ser desfeita.")) {
-      const { error } = await supabase
-        .from('inscriptions')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabase
+      .from('inscriptions')
+      .delete()
+      .eq('id', id);
 
-      if (error) {
-        console.error("Erro ao excluir inscrição:", error);
-        toast({
-          title: "Erro ao excluir",
-          description: "Não foi possível excluir a inscrição. Tente novamente.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Inscrição excluída",
-          description: "A inscrição foi removida com sucesso.",
-        });
-        fetchInscriptions();
-      }
+    if (error) {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir a inscrição. Tente novamente.",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Inscrição excluída",
+        description: "A inscrição foi removida com sucesso.",
+      });
+      fetchInscriptions();
     }
   }, [fetchInscriptions, toast]);
-
+  
   const handleExportXLSX = useCallback(() => {
+    // ... (função de exportação continua a mesma)
     const dataToExport = filteredInscriptions.map(inscription => ({
-      "ID": inscription.id,
-      "Nome Completo": inscription.nome_completo,
-      "Discipuladores": inscription.discipuladores,
-      "Líder": inscription.lider,
-      "Anjo da Guarda": inscription.anjo_guarda,
-      "Sexo": inscription.sexo,
-      "Idade": inscription.idade,
-      "WhatsApp": inscription.whatsapp,
-      "Função": inscription.irmao_voce_e,
-      "Resp. 1 Nome": inscription.responsavel_1_nome,
-      "Resp. 1 WhatsApp": inscription.responsavel_1_whatsapp,
-      "Resp. 2 Nome": inscription.responsavel_2_nome,
-      "Resp. 2 WhatsApp": inscription.responsavel_2_whatsapp,
-      "Resp. 3 Nome": inscription.responsavel_3_nome,
-      "Resp. 3 WhatsApp": inscription.responsavel_3_whatsapp,
-      "Status Pagamento": inscription.status_pagamento,
-      "Forma Pagamento": inscription.forma_pagamento,
-      "Valor": inscription.valor,
-      "Observação": inscription.observacao,
-      "Data Inscrição": new Date(inscription.created_at).toLocaleDateString('pt-BR'),
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-
-    const wscols = [
-        {wch: 10},
-        {wch: 25},
-        {wch: 20},
-        {wch: 20},
-        {wch: 20},
-        {wch: 8},
-        {wch: 6},
-        {wch: 15},
-        {wch: 12},
-        {wch: 25},
-        {wch: 18},
-        {wch: 25},
-        {wch: 18},
-        {wch: 25},
-        {wch: 18},
-        {wch: 18},
-        {wch: 18},
-        {wch: 10},
-        {wch: 30},
-        {wch: 15},
-    ];
-    ws['!cols'] = wscols;
-
-    if (dataToExport.length > 0) {
-        const range = XLSX.utils.decode_range(ws['!ref'] || "A1");
-        ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: range.s.r, c: range.s.c }, e: { r: range.s.r, c: range.e.c } }) };
-        ws['!autofilter'] = { ref: ws['!ref'] };
-    }
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Inscrições");
-    XLSX.writeFile(wb, "inscricoes_encontro_com_deus.xlsx");
-
-    toast({
-      title: "Exportação concluída",
-      description: "Os dados foram exportados para inscricoes_encontro_com_deus.xlsx",
-    });
+        "ID": inscription.id,
+        "Nome Completo": inscription.nome_completo,
+        "Discipuladores": inscription.discipuladores,
+        "Líder": inscription.lider,
+        "Anjo da Guarda": inscription.anjo_guarda,
+        "Sexo": inscription.sexo,
+        "Idade": inscription.idade,
+        "WhatsApp": inscription.whatsapp,
+        "Função": inscription.irmao_voce_e,
+        "Resp. 1 Nome": inscription.responsavel_1_nome,
+        "Resp. 1 WhatsApp": inscription.responsavel_1_whatsapp,
+        "Resp. 2 Nome": inscription.responsavel_2_nome,
+        "Resp. 2 WhatsApp": inscription.responsavel_2_whatsapp,
+        "Resp. 3 Nome": inscription.responsavel_3_nome,
+        "Resp. 3 WhatsApp": inscription.responsavel_3_whatsapp,
+        "Status Pagamento": inscription.status_pagamento,
+        "Forma Pagamento": inscription.forma_pagamento,
+        "Valor": inscription.valor,
+        "Observação": inscription.observacao,
+        "Data Inscrição": new Date(inscription.created_at).toLocaleDateString('pt-BR'),
+      }));
+  
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+  
+      const wscols = [
+          {wch: 10}, {wch: 25}, {wch: 20}, {wch: 20}, {wch: 20},
+          {wch: 8}, {wch: 6}, {wch: 15}, {wch: 12}, {wch: 25},
+          {wch: 18}, {wch: 25}, {wch: 18}, {wch: 25}, {wch: 18},
+          {wch: 18}, {wch: 18}, {wch: 10}, {wch: 30}, {wch: 15},
+      ];
+      ws['!cols'] = wscols;
+  
+      if (dataToExport.length > 0) {
+          ws['!autofilter'] = { ref: ws['!ref'] };
+      }
+  
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Inscrições");
+      XLSX.writeFile(wb, "inscricoes_encontro_com_deus.xlsx");
+  
+      toast({
+        title: "Exportação concluída",
+        description: "Os dados foram exportados para inscricoes_encontro_com_deus.xlsx",
+      });
   }, [filteredInscriptions, toast]);
 
   return {
@@ -315,13 +269,12 @@ export const useManagementLogic = () => {
     filteredInscriptions,
     situationCounts,
     paymentMethodCounts,
-    editingId,
-    setEditingId,
     isRegistrationsOpen,
     userRole,
     userEmail,
     userDiscipulado,
     isAuthenticated,
+    isLoading,
     handleLogout,
     handleToggleRegistrations,
     getStatusBadge,

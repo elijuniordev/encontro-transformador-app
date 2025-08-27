@@ -1,7 +1,10 @@
 // src/hooks/useDormitoryReportLogic.ts
 import { useMemo } from 'react';
-import { getFemaleRooms, getMaleRooms } from '@/config/rooms';
-import { Participant, Room } from '@/types/dormitory'; // Importa os tipos centralizados
+import { getFemaleRooms, getMaleRooms, Room } from '@/config/rooms'; // Importa Room de rooms.ts
+import { Inscription } from '@/types/supabase'; // Importa o tipo centralizado
+
+// O tipo Participant agora é um alias para Inscription
+type Participant = Inscription;
 
 // Algoritmo de alocação de pessoas (sem alterações aqui)
 const alocarPessoas = (pessoas: Participant[], quartosTemplate: Room[]) => {

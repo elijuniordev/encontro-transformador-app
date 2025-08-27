@@ -1,11 +1,9 @@
 // src/hooks/useLandingPageLogic.tsx
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export const useLandingPageLogic = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
 
@@ -13,21 +11,18 @@ export const useLandingPageLogic = () => {
   const whatsappGroupLink = "https://chat.whatsapp.com/KAh5AivWP9O9jUpeKd7q1O"; // SEU LINK DO GRUPO WHATSAPP AQUI
 
   const handleWhatsappButtonClick = useCallback(() => {
-    // 1. Abre o link do WhatsApp em uma nova aba/janela IMEDIATAMENTE (síncrono com o clique)
+    // 1. Abre o link do WhatsApp em uma nova aba
     window.open(whatsappGroupLink, '_blank');
     
-    // 2. Exibir o toast IMEDIATAMENTE (também síncrono com o clique)
+    // 2. Exibe o toast informativo
     toast({
-      title: "Atenção Importante!",
-      description: "O grupo do WhatsApp foi aberto em uma nova aba. Volte a esta página para continuar sua inscrição.",
-      duration: 8000, // Toast visível por 8 segundos
-      variant: "destructive", // Cores chamativas
+      title: "Grupo do WhatsApp aberto!",
+      description: "Volte a esta página para preencher o formulário de inscrição e garantir sua vaga.",
+      duration: 8000, 
+      variant: "default", 
     });
-
-    // 3. Redirecionar a aba ATUAL IMEDIATAMENTE (NÃO há mais atraso)
-    navigate('/whatsapp-confirmation'); 
-
-  }, [navigate, whatsappGroupLink, toast]);
+    // 3. O redirecionamento para o formulário será feito pelo <Link> no componente.
+  }, [whatsappGroupLink, toast]);
 
   useEffect(() => {
     const fetchRegistrationStatus = async () => {
