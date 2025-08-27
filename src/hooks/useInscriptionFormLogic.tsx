@@ -1,3 +1,4 @@
+// src/hooks/useInscriptionFormLogic.tsx
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -5,7 +6,6 @@ import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/config/options";
 import { formatPhoneNumber } from "@/lib/utils";
 
-// A interface para o estado do formulário, permitindo chaves de string
 interface InscriptionFormData {
   [key: string]: string | undefined;
   discipuladores: string;
@@ -24,7 +24,6 @@ interface InscriptionFormData {
   whatsappResponsavel3?: string;
 }
 
-// Schema de validação com Zod
 const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
@@ -65,20 +64,9 @@ const inscriptionSchema = z.object({
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<InscriptionFormData>({
-    discipuladores: "",
-    lider: "",
-    nomeCompleto: "",
-    anjoGuarda: "",
-    sexo: "",
-    idade: "",
-    whatsapp: "",
-    situacao: "",
-    nomeResponsavel1: "",
-    whatsappResponsavel1: "",
-    nomeResponsavel2: "",
-    whatsappResponsavel2: "",
-    nomeResponsavel3: "",
-    whatsappResponsavel3: "",
+    discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
+    idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
+    nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
   });
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,11 +82,7 @@ export const useInscriptionFormLogic = () => {
 
   useEffect(() => {
     const fetchRegistrationStatus = async () => {
-      const { data, error } = await supabase
-        .from('event_settings')
-        .select('registrations_open')
-        .single();
-
+      const { data, error } = await supabase.from('event_settings').select('registrations_open').single();
       if (error) {
         console.error("Erro ao buscar status das inscrições:", error);
         setIsRegistrationsOpen(false);
@@ -109,35 +93,25 @@ export const useInscriptionFormLogic = () => {
     fetchRegistrationStatus();
   }, []);
 
-  // Manipulador de eventos unificado para todos os inputs
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    
-    // Aplica a máscara condicionalmente se o campo for de WhatsApp
-    if (id.toLowerCase().includes('whatsapp')) {
-      const maskedValue = formatPhoneNumber(value);
-      setFormData(prev => ({ ...prev, [id]: maskedValue }));
-    } else {
-      setFormData(prev => ({ ...prev, [id]: value }));
+  // <<< CORREÇÃO APLICADA AQUI >>>
+  const handleInputChange = (field: string, value: string) => {
+    const fieldsToUppercase = ['nomeCompleto', 'anjoGuarda', 'nomeResponsavel1', 'nomeResponsavel2', 'nomeResponsavel3'];
+    let processedValue = value;
+
+    if (field.toLowerCase().includes('whatsapp')) {
+      processedValue = formatPhoneNumber(value);
+    } else if (fieldsToUppercase.includes(field)) {
+      processedValue = value.toUpperCase();
     }
+    
+    setFormData(prev => ({ ...prev, [field]: processedValue }));
   };
 
   const resetForm = useCallback(() => {
     setFormData({
-      discipuladores: "",
-      lider: "",
-      nomeCompleto: "",
-      anjoGuarda: "",
-      sexo: "",
-      idade: "",
-      whatsapp: "",
-      situacao: "",
-      nomeResponsavel1: "",
-      whatsappResponsavel1: "",
-      nomeResponsavel2: "",
-      whatsappResponsavel2: "",
-      nomeResponsavel3: "",
-      whatsappResponsavel3: ""
+      discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
+      idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
+      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
     });
     setIsSuccess(false);
   }, []);
@@ -147,43 +121,24 @@ export const useInscriptionFormLogic = () => {
     setIsLoading(true);
 
     if (!isRegistrationsOpen) {
-      toast({
-        title: "Inscrições Encerradas",
-        description: "As inscrições para o Encontro com Deus estão encerradas no momento.",
-        variant: "destructive"
-      });
+      toast({ title: "Inscrições Encerradas", description: "As inscrições para o Encontro com Deus estão encerradas no momento.", variant: "destructive" });
       setIsLoading(false);
       return;
     }
     
     const parsedData = inscriptionSchema.safeParse(formData);
     if (!parsedData.success) {
-      const firstError = parsedData.error.errors[0];
-      toast({
-        title: "Erro de validação",
-        description: firstError.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro de validação", description: parsedData.error.errors[0].message, variant: "destructive" });
       setIsLoading(false);
       return;
     }
 
     try {
-      const { data: existingInscriptions, error: queryError } = await supabase
-        .from('inscriptions')
-        .select('whatsapp')
-        .eq('whatsapp', formData.whatsapp);
-
-      if (queryError) {
-        throw new Error("Não foi possível verificar o WhatsApp. Tente novamente.");
-      }
-
-      if (existingInscriptions && existingInscriptions.length > 0) {
-        throw new Error("Este número de WhatsApp já está cadastrado.");
-      }
+      const { data: existing } = await supabase.from('inscriptions').select('whatsapp').eq('whatsapp', formData.whatsapp);
+      if (existing && existing.length > 0) throw new Error("Este número de WhatsApp já está cadastrado.");
 
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-      const inscriptionData = {
+      const { error } = await supabase.from('inscriptions').insert([{
         nome_completo: formData.nomeCompleto,
         anjo_guarda: isPastorObreiro ? formData.nomeCompleto : (formData.anjoGuarda || null),
         sexo: formData.sexo,
@@ -201,49 +156,23 @@ export const useInscriptionFormLogic = () => {
         status_pagamento: formData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
         forma_pagamento: formData.situacao === "Cozinha" ? 'Isento' : null,
         valor: 200.00
-      };
+      }]);
 
-      const { error } = await supabase
-        .from('inscriptions')
-        .insert([inscriptionData]);
+      if (error) throw new Error(error.message);
 
-      if (error) {
-        throw new Error(error.message || "Ocorreu um erro ao registrar sua inscrição.");
-      }
-
-      toast({
-        title: "Inscrição realizada com sucesso!",
-        description: "Sua inscrição foi registrada. Aguarde a confirmação do pagamento.",
-      });
-
+      toast({ title: "Inscrição realizada com sucesso!", description: "Sua inscrição foi registrada." });
       setIsSuccess(true);
 
     } catch (error: unknown) {
-        let errorMessage = "Ocorreu um erro inesperado.";
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        }
-        toast({
-            title: "Erro na inscrição",
-            description: errorMessage,
-            variant: "destructive"
-        });
+        toast({ title: "Erro na inscrição", description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   }, [formData, isRegistrationsOpen, toast]);
 
   return {
-    formData,
-    setFormData,
-    handleSubmit,
-    isRegistrationsOpen,
-    isLoading,
-    isSuccess,
-    resetForm,
-    discipuladoresOptions,
-    filteredLideresOptions,
-    situacaoOptions,
-    handleChange,
+    formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading,
+    isSuccess, resetForm, discipuladoresOptions, filteredLideresOptions,
+    situacaoOptions, handleInputChange,
   };
 };
