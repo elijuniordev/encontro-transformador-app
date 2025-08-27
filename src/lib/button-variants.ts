@@ -1,39 +1,32 @@
-// src/lib/pdfGenerator.ts
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// src/lib/button-variants.ts
+import { cva } from "class-variance-authority";
 
-/**
- * Gera um PDF a partir de um array de elementos HTML, colocando cada um em uma nova página.
- * @param elements Array de elementos HTML a serem convertidos.
- * @param fileName O nome do arquivo PDF a ser salvo.
- */
-export const generatePdfFromElements = async (elements: HTMLElement[], fileName: string) => {
-  const pdf = new jsPDF('p', 'mm', 'a4'); // Retrato, milímetros, A4
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-  const margin = 10; // Margem de 10mm
-
-  for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
-    if (!element) continue;
-
-    const canvas = await html2canvas(element, {
-      scale: 2, // Aumenta a escala para melhor qualidade
-      useCORS: true,
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const imgWidth = pdfWidth - margin * 2;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    // Adiciona uma nova página para cada elemento a partir do segundo
-    if (i > 0) {
-      pdf.addPage();
-    }
-    
-    // Adiciona a imagem ao PDF, centralizada com margens
-    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+export const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+        divine: "bg-gradient-divine text-white font-bold shadow-lg hover:shadow-xl transition-shadow",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
   }
-  
-  pdf.save(fileName);
-};
+);
