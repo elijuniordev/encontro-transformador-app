@@ -6,24 +6,28 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// ADICIONE ESTA FUNÇÃO
+// SUBSTITUA A FUNÇÃO ANTIGA POR ESTA VERSÃO CORRIGIDA
 export function formatPhoneNumber(value: string): string {
+  // Se o valor for nulo ou indefinido, retorne uma string vazia
   if (!value) return "";
-  
-  // Remove tudo que não é dígito
+
+  // 1. Remove tudo que não é dígito
   const digitsOnly = value.replace(/\D/g, "");
 
-  // Aplica a máscara (XX) XXXXX-XXXX
-  let maskedValue = "";
-  if (digitsOnly.length > 0) {
-    maskedValue = `(${digitsOnly.slice(0, 2)}`;
+  // 2. Limita a 11 dígitos (máximo para celular com DDD)
+  const clippedValue = digitsOnly.slice(0, 11);
+
+  // 3. Aplica a máscara de forma progressiva
+  if (clippedValue.length <= 2) {
+    // Retorna (XX
+    return `(${clippedValue}`;
   }
-  if (digitsOnly.length > 2) {
-    maskedValue = `${maskedValue}) ${digitsOnly.slice(2, 7)}`;
-  }
-  if (digitsOnly.length > 7) {
-    maskedValue = `${maskedValue}-${digitsOnly.slice(7, 11)}`;
+  
+  if (clippedValue.length <= 7) {
+    // Retorna (XX) XXXXX
+    return `(${clippedValue.slice(0, 2)}) ${clippedValue.slice(2)}`;
   }
 
-  return maskedValue;
+  // Retorna (XX) XXXXX-XXXX
+  return `(${clippedValue.slice(0, 2)}) ${clippedValue.slice(2, 7)}-${clippedValue.slice(7)}`;
 }
