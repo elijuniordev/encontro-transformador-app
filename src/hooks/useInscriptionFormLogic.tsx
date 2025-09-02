@@ -25,6 +25,8 @@ interface InscriptionFormData {
 }
 
 const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
+
+// <<< INÍCIO DA CORREÇÃO 1: AJUSTE NA VALIDAÇÃO >>>
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
   nomeCompleto: z.string().trim().min(3, "O nome completo é obrigatório."),
@@ -44,12 +46,13 @@ const inscriptionSchema = z.object({
   nomeResponsavel3: z.string().trim().optional(),
   whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
 }).refine((data) => {
-  if (data.situacao !== "Pastor, obreiro ou discipulador") {
+  // A validação de discipulador/líder agora só se aplica a 'Equipe' e 'Acompanhante'
+  if (['Equipe', 'Acompanhante'].includes(data.situacao)) {
     return !!data.discipuladores && !!data.lider;
   }
   return true;
 }, {
-  message: "Discipulador e Líder são obrigatórios para esta situação.",
+  message: "Discipulador e Líder são obrigatórios para Equipe e Acompanhantes.",
   path: ['discipuladores'],
 }).refine((data) => {
   if (data.situacao === "Encontrista") {
@@ -60,6 +63,7 @@ const inscriptionSchema = z.object({
   message: "Para encontristas, o nome e WhatsApp do primeiro responsável são obrigatórios.",
   path: ['nomeResponsavel1'],
 });
+// <<< FIM DA CORREÇÃO 1 >>>
 
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
@@ -105,7 +109,7 @@ export const useInscriptionFormLogic = () => {
     setFormData({
       discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
       idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
-      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
+      nomeResponsavel2: "", whatsappResponsual2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
     });
     setIsSuccess(false);
   }, []);
@@ -120,17 +124,13 @@ export const useInscriptionFormLogic = () => {
       return;
     }
     
-    // <<< INÍCIO DA CORREÇÃO >>>
-    // Cria uma cópia dos dados do formulário para processamento
     const processedData = { ...formData };
 
-    // Converte os campos de texto para maiúsculas ANTES da validação e do envio
     processedData.nomeCompleto = processedData.nomeCompleto?.toUpperCase();
     processedData.anjoGuarda = processedData.anjoGuarda?.toUpperCase();
     processedData.nomeResponsavel1 = processedData.nomeResponsavel1?.toUpperCase();
     processedData.nomeResponsavel2 = processedData.nomeResponsavel2?.toUpperCase();
     processedData.nomeResponsavel3 = processedData.nomeResponsavel3?.toUpperCase();
-    // <<< FIM DA CORREÇÃO >>>
 
     const parsedData = inscriptionSchema.safeParse(processedData);
     if (!parsedData.success) {
@@ -140,29 +140,34 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      const { data: existing } = await supabase.from('inscriptions').select('whatsapp').eq('whatsapp', processedData.whatsapp);
-      if (existing && existing.length > 0) throw new Error("Este número de WhatsApp já está cadastrado.");
+      // <<< INÍCIO DA CORREÇÃO 2: REMOÇÃO DA VERIFICAÇÃO DE WHATSAPP >>>
+      // const { data: existing } = await supabase.from('inscriptions').select('whatsapp').eq('whatsapp', processedData.whatsapp);
+      // if (existing && existing.length > 0) throw new Error("Este número de WhatsApp já está cadastrado.");
+      // <<< FIM DA CORREÇÃO 2 >>>
 
-      const isPastorObreiro = processedData.situacao === "Pastor, obreiro ou discipulador";
-      const { error } = await supabase.from('inscriptions').insert([{
+      const isEncontrista = processedData.situacao === "Encontrista";
+      
+      const inscriptionData = {
         nome_completo: processedData.nomeCompleto,
-        anjo_guarda: isPastorObreiro ? processedData.nomeCompleto : (processedData.anjoGuarda || null),
+        anjo_guarda: isEncontrista ? (processedData.anjoGuarda || processedData.nomeCompleto) : processedData.nomeCompleto,
         sexo: processedData.sexo,
         idade: processedData.idade,
         whatsapp: processedData.whatsapp,
-        discipuladores: isPastorObreiro ? processedData.nomeCompleto : (processedData.discipuladores || null),
-        lider: isPastorObreiro ? processedData.nomeCompleto : (processedData.lider || null),
+        discipuladores: processedData.situacao === "Pastor, obreiro ou discipulador" ? processedData.nomeCompleto : (processedData.discipuladores || null),
+        lider: processedData.situacao === "Pastor, obreiro ou discipulador" ? processedData.nomeCompleto : (processedData.lider || null),
         irmao_voce_e: processedData.situacao,
         responsavel_1_nome: processedData.nomeResponsavel1 || null,
         responsavel_1_whatsapp: processedData.whatsappResponsavel1 || null,
-        responsavel_2_nome: processedData.nomeResponsavel2 || null,
+        responsavel_2_nome: processedData.nomeResponsual2 || null,
         responsavel_2_whatsapp: processedData.whatsappResponsavel2 || null,
         responsavel_3_nome: processedData.nomeResponsavel3 || null,
         responsavel_3_whatsapp: processedData.whatsappResponsavel3 || null,
         status_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
         forma_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : null,
         valor: 200.00
-      }]);
+      };
+
+      const { error } = await supabase.from('inscriptions').insert([inscriptionData]);
 
       if (error) throw new Error(error.message);
 
