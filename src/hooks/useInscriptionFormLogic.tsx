@@ -140,11 +140,6 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      // <<< INÍCIO DA CORREÇÃO 2: REMOÇÃO DA VERIFICAÇÃO DE WHATSAPP >>>
-      // const { data: existing } = await supabase.from('inscriptions').select('whatsapp').eq('whatsapp', processedData.whatsapp);
-      // if (existing && existing.length > 0) throw new Error("Este número de WhatsApp já está cadastrado.");
-      // <<< FIM DA CORREÇÃO 2 >>>
-
       const isEncontrista = processedData.situacao === "Encontrista";
       
       const inscriptionData = {
