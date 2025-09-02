@@ -97,7 +97,7 @@ const InscriptionForm = () => {
                       <div>
                         <h4 className="font-bold text-lg">Atenção Responsáveis!</h4>
                         <p className="text-sm mt-1">
-                          Ao inscrever uma criança, você concorda que a organização do evento **não se responsabiliza** por incidentes que possam ocorrer no local (sítio), incluindo, mas não se limitando a, picadas de insetos ou contato com animais.
+                          Ao inscrever uma criança, você concorda que a organização do evento <strong>não se responsabiliza</strong> por incidentes que possam ocorrer no local (sítio), incluindo, mas não se limitando a, picadas de insetos ou contato com animais.
                         </p>
                       </div>
                     </div>
