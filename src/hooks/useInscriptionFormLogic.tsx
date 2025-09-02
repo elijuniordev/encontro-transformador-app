@@ -45,6 +45,7 @@ const inscriptionSchema = z.object({
   nomeResponsavel3: z.string().trim().optional(),
   whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
 }).refine((data) => {
+  // Validação de discipulador/líder só se aplica a 'Equipe' e 'Acompanhante'
   if (['Equipe', 'Acompanhante'].includes(data.situacao)) {
     return !!data.discipuladores && !!data.lider;
   }
@@ -155,8 +156,6 @@ export const useInscriptionFormLogic = () => {
         responsavel_3_nome: processedData.nomeResponsavel3 || null,
         responsavel_3_whatsapp: processedData.whatsappResponsavel3 || null,
         status_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
-        // <<< CORREÇÃO APLICADA AQUI >>>
-        // Se a situação for "Cozinha", a forma de pagamento é nula, não "Isento".
         forma_pagamento: processedData.situacao === "Cozinha" ? null : null,
         valor: 200.00
       };
