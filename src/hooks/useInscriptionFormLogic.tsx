@@ -26,7 +26,6 @@ interface InscriptionFormData {
 
 const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
 
-// <<< INÍCIO DA CORREÇÃO 1: AJUSTE NA VALIDAÇÃO >>>
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
   nomeCompleto: z.string().trim().min(3, "O nome completo é obrigatório."),
@@ -46,7 +45,6 @@ const inscriptionSchema = z.object({
   nomeResponsavel3: z.string().trim().optional(),
   whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
 }).refine((data) => {
-  // A validação de discipulador/líder agora só se aplica a 'Equipe' e 'Acompanhante'
   if (['Equipe', 'Acompanhante'].includes(data.situacao)) {
     return !!data.discipuladores && !!data.lider;
   }
@@ -63,7 +61,6 @@ const inscriptionSchema = z.object({
   message: "Para encontristas, o nome e WhatsApp do primeiro responsável são obrigatórios.",
   path: ['nomeResponsavel1'],
 });
-// <<< FIM DA CORREÇÃO 1 >>>
 
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
@@ -109,7 +106,9 @@ export const useInscriptionFormLogic = () => {
     setFormData({
       discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
       idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
-      nomeResponsavel2: "", whatsappResponsual2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
+      // <<< CORREÇÃO APLICADA AQUI >>>
+      nomeResponsavel2: "", whatsappResponsavel2: "",
+      nomeResponsavel3: "", whatsappResponsavel3: "",
     });
     setIsSuccess(false);
   }, []);
@@ -153,7 +152,8 @@ export const useInscriptionFormLogic = () => {
         irmao_voce_e: processedData.situacao,
         responsavel_1_nome: processedData.nomeResponsavel1 || null,
         responsavel_1_whatsapp: processedData.whatsappResponsavel1 || null,
-        responsavel_2_nome: processedData.nomeResponsual2 || null,
+        // <<< CORREÇÃO APLICADA AQUI >>>
+        responsavel_2_nome: processedData.nomeResponsavel2 || null,
         responsavel_2_whatsapp: processedData.whatsappResponsavel2 || null,
         responsavel_3_nome: processedData.nomeResponsavel3 || null,
         responsavel_3_whatsapp: processedData.whatsappResponsavel3 || null,
