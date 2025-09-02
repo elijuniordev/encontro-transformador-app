@@ -17,6 +17,7 @@ export const IRMAO_VOCE_E_OPTIONS = [
   "Equipe",
   "Acompanhante",
   "Cozinha",
+  "Criança",
   "Pastor, obreiro ou discipulador"
 ];
 
