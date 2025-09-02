@@ -194,8 +194,8 @@ const InscriptionForm = () => {
                         value={formData.idade}
                         onChange={(e) => setFormData({ ...formData, idade: e.target.value })}
                         placeholder="Sua idade"
-                        min="1"
-                        max="120"
+                        min="0"
+                        max="100"
                       />
                     </div>
                   </div>

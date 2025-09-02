@@ -32,8 +32,8 @@ const inscriptionSchema = z.object({
   sexo: z.string().nonempty("Por favor, selecione o sexo."),
   idade: z.string().nonempty("A idade é obrigatória.").refine((val) => {
     const idadeNum = parseInt(val, 10);
-    return !isNaN(idadeNum) && idadeNum >= 12 && idadeNum <= 100;
-  }, "Idade inválida (entre 12 e 100 anos)."),
+    return !isNaN(idadeNum) && idadeNum >= 0 && idadeNum <= 100;
+  }, "Idade inválida (entre 0 e 100 anos)."),
   whatsapp: whatsappSchema.nonempty("O WhatsApp é obrigatório."),
   discipuladores: z.string().optional(),
   lider: z.string().optional(),
