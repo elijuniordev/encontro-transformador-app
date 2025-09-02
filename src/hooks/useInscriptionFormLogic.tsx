@@ -106,9 +106,7 @@ export const useInscriptionFormLogic = () => {
     setFormData({
       discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
       idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
-      // <<< CORREÇÃO APLICADA AQUI >>>
-      nomeResponsavel2: "", whatsappResponsavel2: "",
-      nomeResponsavel3: "", whatsappResponsavel3: "",
+      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
     });
     setIsSuccess(false);
   }, []);
@@ -152,13 +150,14 @@ export const useInscriptionFormLogic = () => {
         irmao_voce_e: processedData.situacao,
         responsavel_1_nome: processedData.nomeResponsavel1 || null,
         responsavel_1_whatsapp: processedData.whatsappResponsavel1 || null,
-        // <<< CORREÇÃO APLICADA AQUI >>>
         responsavel_2_nome: processedData.nomeResponsavel2 || null,
         responsavel_2_whatsapp: processedData.whatsappResponsavel2 || null,
         responsavel_3_nome: processedData.nomeResponsavel3 || null,
         responsavel_3_whatsapp: processedData.whatsappResponsavel3 || null,
         status_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
-        forma_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : null,
+        // <<< CORREÇÃO APLICADA AQUI >>>
+        // Se a situação for "Cozinha", a forma de pagamento é nula, não "Isento".
+        forma_pagamento: processedData.situacao === "Cozinha" ? null : null,
         valor: 200.00
       };
 
