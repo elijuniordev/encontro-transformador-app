@@ -6,7 +6,7 @@ import { useManagementFilters } from "./useManagementFilters";
 import { useInscriptionsExporter } from "./useInscriptionsExporter";
 import { Badge, BadgeProps } from "@/components/ui/badge";
 import { calculateFinancialSummary, calculateSituationCounts } from '@/lib/statistics';
-import { normalizeText } from '@/lib/utils'; // Importação adicionada
+import { normalizeText } from '@/lib/utils';
 
 export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
   const { userEmail, userRole, userDiscipulado, isAuthenticated, handleLogout } = useAuthManagement();
@@ -29,7 +29,7 @@ export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
     filters,
     setFilters,
     filterOptions,
-  } = useManagementFilters(); // Argumentos removidos
+  } = useManagementFilters();
   
   const filteredInscriptions = useMemo(() => {
     return inscriptions.filter(i => {
