@@ -6,37 +6,35 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Footer from "@/components/Footer";
 import { UserPlus, Send, AlertTriangle, Users, Heart, Phone } from "lucide-react";
-import { useInscriptionFormLogic } from "@/hooks/useInscriptionFormLogic";
+import { useInscriptionFormLogic, InscriptionFormData } from "@/hooks/useInscriptionFormLogic";
 import InscriptionSuccess from "@/components/InscriptionSuccess";
-import { InscriptionFormData } from "@/hooks/useInscriptionFormLogic"; // Importando o tipo
 
-// Interface para o componente de Responsável
+// <<< CORREÇÃO: TIPAGEM CORRETA PARA AS PROPS >>>
 interface ResponsavelInputProps {
   index: 1 | 2 | 3;
   formData: InscriptionFormData;
   handleInputChange: (field: string, value: string) => void;
 }
 
-// Componente para inputs de responsáveis
 const ResponsavelInput = ({ index, formData, handleInputChange }: ResponsavelInputProps) => (
-  <div className="space-y-2">
-    <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}: {index === 1 && '*'}</Label>
-    <Input
-      id={`nomeResponsavel${index}`}
-      type="text"
-      value={formData[`nomeResponsavel${index}`] || ""}
-      onChange={(e) => handleInputChange(e.target.id, e.target.value)}
-    />
-    <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp Responsável {index}: {index === 1 && '*'}</Label>
-    <Input
-      id={`whatsappResponsavel${index}`}
-      type="tel"
-      value={formData[`whatsappResponsavel${index}`] || ""}
-      onChange={(e) => handleInputChange(e.target.id, e.target.value)}
-      maxLength={15}
-      placeholder="(XX) XXXXX-XXXX"
-    />
-  </div>
+    <div className="space-y-2">
+        <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}: {index === 1 && '*'}</Label>
+        <Input
+            id={`nomeResponsavel${index}`}
+            type="text"
+            value={formData[`nomeResponsavel${index}`] || ""}
+            onChange={(e) => handleInputChange(e.target.id, e.target.value)}
+        />
+        <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp Responsável {index}: {index === 1 && '*'}</Label>
+        <Input
+            id={`whatsappResponsavel${index}`}
+            type="tel"
+            value={formData[`whatsappResponsavel${index}`] || ""}
+            onChange={(e) => handleInputChange(e.target.id, e.target.value)}
+            maxLength={15}
+            placeholder="(XX) XXXXX-XXXX"
+        />
+    </div>
 );
 
 const InscriptionForm = () => {

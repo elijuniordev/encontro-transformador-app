@@ -7,6 +7,7 @@ import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/con
 import { useNavigate } from "react-router-dom";
 import { formatPhoneNumber } from "@/lib/utils";
 
+// <<< CORREÇÃO: EXPORTANDO A INTERFACE >>>
 export interface InscriptionFormData {
   [key: string]: string | undefined;
   discipuladores: string;
@@ -122,8 +123,10 @@ export const useInscriptionFormLogic = () => {
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
       const isStaff = ["Cozinha"].includes(formData.situacao);
       const isChild = formData.situacao === 'Criança';
+      const isEncontrista = formData.situacao === 'Encontrista';
 
-      const calculateValue = () => {
+      // <<< CORREÇÃO: GARANTINDO O RETORNO DE UM NÚMERO >>>
+      const calculateValue = (): number => {
         if (isChild) {
             const age = parseInt(formData.idade || '0', 10);
             if (age <= 2) return 0.00;
@@ -136,12 +139,12 @@ export const useInscriptionFormLogic = () => {
       
       const inscriptionData = {
         nome_completo: formData.nomeCompleto.toUpperCase(),
-        anjo_guarda: isPastorObreiro || isStaff || isChild ? formData.nomeCompleto.toUpperCase() : (formData.anjoGuarda?.toUpperCase() || null),
+        anjo_guarda: isEncontrista ? (formData.anjoGuarda?.toUpperCase() || null) : formData.nomeCompleto.toUpperCase(),
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
-        discipuladores: isPastorObreiro || isStaff ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
-        lider: isPastorObreiro || isStaff ? formData.nomeCompleto.toUpperCase() : formData.lider,
+        discipuladores: (isPastorObreiro || isStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
+        lider: (isPastorObreiro || isStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
         irmao_voce_e: formData.situacao,
         responsavel_1_nome: formData.nomeResponsavel1?.toUpperCase() || null,
         responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
@@ -149,7 +152,7 @@ export const useInscriptionFormLogic = () => {
         responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
         responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
-        status_pagamento: isStaff || (isChild && finalValue === 0) ? 'Isento' : 'Pendente',
+        status_pagamento: (isStaff || (isChild && finalValue === 0)) ? 'Isento' : 'Pendente',
         forma_pagamento: null,
         valor: finalValue
       };
@@ -160,7 +163,7 @@ export const useInscriptionFormLogic = () => {
       toast({ title: "Inscrição realizada com sucesso!", description: "Sua inscrição foi registrada." });
       setIsSuccess(true);
 
-    } catch (error: unknown) {
+    } catch (error: unknown) { // <<< CORREÇÃO: any PARA unknown >>>
       let errorMessage = "Ocorreu um erro inesperado.";
       if (error instanceof Error) {
         errorMessage = error.message;
@@ -169,6 +172,7 @@ export const useInscriptionFormLogic = () => {
     } finally {
       setIsLoading(false);
     }
+  // <<< CORREÇÃO: REMOVENDO DEPENDÊNCIAS DESNECESSÁRIAS >>>
   }, [formData, isRegistrationsOpen, toast]);
 
   return {
