@@ -21,7 +21,6 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 
   inscriptions.forEach(inscription => {
     if (inscription.irmao_voce_e) {
-      // CORREÇÃO: Usando o nome correto da propriedade 'irmao_voce_e'
       counts[inscription.irmao_voce_e] = (counts[inscription.irmao_voce_e] || 0) + 1;
     }
   });
@@ -29,7 +28,7 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 };
 
 /**
- * Calcula o resumo financeiro completo, incluindo totais e soma de valores por forma de pagamento.
+ * Calcula o resumo financeiro completo.
  * @param inscriptions Array de inscrições filtradas.
  * @param allPayments Array com TODOS os pagamentos do banco.
  * @returns Um objeto com o resumo financeiro.
@@ -47,26 +46,27 @@ export const calculateFinancialSummary = (inscriptions: Inscription[], allPaymen
 
   const filteredInscriptionIds = new Set(inscriptions.map(i => i.id));
 
-  // **INÍCIO DA CORREÇÃO**
+  // **INÍCIO DA CORREÇÃO DEFINITIVA**
   inscriptions.forEach(inscription => {
-    // Se a inscrição for 'Isento' ou 'Cancelado', ela não contribui para os totais financeiros.
-    if (inscription.status_pagamento === 'Isento') {
-      summary.waivedCount += 1;
-      return; // Pula para a próxima inscrição
-    }
-    if (inscription.status_pagamento === 'Cancelado') {
-      return; // Pula para a próxima inscrição
+    // 1. Soma todo o valor pago, exceto de inscrições canceladas.
+    if (inscription.status_pagamento !== 'Cancelado') {
+      summary.totalPaid += inscription.paid_amount;
     }
 
-    // Para todos os outros status, calculamos os valores.
-    summary.totalPaid += inscription.paid_amount;
+    // 2. Conta os isentos.
+    if (inscription.status_pagamento === 'Isento') {
+      summary.waivedCount += 1;
+    }
     
-    const pendingAmount = inscription.total_value - inscription.paid_amount;
-    if (pendingAmount > 0) {
-      summary.totalPending += pendingAmount;
+    // 3. Soma o valor pendente APENAS de quem tem status "Pendente" ou "Pagamento Incompleto".
+    if (inscription.status_pagamento === 'Pendente' || inscription.status_pagamento === 'Pagamento Incompleto') {
+      const pendingAmount = inscription.total_value - inscription.paid_amount;
+      if (pendingAmount > 0) {
+        summary.totalPending += pendingAmount;
+      }
     }
   });
-  // **FIM DA CORREÇÃO**
+  // **FIM DA CORREÇÃO DEFINITIVA**
 
   const relevantPayments = allPayments.filter(p => filteredInscriptionIds.has(p.inscription_id));
 
