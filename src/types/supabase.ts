@@ -1,35 +1,44 @@
 // src/types/supabase.ts
 
 export type Inscription = {
-    anjo_guarda: string;
-    created_at: string;
-    discipuladores: string;
-    forma_pagamento: string | null;
-    id: string;
-    idade: string;
-    irmao_voce_e: string;
-    lider: string;
-    nome_completo: string;
-    observacao: string | null;
-    responsavel_1_nome: string | null;
-    responsavel_1_whatsapp: string | null;
-    responsavel_2_nome: string | null;
-    responsavel_2_whatsapp: string | null;
-    responsavel_3_nome: string | null;
-    responsavel_3_whatsapp: string | null;
-    // REMOVA a linha abaixo
-    // sexo: string;
-    // ADICIONE a linha abaixo
-    sexo: 'masculino' | 'feminino';
-    status_pagamento: string;
-    updated_at: string;
-    valor: number;
-    whatsapp: string;
-    acompanhante_nome?: string | null; // Adicionado para consistência
-    acompanhante_parentesco?: string | null; // Adicionado para consistência
+  id: string;
+  created_at: string;
+  updated_at: string;
+  nome_completo: string;
+  sexo: 'masculino' | 'feminino';
+  idade: string;
+  whatsapp: string;
+  irmao_voce_e: string;
+  discipuladores: string;
+  lider: string;
+  anjo_guarda: string;
+  responsavel_1_nome: string | null;
+  responsavel_1_whatsapp: string | null;
+  responsavel_2_nome: string | null;
+  responsavel_2_whatsapp: string | null;
+  responsavel_3_nome: string | null;
+  responsavel_3_whatsapp: string | null;
+  observacao: string | null;
+  
+  // Campos de pagamento atualizados
+  status_pagamento: string; // Ex: Pendente, Parcial, Confirmado
+  total_value: number;      // Renomeado de 'valor'
+  paid_amount: number;      // Novo campo para o total pago
+  
+  acompanhante_nome?: string | null;
+  acompanhante_parentesco?: string | null;
 };
 
-// ... o resto do arquivo permanece o mesmo
+// Novo tipo para a tabela 'payments'
+export type Payment = {
+  id: string;
+  inscription_id: string;
+  amount: number;
+  payment_method: string;
+  created_at: string;
+};
+
+// ... o resto dos tipos permanece o mesmo
 export type User = {
     created_at: string;
     discipulado: string | null;

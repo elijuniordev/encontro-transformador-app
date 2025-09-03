@@ -1,94 +1,80 @@
 // src/components/management/DesktopInscriptionRow.tsx
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Inscription } from "@/types/supabase";
-import { FORMA_PAGAMENTO_OPTIONS, STATUS_PAGAMENTO_OPTIONS } from "@/config/options";
-import { TableRowActions } from "./table/TableRowActions";
-import { EmergencyContactsDialog } from "./table/EmergencyContactsDialog";
+import { TableRowActions } from "./table/TableRowActions"; // Ações foram extraídas
+import { useState } from "react";
+import { Input } from "../ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface DesktopInscriptionRowProps {
   inscription: Inscription;
   getStatusBadge: (status: string) => JSX.Element;
-  editingId: string | null;
-  editData: Partial<Inscription>;
-  handleEdit: (inscription: Inscription) => void;
-  handleSaveEdit: () => void;
-  setEditingId: (id: string | null) => void;
-  setEditData: (data: Partial<Inscription>) => void;
   handleDelete: (id: string) => void;
+  onOpenPaymentModal: () => void;
 }
 
 export const DesktopInscriptionRow = ({
   inscription,
   getStatusBadge,
-  editingId,
-  editData,
-  handleEdit,
-  handleSaveEdit,
-  setEditingId,
-  setEditData,
   handleDelete,
+  onOpenPaymentModal,
 }: DesktopInscriptionRowProps) => {
-  const isEditing = editingId === inscription.id;
+    const { toast } = useToast();
+    const [isEditingObs, setIsEditingObs] = useState(false);
+    const [obsText, setObsText] = useState(inscription.observacao || '');
+
+    const handleSaveObs = async () => {
+        const { error } = await supabase.from('inscriptions').update({ observacao: obsText }).eq('id', inscription.id);
+        if(error) {
+            toast({ title: "Erro ao salvar observação.", variant: "destructive" });
+        } else {
+            toast({ title: "Observação salva!" });
+            inscription.observacao = obsText; // Atualiza localmente para evitar refetch
+        }
+        setIsEditingObs(false);
+    }
 
   return (
-    <TableRow className={isEditing ? "bg-accent" : ""}>
+    <TableRow>
       <TableCell className="font-medium text-sm">{inscription.nome_completo}</TableCell>
       <TableCell className="text-sm">{inscription.discipuladores}</TableCell>
-      <TableCell className="text-sm">{inscription.lider}</TableCell>
-      <TableCell className="text-sm">{inscription.anjo_guarda || "-"}</TableCell>
       <TableCell className="text-sm">{inscription.whatsapp}</TableCell>
       <TableCell className="text-sm">{inscription.irmao_voce_e}</TableCell>
+      
+      {/* Nova célula de Pagamento */}
       <TableCell>
-        {isEditing ? (
-          <Select
-            value={editData.status_pagamento || ''}
-            onValueChange={(value) => {
-              const newData: Partial<Inscription> = { ...editData, status_pagamento: value };
-              if (['Pendente', 'Cancelado', 'Isento'].includes(value)) {
-                newData.forma_pagamento = null;
-              }
-              setEditData(newData);
-            }}
-          >
-            <SelectTrigger className="w-[110px] text-xs sm:text-sm"><SelectValue /></SelectTrigger>
-            <SelectContent>{STATUS_PAGAMENTO_OPTIONS.map(option => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-          </Select>
-        ) : getStatusBadge(inscription.status_pagamento)}
+        <Button variant="ghost" onClick={onOpenPaymentModal} className="h-auto p-1 text-left flex flex-col items-start">
+          <span className="font-semibold">
+            R$ {inscription.paid_amount.toFixed(2)} / R$ {inscription.total_value.toFixed(2)}
+          </span>
+          {getStatusBadge(inscription.status_pagamento)}
+        </Button>
       </TableCell>
+      
+      {/* Célula de Observação Editável */}
       <TableCell>
-        {isEditing ? (
-          <Select
-            value={editData.forma_pagamento || ''}
-            onValueChange={(value) => setEditData({ ...editData, forma_pagamento: value })}
-            disabled={['Pendente', 'Cancelado', 'Isento'].includes(editData.status_pagamento || '')}
-          >
-            <SelectTrigger className="w-[100px] text-xs sm:text-sm"><SelectValue placeholder="N/A" /></SelectTrigger>
-            <SelectContent>{FORMA_PAGAMENTO_OPTIONS.map(option => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-          </Select>
-        ) : (inscription.forma_pagamento || "-")}
+        {isEditingObs ? (
+            <div className="flex gap-1">
+                <Input value={obsText} onChange={e => setObsText(e.target.value)} className="text-xs h-8"/>
+                <Button size="sm" onClick={handleSaveObs} className="text-xs">Salvar</Button>
+                <Button size="sm" variant="outline" onClick={() => setIsEditingObs(false)} className="text-xs">X</Button>
+            </div>
+        ) : (
+            <div onClick={() => setIsEditingObs(true)} className="min-h-8 cursor-pointer">
+                {inscription.observacao || "-"}
+            </div>
+        )}
       </TableCell>
-      <TableCell>
-        {isEditing ? (
-          <Input type="number" value={editData.valor !== undefined ? String(editData.valor) : ''} onChange={(e) => setEditData({ ...editData, valor: Number(e.target.value) })} className="w-20 text-xs sm:text-sm" />
-        ) : (`R$ ${inscription.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)}
-      </TableCell>
-      <TableCell>
-        <EmergencyContactsDialog inscription={inscription} />
-      </TableCell>
-      <TableCell>
-        {isEditing ? (
-          <Input value={editData.observacao || ''} onChange={(e) => setEditData({ ...editData, observacao: e.target.value })} className="w-32 text-xs sm:text-sm" placeholder="Observação..." />
-        ) : (inscription.observacao || "-")}
-      </TableCell>
+      
       <TableCell>
         <TableRowActions
           inscription={inscription}
-          isEditing={isEditing}
-          onEdit={() => handleEdit(inscription)}
-          onSave={handleSaveEdit}
-          onCancel={() => setEditingId(null)}
+          isEditing={false} // A edição inline foi removida
+          onEdit={() => {}} // A edição agora é via modal
+          onSave={() => {}}
+          onCancel={() => {}}
           onDelete={handleDelete}
         />
       </TableCell>
