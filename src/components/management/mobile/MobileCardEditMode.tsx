@@ -11,7 +11,7 @@ interface MobileCardEditModeProps {
   setEditData: (data: Partial<Inscription>) => void;
   handleSaveEdit: () => void;
   setEditingId: (id: string | null) => void;
-  handleDelete: (id: string) => void; // Pass down for actions
+  handleDelete: (id: string) => void;
 }
 
 export const MobileCardEditMode = ({
@@ -59,8 +59,8 @@ export const MobileCardEditMode = ({
       </Select>
       <Input
         type="number"
-        value={editData.valor !== undefined ? String(editData.valor) : ''}
-        onChange={(e) => setEditData({ ...editData, valor: Number(e.target.value) })}
+        value={editData.total_value !== undefined ? String(editData.total_value) : ''} // <-- CORREÇÃO AQUI
+        onChange={(e) => setEditData({ ...editData, total_value: Number(e.target.value) })} // <-- CORREÇÃO AQUI
         className="w-full text-sm"
         placeholder="Valor"
       />
@@ -73,7 +73,7 @@ export const MobileCardEditMode = ({
       <MobileCardActions
         inscription={inscription}
         isEditing={true}
-        onEdit={() => {}} // Not used in edit mode
+        onEdit={() => {}}
         onSave={handleSaveEdit}
         onCancel={() => setEditingId(null)}
         onDelete={handleDelete}

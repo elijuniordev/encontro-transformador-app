@@ -6,11 +6,10 @@ import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS, PARENTESCO_O
 import { useNavigate } from "react-router-dom";
 import { formatPhoneNumber } from "@/lib/utils";
 import { eventDetails } from "@/config/eventDetails";
-import { InscriptionFormData } from "@/types/forms"; // Importa o tipo centralizado
+import { InscriptionFormData } from "@/types/forms";
 import { inscriptionSchema } from "@/lib/validations/inscriptionSchema";
 import { ZodError } from "zod";
 
-// A definição local de ValidationErrors permanece, pois só é usada aqui.
 type ValidationErrors = {
   [key: string]: string | undefined;
 };
@@ -32,7 +31,7 @@ export const useInscriptionFormLogic = () => {
   const lideresMap = useMemo(() => LIDERES_MAP, []);
   const situacaoOptions = useMemo(() => IRMAO_VOCE_E_OPTIONS, []);
   const parentescoOptions = useMemo(() => PARENTESCO_OPTIONS, []);
-  const filteredLideresOptions = useMemo(() => formData.discipuladores ? lideresMap[formData.discipuladores] : [], [formData.discipuladores, lideresMap]);
+  const filteredLideresOptions = useMemo(() => formData.discipuladores ? lideresMap[formData.discipuladores as keyof typeof lideresMap] : [], [formData.discipuladores, lideresMap]);
 
   useEffect(() => {
     const fetchRegistrationStatus = async () => {
@@ -63,7 +62,6 @@ export const useInscriptionFormLogic = () => {
     setIsSuccess(false);
   }, []);
 
-  // CORREÇÃO: Envolve validateForm em useCallback
   const validateForm = useCallback(() => {
     try {
       inscriptionSchema.parse(formData);
@@ -101,20 +99,27 @@ export const useInscriptionFormLogic = () => {
 
     try {
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-      const isStaff = ["Cozinha"].includes(formData.situacao);
+      const isStaff = ["Cozinha", "Equipe"].includes(formData.situacao);
       const isChild = formData.situacao === 'Criança';
       const isEncontrista = formData.situacao === 'Encontrista';
 
-      const calculateValue = () => {
-        if (isChild) {
-            const age = parseInt(formData.idade || '0', 10);
-            if (age <= eventDetails.childFreeCutoffAge) return 0.00;
-            if (age > eventDetails.childFreeCutoffAge && age <= eventDetails.childValueCutoffAge) return eventDetails.childValue;
-        }
-        return eventDetails.fullValue;
-      };
+      let finalValue = eventDetails.fullValue;
+      let paymentStatus = 'Pendente';
 
-      const finalValue = calculateValue();
+      if (isChild) {
+        const age = parseInt(formData.idade || '0', 10);
+        if (age <= eventDetails.childFreeCutoffAge) {
+          finalValue = 0.00;
+          paymentStatus = 'Isento';
+        } else if (age <= eventDetails.childValueCutoffAge) {
+          finalValue = eventDetails.childValue;
+        }
+      }
+
+      if (isStaff || isPastorObreiro) {
+        finalValue = 0.00;
+        paymentStatus = 'Isento';
+      }
       
       let anjoGuardaFinal = "";
       if (isChild) {
@@ -140,9 +145,10 @@ export const useInscriptionFormLogic = () => {
         responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
         responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
-        status_pagamento: isStaff || (isChild && finalValue === 0) ? 'Isento' : 'Pendente',
+        status_pagamento: paymentStatus,
         forma_pagamento: null,
-        valor: finalValue,
+        total_value: finalValue, // <-- CORREÇÃO AQUI
+        paid_amount: 0,          // <-- ADIÇÃO AQUI
         acompanhante_nome: isChild ? formData.nomeAcompanhante?.toUpperCase() : null,
         acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
       };
@@ -162,7 +168,7 @@ export const useInscriptionFormLogic = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [formData, isRegistrationsOpen, toast, validateForm]); // CORREÇÃO: Adiciona validateForm à lista de dependências
+  }, [formData, isRegistrationsOpen, toast, validateForm]);
 
   return {
     formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading, isSuccess,

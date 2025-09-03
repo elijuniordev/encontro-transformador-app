@@ -21,15 +21,18 @@ export type Inscription = {
   observacao: string | null;
   
   // Campos de pagamento atualizados
-  status_pagamento: string; // Ex: Pendente, Parcial, Confirmado
-  total_value: number;      // Renomeado de 'valor'
-  paid_amount: number;      // Novo campo para o total pago
+  status_pagamento: string;
+  total_value: number;
+  paid_amount: number;
+
+  // ADICIONE ESTA LINHA
+  forma_pagamento: string | null;
   
   acompanhante_nome?: string | null;
   acompanhante_parentesco?: string | null;
 };
 
-// Novo tipo para a tabela 'payments'
+// ... o restante do arquivo permanece igual
 export type Payment = {
   id: string;
   inscription_id: string;
@@ -38,7 +41,6 @@ export type Payment = {
   created_at: string;
 };
 
-// ... o resto dos tipos permanece o mesmo
 export type User = {
     created_at: string;
     discipulado: string | null;
@@ -47,6 +49,7 @@ export type User = {
     password_hash: string;
     role: string;
 };
+
 export type EventSettings = {
     created_at: string;
     id: string;

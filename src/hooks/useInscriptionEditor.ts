@@ -14,7 +14,7 @@ export const useInscriptionEditor = (onSaveSuccess: () => void) => {
     setEditData({
       status_pagamento: inscription.status_pagamento,
       forma_pagamento: inscription.forma_pagamento,
-      valor: inscription.valor,
+      total_value: inscription.total_value, // <-- CORREÇÃO AQUI
       observacao: inscription.observacao,
     });
   }, []);
@@ -43,7 +43,7 @@ export const useInscriptionEditor = (onSaveSuccess: () => void) => {
         title: "Dados atualizados",
         description: "As informações foram salvas com sucesso.",
       });
-      onSaveSuccess(); // Chama a função de callback para recarregar os dados
+      onSaveSuccess();
     }
     handleCancelEdit();
   }, [editingId, editData, onSaveSuccess, handleCancelEdit, toast]);
