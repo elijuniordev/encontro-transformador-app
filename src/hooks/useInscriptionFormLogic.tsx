@@ -25,7 +25,7 @@ interface InscriptionFormData {
   whatsappResponsavel3?: string;
 }
 
-const whatsappSchema = z.string().trim().regex(/^\(\d{2}\) \d{5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
+const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
 
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
@@ -150,7 +150,7 @@ export const useInscriptionFormLogic = () => {
         responsavel_3_nome: formData.nomeResponsavel3 || null,
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
         status_pagamento: isStaff || (isChild && finalValue === 0) ? 'Isento' : 'Pendente',
-        forma_pagamento: null,
+        forma_pagamento: null, // Forma de pagamento é SEMPRE nula na criação
         valor: finalValue
       };
 
@@ -160,7 +160,7 @@ export const useInscriptionFormLogic = () => {
       toast({ title: "Inscrição realizada com sucesso!", description: "Sua inscrição foi registrada." });
       setIsSuccess(true);
 
-    } catch (error: unknown) { // <<< CORREÇÃO APLICADA AQUI
+    } catch (error: unknown) {
       let errorMessage = "Ocorreu um erro inesperado.";
       if (error instanceof Error) {
         errorMessage = error.message;
