@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Info, AlertCircle } from "lucide-react"; // Importe o Info
+import { Loader2, Trash2, Info, AlertCircle } from "lucide-react";
 import { FORMA_PAGAMENTO_OPTIONS } from "@/config/options";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { paymentSchema } from "@/lib/validations/paymentSchema";
@@ -57,7 +57,11 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   }, [isOpen, fetchPayments]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
+    // **INÍCIO DA CORREÇÃO**
+    // Esta linha previne que a página recarregue ao submeter o formulário
     e.preventDefault();
+    // **FIM DA CORREÇÃO**
+
     setError(null);
 
     try {
@@ -134,7 +138,6 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
             </Alert>
         )}
 
-        {/* **INÍCIO DA CORREÇÃO** */}
         {inscription?.status_pagamento === 'Isento' ? (
           <div className="border-t pt-4 text-center text-muted-foreground flex items-center justify-center gap-2 bg-slate-50 p-4 rounded-md">
             <Info className="h-5 w-5"/>
@@ -159,7 +162,6 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
             </div>
           </form>
         )}
-        {/* **FIM DA CORREÇÃO** */}
 
         <div className="space-y-2 border-t pt-4">
           <h4 className="font-semibold">Histórico de Pagamentos</h4>
