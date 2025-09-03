@@ -1,7 +1,7 @@
 // src/components/management/PaymentMethodStatistics.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Ban, CircleDollarSign, CheckCircle, Clock, PiggyBank, Users, TrendingUp } from 'lucide-react';
-import { FinancialSummary } from "@/lib/statistics"; // Importa a nova interface
+import { CreditCard, PiggyBank, Users, TrendingUp, CheckCircle, Clock } from 'lucide-react';
+import { FinancialSummary } from "@/lib/statistics";
 
 interface PaymentMethodStatisticsProps {
   financialSummary: FinancialSummary;
@@ -10,7 +10,10 @@ interface PaymentMethodStatisticsProps {
 const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
 
 const PaymentMethodStatistics = ({ financialSummary }: PaymentMethodStatisticsProps) => {
-  const paymentMethods = ['Pix', 'Cartão de Crédito', 'Dinheiro', 'Transferência']; // Principais a serem exibidos
+  // Filtra apenas os métodos de pagamento que tiveram arrecadação
+  const paymentMethods = Object.entries(financialSummary.paymentMethodTotals)
+    .filter(([, total]) => total > 0)
+    .map(([method]) => method);
 
   return (
     <Card className="shadow-peaceful">
@@ -61,29 +64,30 @@ const PaymentMethodStatistics = ({ financialSummary }: PaymentMethodStatisticsPr
           </Card>
         </div>
 
-        {/* Detalhamento das Formas de Pagamento */}
-        <div className="border-t pt-4">
-          <h4 className="text-md font-semibold mb-2 text-primary">Formas de Pagamento Registradas</h4>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {paymentMethods.map(method => {
-              const count = financialSummary.paymentMethodCounts[method] || 0;
-              if (count === 0) return null; // Não mostra se a contagem for zero
-              const Icon = method === 'Pix' ? PiggyBank : CreditCard;
+        {/* **INÍCIO DA CORREÇÃO** */}
+        {/* Detalhamento dos VALORES por Forma de Pagamento */}
+        {paymentMethods.length > 0 && (
+          <div className="border-t pt-4">
+            <h4 className="text-md font-semibold mb-2 text-primary">Arrecadado por Forma de Pagamento</h4>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {paymentMethods.map(method => {
+                const total = financialSummary.paymentMethodTotals[method];
+                const Icon = method.toLowerCase().includes('cart') ? CreditCard : PiggyBank;
 
-              return (
-                <Card key={method} className="shadow-sm border bg-gray-50">
-                  <CardContent className="pt-6 flex items-center gap-3">
-                    <Icon className="h-6 w-6 text-gray-600" />
-                    <div>
-                      <p className="text-xl font-bold">{count}</p>
+                return (
+                  <Card key={method} className="shadow-sm border bg-gray-50">
+                    <CardContent className="pt-6 flex flex-col items-center text-center">
+                      <Icon className="h-6 w-6 text-gray-600 mb-2" />
+                      <p className="text-lg font-bold">{formatCurrency(total)}</p>
                       <p className="text-xs text-muted-foreground">{method}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
+        {/* **FIM DA CORREÇÃO** */}
       </CardContent>
     </Card>
   );

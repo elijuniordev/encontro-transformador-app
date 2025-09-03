@@ -10,7 +10,8 @@ export interface FinancialSummary {
   totalPending: number;
   totalPotential: number;
   waivedCount: number;
-  paymentMethodCounts: { [key: string]: number };
+  // Agora irá armazenar a soma dos valores por método
+  paymentMethodTotals: { [key: string]: number }; 
 }
 
 export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
@@ -28,7 +29,7 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 };
 
 /**
- * Calcula o resumo financeiro completo.
+ * Calcula o resumo financeiro completo, incluindo totais e soma de valores por forma de pagamento.
  * @param inscriptions Array de inscrições filtradas.
  * @param allPayments Array com TODOS os pagamentos do banco.
  * @returns Um objeto com o resumo financeiro.
@@ -39,10 +40,10 @@ export const calculateFinancialSummary = (inscriptions: Inscription[], allPaymen
     totalPending: 0,
     totalPotential: 0,
     waivedCount: 0,
-    paymentMethodCounts: {},
+    paymentMethodTotals: {},
   };
 
-  FORMA_PAGAMENTO_OPTIONS.forEach(option => summary.paymentMethodCounts[option] = 0);
+  FORMA_PAGAMENTO_OPTIONS.forEach(option => summary.paymentMethodTotals[option] = 0);
 
   const filteredInscriptionIds = new Set(inscriptions.map(i => i.id));
 
@@ -61,14 +62,14 @@ export const calculateFinancialSummary = (inscriptions: Inscription[], allPaymen
 
   const relevantPayments = allPayments.filter(p => filteredInscriptionIds.has(p.inscription_id));
 
+  // **INÍCIO DA CORREÇÃO**
+  // Soma os valores de cada pagamento em vez de contar
   relevantPayments.forEach(payment => {
-    // **INÍCIO DA CORREÇÃO**
-    // Usa Object.hasOwn para uma verificação mais segura
-    if (Object.hasOwn(summary.paymentMethodCounts, payment.payment_method)) {
-        summary.paymentMethodCounts[payment.payment_method]++;
+    if (Object.hasOwn(summary.paymentMethodTotals, payment.payment_method)) {
+      summary.paymentMethodTotals[payment.payment_method] += payment.amount;
     }
-    // **FIM DA CORREÇÃO**
   });
+  // **FIM DA CORREÇÃO**
 
   summary.totalPotential = summary.totalPaid + summary.totalPending;
 
