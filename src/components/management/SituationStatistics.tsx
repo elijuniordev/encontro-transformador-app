@@ -1,94 +1,77 @@
 // src/components/management/SituationStatistics.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CheckCircle2, XCircle } from "lucide-react"; // Importe os ícones necessários
+import { Badge } from "@/components/ui/badge";
+import { Users, HelpingHand, UserCheck, Baby, UtensilsCrossed, UserPlus, Package, Users2 } from "lucide-react";
 
 interface SituationStatisticsProps {
   situationCounts: { [key: string]: number };
-  totalInscriptions: number; // Nova prop
-  isRegistrationsOpen: boolean; // Nova prop
+  totalInscriptions: number;
+  isRegistrationsOpen: boolean;
 }
 
-const SituationStatistics = ({ situationCounts, totalInscriptions, isRegistrationsOpen }: SituationStatisticsProps) => {
+// Mapeia cada função a um ícone e cor específicos para uma melhor visualização
+const functionDetails: { [key: string]: { icon: React.ElementType; color: string } } = {
+  "Encontrista": { icon: Users, color: "text-blue-600" },
+  "Equipe": { icon: HelpingHand, color: "text-green-600" },
+  "Pastor, obreiro ou discipulador": { icon: UserCheck, color: "text-purple-600" },
+  "Criança": { icon: Baby, color: "text-yellow-600" },
+  "Cozinha": { icon: UtensilsCrossed, color: "text-orange-600" },
+  "Acompanhante": { icon: UserPlus, color: "text-pink-600" },
+  "Outros": { icon: Package, color: "text-gray-600" },
+};
+
+const SituationStatistics = ({
+  situationCounts,
+  totalInscriptions,
+  isRegistrationsOpen,
+}: SituationStatisticsProps) => {
+  // Ordena as funções para uma exibição consistente, deixando "Outros" por último
+  const orderedFunctions = Object.keys(situationCounts)
+    .filter(key => key !== 'Total')
+    .sort((a, b) => {
+      if (a === 'Outros') return 1;
+      if (b === 'Outros') return -1;
+      return a.localeCompare(b);
+    });
+
   return (
     <Card className="shadow-peaceful">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Inscrições por Função
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="flex items-center gap-2">
+            <Users2 className="h-5 w-5" />
+            Inscrições por Função
+          </CardTitle>
+          <Badge variant={isRegistrationsOpen ? "default" : "destructive"}>
+            {isRegistrationsOpen ? "Inscrições Abertas" : "Inscrições Fechadas"}
+          </Badge>
+        </div>
       </CardHeader>
-      <CardContent className="pt-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {/* Card de Total de Inscrições */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <Users className="h-7 w-7 text-blue-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-blue-700">{totalInscriptions}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Total de Inscrições</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card de Status do Evento (se desejar manter alguma indicação visual) */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              {isRegistrationsOpen ? (
-                <CheckCircle2 className="h-7 w-7 text-green-500" />
-              ) : (
-                <XCircle className="h-7 w-7 text-red-500" />
-              )}
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">
-                  {isRegistrationsOpen ? "Aberto" : "Encerrado"}
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Status das Inscrições</p>
-              </div>
-            </CardContent>
-          </Card>
+      <CardContent>
+        {/* Card de Total com destaque */}
+        <div className="bg-primary text-primary-foreground p-4 rounded-lg mb-4 text-center">
+          <p className="text-sm uppercase font-semibold">Total de Inscrições</p>
+          <p className="text-4xl font-bold">{totalInscriptions}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <Users className="h-7 w-7 text-purple-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-purple-700">{situationCounts.Encontrista || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Encontristas</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Grid responsivo para as funções individuais */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {orderedFunctions.map((funcao) => {
+            const count = situationCounts[funcao];
+            // Não renderiza o card se a contagem for zero
+            if (count === 0) return null;
 
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <Users className="h-7 w-7 text-indigo-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-indigo-700">{situationCounts.Equipe || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Equipe</p>
-              </div>
-            </CardContent>
-          </Card>
+            const details = functionDetails[funcao] || functionDetails["Outros"];
+            const Icon = details.icon;
 
-          {/* Novo card para Acompanhante */}
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <Users className="h-7 w-7 text-pink-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-pink-700">{situationCounts.Acompanhante || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Acompanhantes</p>
+            return (
+              <div key={funcao} className="bg-slate-50 border rounded-lg p-3 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+                <Icon className={`h-7 w-7 mb-2 ${details.color}`} />
+                <p className="text-2xl font-bold text-slate-800">{count}</p>
+                <p className="text-xs font-medium text-slate-500">{funcao}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm border">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <Users className="h-7 w-7 text-yellow-600" />
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-yellow-700">{situationCounts.Cozinha || 0}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Cozinha</p>
-              </div>
-            </CardContent>
-          </Card>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
