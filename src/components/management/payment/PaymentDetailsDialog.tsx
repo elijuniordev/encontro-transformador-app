@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Info } from "lucide-react"; // Adicionado o ícone de Informação
 import { FORMA_PAGAMENTO_OPTIONS } from "@/config/options";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { paymentSchema } from "@/lib/validations/paymentSchema"; // Importe o novo schema
+import { paymentSchema } from "@/lib/validations/paymentSchema";
 import { ZodError } from "zod";
 
 interface PaymentDetailsDialogProps {
@@ -30,7 +30,6 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   const [newMethod, setNewMethod] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // ... (fetchPayments permanece o mesmo)
   const fetchPayments = useCallback(async () => {
     if (!inscription) return;
     setIsLoading(true);
@@ -48,7 +47,6 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
     }
     setIsLoading(false);
   }, [inscription, toast]);
-
 
   useEffect(() => {
     if (isOpen) {
@@ -137,23 +135,32 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
             </Alert>
         )}
 
-        <form onSubmit={handleAddPayment} className="space-y-4 border-t pt-4">
-          <h4 className="font-semibold">Adicionar Novo Pagamento</h4>
-          <div className="flex gap-2 items-end">
-            <div className="flex-grow">
-              <Label htmlFor="amount">Valor (R$)</Label>
-              <Input id="amount" type="text" inputMode="decimal" placeholder="100,00" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="method">Forma</Label>
-              <Select value={newMethod} onValueChange={setNewMethod}>
-                <SelectTrigger id="method" className="w-[120px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{FORMA_PAGAMENTO_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}</Button>
+        {/* **INÍCIO DA CORREÇÃO** */}
+        {inscription?.status_pagamento === 'Isento' ? (
+          <div className="border-t pt-4 text-center text-muted-foreground flex items-center justify-center gap-2 bg-slate-50 p-4 rounded-md">
+            <Info className="h-5 w-5"/>
+            <p className="font-semibold">Este participante é isento de pagamento.</p>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleAddPayment} className="space-y-4 border-t pt-4">
+            <h4 className="font-semibold">Adicionar Novo Pagamento</h4>
+            <div className="flex gap-2 items-end">
+              <div className="flex-grow">
+                <Label htmlFor="amount">Valor (R$)</Label>
+                <Input id="amount" type="text" inputMode="decimal" placeholder="100,00" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="method">Forma</Label>
+                <Select value={newMethod} onValueChange={setNewMethod}>
+                  <SelectTrigger id="method" className="w-[120px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{FORMA_PAGAMENTO_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}</Button>
+            </div>
+          </form>
+        )}
+        {/* **FIM DA CORREÇÃO** */}
 
         <div className="space-y-2 border-t pt-4">
           <h4 className="font-semibold">Histórico de Pagamentos</h4>
