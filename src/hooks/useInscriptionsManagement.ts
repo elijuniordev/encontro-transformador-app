@@ -18,7 +18,8 @@ export const useInscriptionsManagement = (userRole: string | null, userDiscipula
         .select(`
           *,
           payments ( id, amount, payment_method, created_at )
-        `);
+        `)
+        .order('created_at', { ascending: false }); // <--- ADIÇÃO AQUI
 
       if (inscriptionsError) throw inscriptionsError;
 
