@@ -27,9 +27,7 @@ const InscriptionForm = () => {
     return (
       <div className="min-h-screen bg-gradient-peaceful flex flex-col">
         <div className="flex-grow flex items-center justify-center p-4">
-          <div className="max-w-md mx-auto w-full">
-            <InscriptionSuccess />
-          </div>
+          <div className="max-w-md mx-auto w-full"><InscriptionSuccess /></div>
         </div>
         <Footer />
       </div>
@@ -82,13 +80,14 @@ const InscriptionForm = () => {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="whatsapp">Seu WhatsApp: *</Label>
+                            <Label htmlFor="whatsapp">Seu WhatsApp de Contato: *</Label>
                             <Input id="whatsapp" type="tel" value={formData.whatsapp} onChange={(e) => handleInputChange('whatsapp', e.target.value)} placeholder="(11) 99999-9999" maxLength={15}/>
                         </div>
                     </CardContent>
                   </Card>
 
-                  {['Encontrista', 'Equipe', 'Acompanhante'].includes(formData.situacao) && (
+                  {/* <<< CORREÇÃO APLICADA AQUI >>> */}
+                  {['Encontrista', 'Equipe', 'Acompanhante', 'Criança'].includes(formData.situacao) && (
                      <Card>
                         <CardHeader><CardTitle className="flex items-center gap-2 text-xl"><Users className="h-5 w-5" />Sua Liderança na Igreja</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
@@ -99,12 +98,12 @@ const InscriptionForm = () => {
                                 </div>
                             )}
                              <div className="space-y-2">
-                                <Label htmlFor="discipuladores">Seus discipuladores: *</Label>
-                                <Select value={formData.discipuladores} onValueChange={(value) => setFormData({ ...formData, discipuladores: value, lider: "" })}><SelectTrigger id="discipuladores"><SelectValue placeholder="Selecione seus discipuladores" /></SelectTrigger><SelectContent>{discipuladoresOptions.map((discipulador) => (<SelectItem key={discipulador} value={discipulador}>{discipulador}</SelectItem>))}</SelectContent></Select>
+                                <Label htmlFor="discipuladores">Discipuladores (dos pais, se criança): *</Label>
+                                <Select value={formData.discipuladores} onValueChange={(value) => setFormData({ ...formData, discipuladores: value, lider: "" })}><SelectTrigger id="discipuladores"><SelectValue placeholder="Selecione os discipuladores" /></SelectTrigger><SelectContent>{discipuladoresOptions.map((discipulador) => (<SelectItem key={discipulador} value={discipulador}>{discipulador}</SelectItem>))}</SelectContent></Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="lider">Seu líder de célula: *</Label>
-                                <Select value={formData.lider} onValueChange={(value) => setFormData({ ...formData, lider: value })} disabled={!formData.discipuladores}><SelectTrigger id="lider"><SelectValue placeholder="Selecione seu líder" /></SelectTrigger><SelectContent>{filteredLideresOptions?.map((lider) => (<SelectItem key={lider} value={lider}>{lider}</SelectItem>))}</SelectContent></Select>
+                                <Label htmlFor="lider">Líder de Célula (dos pais, se criança): *</Label>
+                                <Select value={formData.lider} onValueChange={(value) => setFormData({ ...formData, lider: value })} disabled={!formData.discipuladores}><SelectTrigger id="lider"><SelectValue placeholder="Selecione o líder" /></SelectTrigger><SelectContent>{filteredLideresOptions?.map((lider) => (<SelectItem key={lider} value={lider}>{lider}</SelectItem>))}</SelectContent></Select>
                             </div>
                         </CardContent>
                      </Card>
@@ -139,7 +138,7 @@ const InscriptionForm = () => {
                   <div className="!mt-8 flex items-start bg-red-100 border-l-4 border-red-600 p-4 rounded-lg shadow-md">
                     <AlertTriangle className="w-8 h-8 text-red-600 mr-3 flex-shrink-0" />
                     <p className="text-sm text-red-800">
-                      <strong>Atenção:</strong> Após a inscrição, realize o pagamento e envie o comprovante para seu líder ou para quem te convidou.
+                      <strong>Atenção:</strong> Após a inscrição, realize o pagamento (se aplicável) e envie o comprovante para seu líder ou para quem te convidou.
                     </p>
                   </div>
 

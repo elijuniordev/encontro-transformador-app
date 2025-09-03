@@ -27,6 +27,7 @@ interface InscriptionFormData {
 
 const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
 
+// Esquema de validação Zod corrigido
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
   nomeCompleto: z.string().trim().min(3, "O nome completo é obrigatório."),
@@ -46,13 +47,14 @@ const inscriptionSchema = z.object({
   const idadeNum = parseInt(data.idade, 10);
   if (!isNaN(idadeNum)) {
     if (data.situacao !== 'Criança' && (idadeNum < 12 || idadeNum > 100)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Idade inválida (deve ser entre 12 e 100 anos para adultos).", path: ['idade'] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para adultos e equipes, a idade deve ser de 12 a 100 anos.", path: ['idade'] });
     }
     if (data.situacao === 'Criança' && idadeNum >= 12) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para 'Criança', a idade deve ser menor que 12 anos. Para idades maiores, selecione 'Encontrista'.", path: ['idade'] });
     }
   }
-  if (['Equipe', 'Acompanhante', 'Encontrista'].includes(data.situacao) && (!data.discipuladores || !data.lider)) {
+  // Discipulador e líder são obrigatórios para todos, exceto Pastor e Cozinha
+  if (['Encontrista', 'Equipe', 'Acompanhante', 'Criança'].includes(data.situacao) && (!data.discipuladores || !data.lider)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Discipulador e Líder são obrigatórios para esta situação.", path: ['discipuladores'] });
   }
   if ((data.situacao === "Encontrista" || data.situacao === "Criança") && (!data.nomeResponsavel1 || !data.whatsappResponsavel1)) {
@@ -110,8 +112,10 @@ export const useInscriptionFormLogic = () => {
       setIsLoading(false);
       return;
     }
+
+    const processedData = { ...formData };
     
-    const parsedData = inscriptionSchema.safeParse(formData);
+    const parsedData = inscriptionSchema.safeParse(processedData);
     if (!parsedData.success) {
       toast({ title: "Erro de validação", description: parsedData.error.errors[0].message, variant: "destructive" });
       setIsLoading(false);
@@ -119,13 +123,13 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-      const isStaff = ["Cozinha"].includes(formData.situacao);
-      const isChild = formData.situacao === 'Criança';
+      const isPastorObreiro = processedData.situacao === "Pastor, obreiro ou discipulador";
+      const isStaff = ["Cozinha"].includes(processedData.situacao);
+      const isChild = processedData.situacao === 'Criança';
 
       const calculateValue = () => {
         if (isChild) {
-            const age = parseInt(formData.idade || '0', 10);
+            const age = parseInt(processedData.idade || '0', 10);
             if (age <= 2) return 0.00;
             if (age >= 3 && age <= 8) return 100.00;
         }
@@ -135,20 +139,20 @@ export const useInscriptionFormLogic = () => {
       const finalValue = calculateValue();
       
       const inscriptionData = {
-        nome_completo: formData.nomeCompleto,
-        anjo_guarda: isPastorObreiro ? formData.nomeCompleto : (formData.anjoGuarda || null),
-        sexo: formData.sexo,
-        idade: formData.idade,
-        whatsapp: formData.whatsapp,
-        discipuladores: isPastorObreiro || isStaff || isChild ? formData.nomeCompleto : (formData.discipuladores || null),
-        lider: isPastorObreiro || isStaff || isChild ? formData.nomeCompleto : (formData.lider || null),
-        irmao_voce_e: formData.situacao,
-        responsavel_1_nome: formData.nomeResponsavel1 || null,
-        responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
-        responsavel_2_nome: formData.nomeResponsavel2 || null,
-        responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
-        responsavel_3_nome: formData.nomeResponsavel3 || null,
-        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
+        nome_completo: processedData.nomeCompleto.toUpperCase(),
+        anjo_guarda: isPastorObreiro || isStaff || isChild ? processedData.nomeCompleto.toUpperCase() : (processedData.anjoGuarda?.toUpperCase() || processedData.nomeCompleto.toUpperCase()),
+        sexo: processedData.sexo,
+        idade: processedData.idade,
+        whatsapp: processedData.whatsapp,
+        discipuladores: isPastorObreiro || isStaff ? processedData.nomeCompleto.toUpperCase() : (processedData.discipuladores),
+        lider: isPastorObreiro || isStaff ? processedData.nomeCompleto.toUpperCase() : (processedData.lider),
+        irmao_voce_e: processedData.situacao,
+        responsavel_1_nome: processedData.nomeResponsavel1?.toUpperCase() || null,
+        responsavel_1_whatsapp: processedData.whatsappResponsavel1 || null,
+        responsavel_2_nome: processedData.nomeResponsavel2?.toUpperCase() || null,
+        responsavel_2_whatsapp: processedData.whatsappResponsavel2 || null,
+        responsavel_3_nome: processedData.nomeResponsavel3?.toUpperCase() || null,
+        responsavel_3_whatsapp: processedData.whatsappResponsavel3 || null,
         status_pagamento: isStaff || (isChild && finalValue === 0) ? 'Isento' : 'Pendente',
         forma_pagamento: null,
         valor: finalValue
@@ -169,7 +173,6 @@ export const useInscriptionFormLogic = () => {
     } finally {
       setIsLoading(false);
     }
-  // <<< CORREÇÃO APLICADA AQUI >>>
   }, [formData, isRegistrationsOpen, toast]);
 
   return {
