@@ -1,6 +1,7 @@
 // src/components/landing/PaymentInfoSection.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { HandCoins, Clock, Users } from "lucide-react"; // Importar ícones necessários
+import { eventDetails } from "@/config/eventDetails"; // Importe eventDetails
 
 const PaymentInfoSection = () => {
   return (
@@ -16,7 +17,11 @@ const PaymentInfoSection = () => {
           <div className="space-y-8">
             <div className="bg-gradient-to-br from-yellow-50 to-yellow-200 p-8 rounded-xl text-center shadow-lg border border-yellow-300">
               <HandCoins className="h-16 w-16 text-yellow-700 mx-auto mb-4" />
-              <p className="text-2xl sm:text-3xl font-bold text-yellow-800 mb-2">Investimento: R$ 200,00</p>
+              {/* REMOVA a linha abaixo */}
+              {/* <p className="text-2xl sm:text-3xl font-bold text-yellow-800 mb-2">Investimento: R$ 200,00</p> */}
+              
+              {/* ADICIONE a linha abaixo */}
+              <p className="text-2xl sm:text-3xl font-bold text-yellow-800 mb-2">Investimento: R$ {eventDetails.fullValue.toFixed(2).replace('.', ',')}</p>
               <p className="text-xl text-yellow-700">Um passo de fé em sua transformação.</p>
             </div>
             
@@ -24,8 +29,14 @@ const PaymentInfoSection = () => {
               <h3 className="font-bold text-xl sm:text-2xl text-blue-700 mb-4">Passo 1: Efetue o Pagamento via PIX</h3>
               <div className="bg-white p-5 rounded border border-blue-100">
                 <p className="text-base text-gray-600 mb-2">Chave PIX exclusiva para o Encontro:</p>
-                <p className="font-mono text-xl font-bold text-blue-700 break-all">
+                {/* REMOVA a linha abaixo */}
+                {/* <p className="font-mono text-xl font-bold text-blue-700 break-all">
                   📧 videiraosascoencontro@gmail.com
+                </p> */}
+
+                {/* ADICIONE a linha abaixo */}
+                <p className="font-mono text-xl font-bold text-blue-700 break-all">
+                  📧 {eventDetails.pixKey}
                 </p>
               </div>
             </div>
@@ -40,7 +51,11 @@ const PaymentInfoSection = () => {
                 <Clock className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                 <div>
                   <h4 className="font-bold text-primary text-xl">Prazo Final para Inscrição:</h4>
-                  <p className="text-gray-700 text-base sm:text-lg">Pagamentos e confirmações aceitos até <strong className="text-primary">quarta-feira, 27 de agosto de 2025</strong>.</p>
+                  {/* REMOVA a linha abaixo */}
+                  {/* <p className="text-gray-700 text-base sm:text-lg">Pagamentos e confirmações aceitos até <strong className="text-primary">quarta-feira, 27 de agosto de 2025</strong>.</p> */}
+
+                  {/* ADICIONE a linha abaixo */}
+                  <p className="text-gray-700 text-base sm:text-lg">Pagamentos e confirmações aceitos até <strong className="text-primary">{eventDetails.deadline}</strong>.</p>
                 </div>
               </div>
               

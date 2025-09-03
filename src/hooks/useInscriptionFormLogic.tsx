@@ -6,6 +6,7 @@ import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS, PARENTESCO_OPTIONS } from "@/config/options";
 import { useNavigate } from "react-router-dom";
 import { formatPhoneNumber } from "@/lib/utils";
+import { eventDetails } from "@/config/eventDetails"; // Importe eventDetails
 
 export interface InscriptionFormData {
   [key: string]: string | undefined;
@@ -137,10 +138,19 @@ export const useInscriptionFormLogic = () => {
       const calculateValue = () => {
         if (isChild) {
             const age = parseInt(formData.idade || '0', 10);
-            if (age <= 2) return 0.00;
-            if (age >= 3 && age <= 8) return 100.00;
+            // REMOVA as 2 linhas abaixo
+            // if (age <= 2) return 0.00;
+            // if (age >= 3 && age <= 8) return 100.00;
+            
+            // ADICIONE as 2 linhas abaixo
+            if (age <= eventDetails.childFreeCutoffAge) return 0.00;
+            if (age > eventDetails.childFreeCutoffAge && age <= eventDetails.childValueCutoffAge) return eventDetails.childValue;
         }
-        return 200.00;
+        // REMOVA a linha abaixo
+        // return 200.00;
+
+        // ADICIONE a linha abaixo
+        return eventDetails.fullValue;
       };
 
       const finalValue = calculateValue();

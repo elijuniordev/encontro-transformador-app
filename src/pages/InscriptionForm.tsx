@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { UserPlus, Send, AlertTriangle, Users, Heart, Phone } from "lucide-react";
 import { useInscriptionFormLogic, InscriptionFormData } from "@/hooks/useInscriptionFormLogic";
 import InscriptionSuccess from "@/components/InscriptionSuccess";
+import { eventDetails } from "@/config/eventDetails"; // Importe eventDetails
 
 interface ResponsavelInputProps {
   index: 1 | 2 | 3;
@@ -72,7 +73,11 @@ const InscriptionForm = () => {
                 <UserPlus className="h-8 w-8 text-primary" />
               </div>
               <CardTitle className="text-3xl font-bold text-primary">Formulário de Inscrição</CardTitle>
-              <CardDescription>Encontro com Deus - 29 a 31 de Agosto</CardDescription>
+              {/* REMOVA a linha abaixo */}
+              {/* <CardDescription>Encontro com Deus - 29 a 31 de Agosto</CardDescription> */}
+
+              {/* ADICIONE a linha abaixo */}
+              <CardDescription>Encontro com Deus - {eventDetails.dateRange}</CardDescription>
             </CardHeader>
             <CardContent>
               {!isRegistrationsOpen ? (

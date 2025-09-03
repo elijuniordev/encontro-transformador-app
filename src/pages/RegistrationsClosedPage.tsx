@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
+import { eventDetails } from "@/config/eventDetails"; // Importe eventDetails
 
 const RegistrationsClosedPage = () => {
   return (
@@ -22,8 +23,14 @@ const RegistrationsClosedPage = () => {
               <CardTitle className="text-3xl font-bold text-red-700">
                 Inscrições Encerradas!
               </CardTitle>
-              <p className="text-muted-foreground">
+              {/* REMOVA a linha abaixo */}
+              {/* <p className="text-muted-foreground">
                 Encontro com Deus - 29 a 31 de Agosto
+              </p> */}
+
+              {/* ADICIONE a linha abaixo */}
+              <p className="text-muted-foreground">
+                Encontro com Deus - {eventDetails.dateRange}
               </p>
             </CardHeader>
             

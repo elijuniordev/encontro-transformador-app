@@ -5,6 +5,7 @@ import { Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-encontro.jpg";
 import logo from "@/assets/logo-videira.webp";
+import { eventDetails } from "@/config/eventDetails"; // Importe eventDetails
 
 const HeroSection = () => {
   return (
@@ -40,7 +41,11 @@ const HeroSection = () => {
             <Calendar className="h-6 w-6 text-primary" />
             <span className="font-semibold text-primary text-xl">Quando Acontece:</span>
           </div>
-          <p className="text-xl font-bold text-primary">29 a 31 de Agosto</p>
+          {/* REMOVA a linha abaixo */}
+          {/* <p className="text-xl font-bold text-primary">29 a 31 de Agosto</p> */}
+
+          {/* ADICIONE a linha abaixo */}
+          <p className="text-xl font-bold text-primary">{eventDetails.dateRange}</p>
         </div>
       </div>
     </section>
