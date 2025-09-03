@@ -1,13 +1,31 @@
 // src/hooks/useInscriptionsExporter.ts
 import { useCallback } from 'react';
-import * as XLSX from 'xlsx';
-import { Inscription } from '@/types/supabase';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { Inscription, Payment } from '@/types/supabase';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
 
-export const useInscriptionsExporter = (inscriptions: Inscription[]) => {
+export const useInscriptionsExporter = (
+    inscriptions: Inscription[], 
+    payments: Payment[],
+    chartRef: React.RefObject<HTMLDivElement>
+) => {
     const { toast } = useToast();
 
-    const handleExportXLSX = useCallback(() => {
+    const applyHeaderStyles = (worksheet: ExcelJS.Worksheet) => {
+        worksheet.getRow(1).eachCell(cell => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF4F4F4F' }
+            };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+    };
+
+    const handleExportXLSX = useCallback(async () => {
         if (inscriptions.length === 0) {
             toast({
                 title: "Nenhuma inscrição",
@@ -17,96 +35,116 @@ export const useInscriptionsExporter = (inscriptions: Inscription[]) => {
             return;
         }
 
-        // --- 1. Preparando os Dados para cada Aba ---
+        toast({ title: "Gerando relatório...", description: "Aguarde enquanto preparamos o arquivo Excel." });
 
-        // Aba: Inscrições Gerais
-        const generalData = inscriptions.map(p => {
-            const contacts = [
-                p.responsavel_1_nome && `${p.responsavel_1_nome} (${p.responsavel_1_whatsapp || 'N/A'})`,
-                p.responsavel_2_nome && `${p.responsavel_2_nome} (${p.responsavel_2_whatsapp || 'N/A'})`,
-                p.responsavel_3_nome && `${p.responsavel_3_nome} (${p.responsavel_3_whatsapp || 'N/A'})`
-            ].filter(Boolean).join('\n'); // Junta com quebra de linha
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'DevDesigner';
+        workbook.created = new Date();
 
-            return {
-                "Nome Completo": p.nome_completo,
-                "Função": p.irmao_voce_e,
-                "Sexo": p.sexo,
-                "Idade": p.idade,
-                "Discipulador": p.discipuladores,
-                "Líder": p.lider,
-                "Status Pagamento": p.status_pagamento,
-                "Contatos de Emergência": contacts || "N/A",
-                "Observação": p.observacao || "",
-                "Data Inscrição": new Date(p.created_at).toLocaleDateString('pt-BR'),
-            };
+        // --- 1. Aba: Resumo por Método (com Gráfico) ---
+        const summarySheet = workbook.addWorksheet('Resumo por Método');
+        const summaryByMethod: { [key: string]: number } = {};
+        payments.forEach(payment => {
+            const method = payment.payment_method || 'Não especificado';
+            if (!summaryByMethod[method]) {
+                summaryByMethod[method] = 0;
+            }
+            summaryByMethod[method] += payment.amount;
         });
+        const summaryData = Object.entries(summaryByMethod).map(([method, total]) => ({ method, total }));
+        
+        summarySheet.columns = [
+            { header: 'Forma de Pagamento', key: 'method', width: 30 },
+            { header: 'Valor Total Arrecadado', key: 'total', width: 30, style: { numFmt: '"R$" #,##0.00' } },
+        ];
+        summarySheet.addRows(summaryData);
+        applyHeaderStyles(summarySheet);
 
-        // Aba: Relatório Financeiro
-        const financialData = inscriptions.map(p => {
+        // Adicionar imagem do gráfico
+        if (chartRef.current && summaryData.length > 0) {
+            try {
+                const canvas = await html2canvas(chartRef.current, { backgroundColor: null, scale: 2 });
+                const imageBase64 = canvas.toDataURL('image/png');
+                const imageId = workbook.addImage({
+                    base64: imageBase64,
+                    extension: 'png',
+                });
+                summarySheet.addImage(imageId, {
+                    tl: { col: 3, row: 1 }, // Canto superior esquerdo (Coluna D, Linha 2)
+                    ext: { width: 500, height: 350 } // Tamanho da imagem
+                });
+            } catch (error) {
+                console.error("Erro ao gerar a imagem do gráfico:", error);
+                toast({ title: "Aviso", description: "Não foi possível gerar a imagem do gráfico, mas os dados foram exportados.", variant: "default" });
+            }
+        }
+
+        // --- 2. Aba: Relatório Financeiro ---
+        const financialSheet = workbook.addWorksheet('Relatório Financeiro');
+        financialSheet.columns = [
+            { header: 'Nome Completo', key: 'name', width: 35 },
+            { header: 'Status', key: 'status', width: 20 },
+            { header: 'Formas de Pagamento', key: 'methods', width: 25 },
+            { header: 'Valor Total', key: 'total', width: 15, style: { numFmt: '"R$" #,##0.00' } },
+            { header: 'Valor Pago', key: 'paid', width: 15, style: { numFmt: '"R$" #,##0.00' } },
+            { header: 'Saldo Devedor', key: 'due', width: 15, style: { numFmt: '"R$" #,##0.00' } },
+        ];
+        inscriptions.map(p => {
+            const inscriptionPayments = payments.filter(pay => pay.inscription_id === p.id);
+            const paymentMethods = [...new Set(inscriptionPayments.map(pay => pay.payment_method))].join(', ');
             const saldoDevedor = p.total_value - p.paid_amount;
             return {
-                "Nome Completo": p.nome_completo,
-                "Status": p.status_pagamento,
-                "Valor Total": p.total_value,
-                "Valor Pago": p.paid_amount,
-                "Saldo Devedor": saldoDevedor < 0 ? 0 : saldoDevedor,
+                name: p.nome_completo,
+                status: p.status_pagamento,
+                methods: paymentMethods || 'N/A',
+                total: p.total_value,
+                paid: p.paid_amount,
+                due: saldoDevedor < 0 ? 0 : saldoDevedor,
             };
-        });
-        
-        // Aba: Contatos Detalhados
-        const contactsData = inscriptions.map(p => ({
-            "Nome Completo": p.nome_completo,
-            "WhatsApp Pessoal": p.whatsapp,
-            "Responsável 1": p.responsavel_1_nome || "N/A",
-            "WhatsApp Resp. 1": p.responsavel_1_whatsapp || "N/A",
-            "Responsável 2": p.responsavel_2_nome || "N/A",
-            "WhatsApp Resp. 2": p.responsavel_2_whatsapp || "N/A",
-            "Responsável 3": p.responsavel_3_nome || "N/A",
-            "WhatsApp Resp. 3": p.responsavel_3_whatsapp || "N/A",
+        }).forEach(row => financialSheet.addRow(row));
+        applyHeaderStyles(financialSheet);
+
+        // --- 3. Aba: Inscrições Gerais ---
+        const generalSheet = workbook.addWorksheet('Inscrições Gerais');
+        generalSheet.columns = [
+            { header: 'Nome Completo', key: 'name', width: 35 },
+            { header: 'Função', key: 'role', width: 20 },
+            { header: 'Sexo', key: 'gender', width: 10 },
+            { header: 'Discipulador', key: 'discipler', width: 25 },
+            { header: 'Líder', key: 'leader', width: 25 },
+            { header: 'Status Pagamento', key: 'paymentStatus', width: 20 },
+            { header: 'Observação', key: 'obs', width: 40 },
+        ];
+        inscriptions.forEach(p => generalSheet.addRow({
+            name: p.nome_completo, role: p.irmao_voce_e, gender: p.sexo,
+            discipler: p.discipuladores, leader: p.lider, paymentStatus: p.status_pagamento,
+            obs: p.observacao || ''
         }));
-
-        // --- 2. Criando as Planilhas (Worksheets) ---
+        applyHeaderStyles(generalSheet);
         
-        const wsGeneral = XLSX.utils.json_to_sheet(generalData);
-        const wsFinancial = XLSX.utils.json_to_sheet(financialData);
-        const wsContacts = XLSX.utils.json_to_sheet(contactsData);
-
-        // --- 3. Aplicando Formatação e Estilos ---
-
-        // Largura das colunas
-        wsGeneral['!cols'] = [ { wch: 30 }, { wch: 20 }, { wch: 10 }, { wch: 8 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 35 }, { wch: 40 }, { wch: 15 } ];
-        wsFinancial['!cols'] = [ { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 } ];
-        wsContacts['!cols'] = [ { wch: 30 }, { wch: 20 }, { wch: 30 }, { wch: 20 }, { wch: 30 }, { wch: 20 }, { wch: 30 }, { wch: 20 } ];
-
-        // Formato de moeda para a aba financeira
-        const currencyFormat = 'R$ #,##0.00';
-        financialData.forEach((_row, index) => {
-            const rowIndex = index + 2; // +1 para o header, +1 porque é 1-based
-            ['C', 'D', 'E'].forEach(col => {
-                const cellRef = `${col}${rowIndex}`;
-                if (wsFinancial[cellRef]) {
-                    wsFinancial[cellRef].z = currencyFormat;
-                }
-            });
-        });
+        // --- 4. Aba: Contatos ---
+        const contactsSheet = workbook.addWorksheet('Contatos de Emergência');
+        contactsSheet.columns = [
+            { header: 'Nome Completo', key: 'name', width: 35 },
+            { header: 'WhatsApp Pessoal', key: 'whatsapp', width: 20 },
+            { header: 'Resp. 1', key: 'r1n', width: 30 }, { header: 'WhatsApp Resp. 1', key: 'r1w', width: 20 },
+            { header: 'Resp. 2', key: 'r2n', width: 30 }, { header: 'WhatsApp Resp. 2', key: 'r2w', width: 20 },
+        ];
+        inscriptions.forEach(p => contactsSheet.addRow({
+            name: p.nome_completo, whatsapp: p.whatsapp,
+            r1n: p.responsavel_1_nome, r1w: p.responsavel_1_whatsapp,
+            r2n: p.responsavel_2_nome, r2w: p.responsavel_2_whatsapp,
+        }));
+        applyHeaderStyles(contactsSheet);
         
-        // Adicionar AutoFiltro em todas as abas
-        if (wsGeneral['!ref']) wsGeneral['!autofilter'] = { ref: wsGeneral['!ref'] };
-        if (wsFinancial['!ref']) wsFinancial['!autofilter'] = { ref: wsFinancial['!ref'] };
-        if (wsContacts['!ref']) wsContacts['!autofilter'] = { ref: wsContacts['!ref'] };
-
-
-        // --- 4. Montando e Baixando o Arquivo ---
-        
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, wsGeneral, "Inscrições Gerais");
-        XLSX.utils.book_append_sheet(wb, wsFinancial, "Relatório Financeiro");
-        XLSX.utils.book_append_sheet(wb, wsContacts, "Contatos de Emergência");
-
-        XLSX.writeFile(wb, "relatorio_encontro_com_deus.xlsx");
+        // --- Gerar e Baixar o Arquivo ---
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, `relatorio_encontro_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`);
 
         toast({ title: "Exportação concluída", description: "O arquivo Excel foi baixado com sucesso." });
-    }, [inscriptions, toast]);
+
+    }, [inscriptions, payments, toast, chartRef]);
 
     return { handleExportXLSX };
 };

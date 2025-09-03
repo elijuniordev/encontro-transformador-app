@@ -1,6 +1,7 @@
 // src/pages/Management.tsx
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 import ManagementHeader from "@/components/management/ManagementHeader";
 import ManagementFilters from "@/components/management/ManagementFilters";
 import ManagementActions from "@/components/management/ManagementActions";
@@ -8,70 +9,49 @@ import SituationStatistics from "@/components/management/SituationStatistics";
 import PaymentMethodStatistics from "@/components/management/PaymentMethodStatistics";
 import InscriptionsTable from "@/components/management/InscriptionsTable";
 import Footer from "@/components/Footer";
-import { useManagementLogic } from "@/hooks/useManagementLogic";
 import DormitoryReport from "@/components/management/DormitoryReport";
+import { BatchPaymentDialog } from "@/components/management/BatchPaymentDialog";
+import { FinancialChart } from "@/components/management/FinancialChart";
+import { useManagementLogic } from "@/hooks/useManagementLogic";
+import { useBatchPayment } from "@/hooks/useBatchPayment";
 import { StatisticsCardsSkeleton } from "@/components/management/StatisticsCardsSkeleton";
 import { InscriptionsTableSkeleton } from "@/components/management/InscriptionsTableSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search } from "lucide-react";
-import { useBatchPayment } from "@/hooks/useBatchPayment";
-import { BatchPaymentDialog } from "@/components/management/BatchPaymentDialog";
+import { Inscription } from "@/types/supabase";
 
 const Management = () => {
-  const {
-    filteredInscriptions,
-    fetchInscriptions,
-    searchTerm,
-    setSearchTerm,
-    filterDiscipulado,
-    setFilterDiscipulado,
-    filterByFuncao,
-    setFilterByFuncao,
-    filterByStatusPagamento,
-    setFilterByStatusPagamento,
-    filterByDiscipuladoGroup,
-    setFilterByDiscipuladoGroup,
-    inscriptions,
-    situationCounts,
-    financialSummary,
-    isRegistrationsOpen,
-    userRole,
-    userEmail,
-    userDiscipulado,
-    isAuthenticated,
-    isLoading,
-    handleLogout,
-    handleToggleRegistrations,
-    getStatusBadge,
-    handleDelete,
-    handleExportXLSX,
-    funcaoOptions,
-    statusPagamentoOptions,
-    discipuladoGroupOptions,
-    sexoOptions,
-    filterBySexo,
-    setFilterBySexo,
-  } = useManagementLogic();
-
+  const chartRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  
+
+  const {
+    inscriptions, filteredInscriptions, fetchInscriptions, situationCounts,
+    financialSummary, isRegistrationsOpen, userRole, userEmail, userDiscipulado,
+    isAuthenticated, isLoading, handleLogout, handleToggleRegistrations,
+    getStatusBadge, handleDelete, handleExportXLSX, summaryDataForChart,
+    filters, setFilters, filterOptions
+  } = useManagementLogic(chartRef);
+
   const batchPayment = useBatchPayment(fetchInscriptions);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       navigate("/login");
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
 
-  if (!isAuthenticated) {
-    return null;
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-grow p-8"><InscriptionsTableSkeleton /></div>
+      </div>
+    );
   }
 
   return (
     <>
       <div className="flex flex-col min-h-screen bg-gradient-peaceful">
         <ManagementHeader
-          userEmail={userEmail}
+          userEmail={userEmail ?? null}
           userRole={userRole}
           handleLogout={handleLogout}
           isRegistrationsOpen={isRegistrationsOpen}
@@ -87,24 +67,24 @@ const Management = () => {
             </CardHeader>
             <CardContent>
               <ManagementFilters
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filterByFuncao={filterByFuncao}
-                setFilterByFuncao={setFilterByFuncao}
-                filterByStatusPagamento={filterByStatusPagamento}
-                setFilterByStatusPagamento={setFilterByStatusPagamento}
-                filterByDiscipuladoGroup={filterByDiscipuladoGroup}
-                setFilterByDiscipuladoGroup={setFilterByDiscipuladoGroup}
-                funcaoOptions={funcaoOptions}
-                statusPagamentoOptions={statusPagamentoOptions}
-                discipuladoGroupOptions={discipuladoGroupOptions}
-                sexoOptions={sexoOptions}
-                filterBySexo={filterBySexo}
-                setFilterBySexo={setFilterBySexo}
+                searchTerm={filters.searchTerm}
+                setSearchTerm={setFilters.setSearchTerm}
+                filterByFuncao={filters.filterByFuncao}
+                setFilterByFuncao={setFilters.setFilterByFuncao}
+                filterByStatusPagamento={filters.filterByStatusPagamento}
+                setFilterByStatusPagamento={setFilters.setFilterByStatusPagamento}
+                filterByDiscipuladoGroup={filters.filterByDiscipuladoGroup}
+                setFilterByDiscipuladoGroup={setFilters.setFilterByDiscipuladoGroup}
+                filterBySexo={filters.filterBySexo}
+                setFilterBySexo={setFilters.setFilterBySexo}
+                funcaoOptions={filterOptions.funcaoOptions}
+                statusPagamentoOptions={filterOptions.statusPagamentoOptions}
+                discipuladoGroupOptions={filterOptions.discipuladoGroupOptions}
+                sexoOptions={filterOptions.sexoOptions}
               />
               <ManagementActions
-                filterDiscipulado={filterDiscipulado}
-                setFilterDiscipulado={setFilterDiscipulado}
+                filterDiscipulado={filters.filterDiscipulado}
+                setFilterDiscipulado={setFilters.setFilterDiscipulado}
                 userRole={userRole}
                 userDiscipulado={userDiscipulado}
                 handleExportXLSX={handleExportXLSX}
@@ -113,9 +93,7 @@ const Management = () => {
             </CardContent>
           </Card>
 
-          {isLoading ? (
-            <StatisticsCardsSkeleton />
-          ) : (
+          {isLoading ? <StatisticsCardsSkeleton /> : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <SituationStatistics
                 situationCounts={situationCounts}
@@ -130,9 +108,7 @@ const Management = () => {
             <DormitoryReport inscriptions={inscriptions} />
           )}
 
-          {isLoading ? (
-            <InscriptionsTableSkeleton />
-          ) : (
+          {isLoading ? <InscriptionsTableSkeleton /> : (
             <InscriptionsTable
               filteredInscriptions={filteredInscriptions}
               userRole={userRole}
@@ -146,18 +122,18 @@ const Management = () => {
         <Footer />
       </div>
       
+      <FinancialChart ref={chartRef} summaryData={summaryDataForChart} />
+      
       <BatchPaymentDialog
         isOpen={batchPayment.isModalOpen}
         onClose={() => batchPayment.setIsModalOpen(false)}
-        inscriptions={filteredInscriptions.filter(i => i.status_pagamento !== 'Isento')}
+        inscriptions={filteredInscriptions.filter((i: Inscription) => i.status_pagamento !== 'Isento')}
         selectedIds={batchPayment.selectedIds}
         onSelectionChange={batchPayment.handleSelectionChange}
-        onSelectAll={() => batchPayment.handleSelectAll(filteredInscriptions.filter(i => i.status_pagamento !== 'Isento'))}
+        onSelectAll={() => batchPayment.handleSelectAll(filteredInscriptions.filter((i: Inscription) => i.status_pagamento !== 'Isento'))}
         onClearAll={batchPayment.handleClearAll}
-        amount={batchPayment.amount}
-        setAmount={batchPayment.setAmount}
-        method={batchPayment.method}
-        setMethod={batchPayment.setMethod}
+        amount={batchPayment.amount} setAmount={batchPayment.setAmount}
+        method={batchPayment.method} setMethod={batchPayment.setMethod}
         onSubmit={batchPayment.handleSubmit}
         isLoading={batchPayment.isLoading}
       />
