@@ -139,7 +139,7 @@ const InscriptionForm = () => {
                   <div className="!mt-8 flex items-start bg-red-100 border-l-4 border-red-600 p-4 rounded-lg shadow-md">
                     <AlertTriangle className="w-8 h-8 text-red-600 mr-3 flex-shrink-0" />
                     <p className="text-sm text-red-800">
-                      <strong>Atenção:</strong> Após a inscrição, realize o pagamento (se aplicável) e envie o comprovante para seu líder ou para quem te convidou.
+                      <strong>Atenção:</strong> Após a inscrição, realize o pagamento e envie o comprovante para seu líder ou para quem te convidou.
                     </p>
                   </div>
 
