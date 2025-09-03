@@ -1,5 +1,5 @@
 // src/pages/Management/InscriptionsPage.tsx
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo, useCallback, useState } from "react";
 import ManagementFilters from "@/components/management/ManagementFilters";
 import ManagementActions from "@/components/management/ManagementActions";
 import InscriptionsTable from "@/components/management/InscriptionsTable";
@@ -8,7 +8,7 @@ import { InscriptionsTableSkeleton } from "@/components/management/InscriptionsT
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { Inscription } from "@/types/supabase";
-import { useManagement } from "./useManagement"; // Caminho de importação corrigido
+import { useManagement } from "./useManagement";
 import { useBatchPayment } from "@/hooks/useBatchPayment";
 import { useManagementFilters } from "@/hooks/useManagementFilters";
 import { useInscriptionsExporter } from "@/hooks/useInscriptionsExporter";
@@ -26,8 +26,12 @@ const InscriptionsPage = () => {
     filterOptions,
   } = useManagementFilters();
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const filteredInscriptions = useMemo(() => {
-    return inscriptions.filter((i: Inscription) => { // Tipagem explícita adicionada aqui
+    setCurrentPage(1); // Resetar para a primeira página sempre que os filtros mudarem
+    return inscriptions.filter((i: Inscription) => {
       const searchTermMatch = normalizeText(i.nome_completo).includes(normalizeText(filters.searchTerm)) ||
                               normalizeText(i.whatsapp).includes(normalizeText(filters.searchTerm));
       
@@ -45,6 +49,13 @@ const InscriptionsPage = () => {
       return searchTermMatch && funcaoMatch && statusMatch && discipuladoMatch && sexoMatch;
     });
   }, [inscriptions, filters, userRole, userDiscipulado]);
+
+  const totalPages = Math.ceil(filteredInscriptions.length / itemsPerPage);
+  const paginatedInscriptions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredInscriptions.slice(startIndex, endIndex);
+  }, [filteredInscriptions, currentPage, itemsPerPage]);
 
   const batchPayment = useBatchPayment(fetchInscriptions);
 
@@ -90,12 +101,15 @@ const InscriptionsPage = () => {
       
       {isLoading ? <InscriptionsTableSkeleton /> : (
         <InscriptionsTable
-          filteredInscriptions={filteredInscriptions}
+          filteredInscriptions={paginatedInscriptions}
           userRole={userRole}
           userDiscipulado={userDiscipulado}
           getStatusBadge={getStatusBadge}
           handleDelete={handleDelete}
           fetchInscriptions={fetchInscriptions}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
         />
       )}
       

@@ -1,9 +1,10 @@
+// src/components/ui/pagination.tsx
 import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ButtonProps } from "@/components/ui/button"
-import { buttonVariants } from "@/lib/button-variants" // Importação corrigida
+import { buttonVariants } from "@/lib/button-variants"
 
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
@@ -36,7 +37,8 @@ const PaginationItem = React.forwardRef<
 PaginationItem.displayName = "PaginationItem"
 
 type PaginationLinkProps = {
-  isActive?: boolean
+  isActive?: boolean;
+  disabled?: boolean; // Adicionado
 } & Pick<ButtonProps, "size"> &
   React.ComponentProps<"a">
 
@@ -44,6 +46,7 @@ const PaginationLink = ({
   className,
   isActive,
   size = "icon",
+  disabled, // Adicionado
   ...props
 }: PaginationLinkProps) => (
   <a
@@ -53,6 +56,7 @@ const PaginationLink = ({
         variant: isActive ? "outline" : "ghost",
         size,
       }),
+      disabled && "pointer-events-none opacity-50", // Adicionado
       className
     )}
     {...props}
@@ -71,7 +75,7 @@ const PaginationPrevious = ({
     {...props}
   >
     <ChevronLeft className="h-4 w-4" />
-    <span>Previous</span>
+    <span>Anterior</span>
   </PaginationLink>
 )
 PaginationPrevious.displayName = "PaginationPrevious"
@@ -86,7 +90,7 @@ const PaginationNext = ({
     className={cn("gap-1 pr-2.5", className)}
     {...props}
   >
-    <span>Next</span>
+    <span>Próximo</span>
     <ChevronRight className="h-4 w-4" />
   </PaginationLink>
 )
@@ -102,7 +106,7 @@ const PaginationEllipsis = ({
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More pages</span>
+    <span className="sr-only">Mais páginas</span>
   </span>
 )
 PaginationEllipsis.displayName = "PaginationEllipsis"

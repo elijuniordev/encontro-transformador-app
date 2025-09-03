@@ -1,5 +1,5 @@
 // src/components/management/InscriptionsTable.tsx
-import { useState } from "react";
+import { useState, useMemo, useCallback, useRef } from "react"; // Adicionado useRef
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,14 @@ import { MobileInscriptionCard } from "./MobileInscriptionCard";
 import { DesktopInscriptionRow } from "./DesktopInscriptionRow";
 import { PaymentDetailsDialog } from "../payment/PaymentDetailsDialog";
 import { useInscriptionEditor } from "@/hooks/useInscriptionEditor";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
+import { useManagement } from "@/pages/Management/useManagement";
+import { useBatchPayment } from "@/hooks/useBatchPayment";
+import { useManagementFilters } from "@/hooks/useManagementFilters";
+import { useInscriptionsExporter } from "@/hooks/useInscriptionsExporter";
+import { normalizeText } from '@/lib/utils';
+import { BadgeProps } from "@/components/ui/badge";
+import { Payment } from "@/types/supabase";
 
 interface InscriptionsTableProps {
   filteredInscriptions: Inscription[];
@@ -18,6 +26,9 @@ interface InscriptionsTableProps {
   getStatusBadge: (status: string) => JSX.Element;
   handleDelete: (id: string) => void;
   fetchInscriptions: () => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 const InscriptionsTable = ({
@@ -26,7 +37,10 @@ const InscriptionsTable = ({
   userDiscipulado,
   getStatusBadge,
   handleDelete,
-  fetchInscriptions
+  fetchInscriptions,
+  currentPage,
+  totalPages,
+  onPageChange,
 }: InscriptionsTableProps) => {
   const isMobile = useIsMobile();
   const [selectedInscription, setSelectedInscription] = useState<Inscription | null>(null);
@@ -37,6 +51,30 @@ const InscriptionsTable = ({
   const handleOpenPaymentModal = (inscription: Inscription) => {
     setSelectedInscription(inscription);
     setPaymentModalOpen(true);
+  };
+
+  const getPaginationItems = () => {
+    const items = [];
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+
+    if (currentPage <= 3) {
+      endPage = Math.min(totalPages, 5);
+    }
+    if (currentPage > totalPages - 2) {
+      startPage = Math.max(1, totalPages - 4);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink onClick={() => onPageChange(i)} isActive={i === currentPage}>
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    return items;
   };
 
   return (
@@ -105,6 +143,21 @@ const InscriptionsTable = ({
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} />
+                  </PaginationItem>
+                  {getPaginationItems()}
+                  <PaginationItem>
+                    <PaginationNext onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </CardContent>
