@@ -7,7 +7,6 @@ import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/con
 import { useNavigate } from "react-router-dom";
 import { formatPhoneNumber } from "@/lib/utils";
 
-// <<< CORREÇÃO: EXPORTANDO A INTERFACE >>>
 export interface InscriptionFormData {
   [key: string]: string | undefined;
   discipuladores: string;
@@ -24,6 +23,8 @@ export interface InscriptionFormData {
   whatsappResponsavel2?: string;
   nomeResponsavel3?: string;
   whatsappResponsavel3?: string;
+  nomeAcompanhante?: string;
+  parentescoAcompanhante?: string;
 }
 
 const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
@@ -43,6 +44,8 @@ const inscriptionSchema = z.object({
   whatsappResponsavel2: whatsappSchema.optional().or(z.literal('')),
   nomeResponsavel3: z.string().trim().optional(),
   whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
+  nomeAcompanhante: z.string().optional(),
+  parentescoAcompanhante: z.string().optional(),
 }).superRefine((data, ctx) => {
   const idadeNum = parseInt(data.idade, 10);
   if (!isNaN(idadeNum)) {
@@ -59,6 +62,9 @@ const inscriptionSchema = z.object({
   if ((data.situacao === "Encontrista" || data.situacao === "Criança") && (!data.nomeResponsavel1 || !data.whatsappResponsavel1)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e WhatsApp do primeiro responsável são obrigatórios.", path: ['nomeResponsavel1'] });
   }
+  if (data.situacao === 'Criança' && (!data.nomeAcompanhante || !data.parentescoAcompanhante)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e o parentesco do acompanhante são obrigatórios para a inscrição da criança.", path: ['nomeAcompanhante'] });
+  }
 });
 
 export const useInscriptionFormLogic = () => {
@@ -67,6 +73,7 @@ export const useInscriptionFormLogic = () => {
   const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
     idade: "", whatsapp: "", situacao: "",
+    nomeAcompanhante: "", parentescoAcompanhante: "",
   });
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,7 +104,8 @@ export const useInscriptionFormLogic = () => {
     setFormData({
       discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
       idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
-      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: ""
+      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
+      nomeAcompanhante: "", parentescoAcompanhante: "",
     });
     setIsSuccess(false);
   }, []);
@@ -125,8 +133,7 @@ export const useInscriptionFormLogic = () => {
       const isChild = formData.situacao === 'Criança';
       const isEncontrista = formData.situacao === 'Encontrista';
 
-      // <<< CORREÇÃO: GARANTINDO O RETORNO DE UM NÚMERO >>>
-      const calculateValue = (): number => {
+      const calculateValue = () => {
         if (isChild) {
             const age = parseInt(formData.idade || '0', 10);
             if (age <= 2) return 0.00;
@@ -137,9 +144,18 @@ export const useInscriptionFormLogic = () => {
 
       const finalValue = calculateValue();
       
+      let anjoGuardaFinal = "";
+      if (isChild) {
+        anjoGuardaFinal = `${formData.nomeAcompanhante} (${formData.parentescoAcompanhante})`.toUpperCase();
+      } else if (isEncontrista) {
+        anjoGuardaFinal = (formData.anjoGuarda || "N/A").toUpperCase();
+      } else {
+        anjoGuardaFinal = formData.nomeCompleto.toUpperCase();
+      }
+      
       const inscriptionData = {
         nome_completo: formData.nomeCompleto.toUpperCase(),
-        anjo_guarda: isEncontrista ? (formData.anjoGuarda?.toUpperCase() || null) : formData.nomeCompleto.toUpperCase(),
+        anjo_guarda: anjoGuardaFinal,
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
@@ -152,7 +168,7 @@ export const useInscriptionFormLogic = () => {
         responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
         responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
-        status_pagamento: (isStaff || (isChild && finalValue === 0)) ? 'Isento' : 'Pendente',
+        status_pagamento: isStaff || (isChild && finalValue === 0) ? 'Isento' : 'Pendente',
         forma_pagamento: null,
         valor: finalValue
       };
@@ -163,7 +179,7 @@ export const useInscriptionFormLogic = () => {
       toast({ title: "Inscrição realizada com sucesso!", description: "Sua inscrição foi registrada." });
       setIsSuccess(true);
 
-    } catch (error: unknown) { // <<< CORREÇÃO: any PARA unknown >>>
+    } catch (error: unknown) {
       let errorMessage = "Ocorreu um erro inesperado.";
       if (error instanceof Error) {
         errorMessage = error.message;
@@ -172,8 +188,7 @@ export const useInscriptionFormLogic = () => {
     } finally {
       setIsLoading(false);
     }
-  // <<< CORREÇÃO: REMOVENDO DEPENDÊNCIAS DESNECESSÁRIAS >>>
-  }, [formData, isRegistrationsOpen, toast]);
+  }, [formData, isRegistrationsOpen, toast, navigate]);
 
   return {
     formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading, isSuccess,

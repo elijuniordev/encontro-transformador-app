@@ -9,7 +9,6 @@ import { UserPlus, Send, AlertTriangle, Users, Heart, Phone } from "lucide-react
 import { useInscriptionFormLogic, InscriptionFormData } from "@/hooks/useInscriptionFormLogic";
 import InscriptionSuccess from "@/components/InscriptionSuccess";
 
-// <<< CORREÇÃO: TIPAGEM CORRETA PARA AS PROPS >>>
 interface ResponsavelInputProps {
   index: 1 | 2 | 3;
   formData: InscriptionFormData;
@@ -116,8 +115,26 @@ const InscriptionForm = () => {
 
                   {['Encontrista', 'Equipe', 'Acompanhante', 'Criança'].includes(formData.situacao) && (
                      <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2 text-xl"><Users className="h-5 w-5" />Sua Liderança na Igreja</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2 text-xl"><Users className="h-5 w-5" />Liderança</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
+                            {formData.situacao === 'Criança' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="nomeAcompanhante">Nome do Pai/Mãe Acompanhante: *</Label>
+                                        <Input id="nomeAcompanhante" type="text" value={formData.nomeAcompanhante} onChange={(e) => handleInputChange('nomeAcompanhante', e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="parentescoAcompanhante">Parentesco: *</Label>
+                                        <Select value={formData.parentescoAcompanhante} onValueChange={(value) => setFormData({ ...formData, parentescoAcompanhante: value })}>
+                                            <SelectTrigger id="parentescoAcompanhante"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Pai">Pai</SelectItem>
+                                                <SelectItem value="Mãe">Mãe</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            )}
                             {formData.situacao === 'Encontrista' && (
                                 <div className="space-y-2">
                                 <Label htmlFor="anjoGuarda">Quem te convidou (Anjo da Guarda)?</Label>
