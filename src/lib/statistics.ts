@@ -2,9 +2,17 @@
 import { Inscription } from "@/types/supabase";
 import { 
   FORMA_PAGAMENTO_OPTIONS, 
-  STATUS_PAGAMENTO_OPTIONS, 
   IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS 
 } from "@/config/options";
+
+// Estrutura para os totais financeiros
+export interface FinancialSummary {
+  totalPaid: number;
+  totalPending: number;
+  totalPotential: number;
+  waivedCount: number;
+  paymentMethodCounts: { [key: string]: number };
+}
 
 /**
  * Calcula a contagem de inscrições por função (Encontrista, Equipe, etc.).
@@ -26,27 +34,43 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 };
 
 /**
- * Calcula a contagem de status de pagamento e formas de pagamento confirmadas.
+ * Calcula o resumo financeiro completo, incluindo totais e contagem por forma de pagamento.
  * @param inscriptions Array de inscrições filtradas.
- * @returns Um objeto com a contagem para cada status e forma de pagamento.
+ * @returns Um objeto com o resumo financeiro.
  */
-export const calculatePaymentMethodCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
-  const counts: { [key: string]: number } = {};
-  [...FORMA_PAGAMENTO_OPTIONS, ...STATUS_PAGAMENTO_OPTIONS].forEach(option => counts[option] = 0);
+export const calculateFinancialSummary = (inscriptions: Inscription[]): FinancialSummary => {
+  const summary: FinancialSummary = {
+    totalPaid: 0,
+    totalPending: 0,
+    totalPotential: 0,
+    waivedCount: 0,
+    paymentMethodCounts: {},
+  };
+
+  // Inicializa a contagem para todas as formas de pagamento
+  FORMA_PAGAMENTO_OPTIONS.forEach(option => summary.paymentMethodCounts[option] = 0);
 
   inscriptions.forEach(inscription => {
-    // Conta as formas de pagamento apenas para os confirmados
-    if (inscription.status_pagamento === 'Confirmado' && inscription.forma_pagamento) {
-      if (Object.hasOwn(counts, inscription.forma_pagamento)) {
-        counts[inscription.forma_pagamento]++;
+    summary.totalPaid += inscription.paid_amount;
+
+    if (inscription.status_pagamento === 'Isento') {
+      summary.waivedCount += 1;
+    } else if (inscription.status_pagamento !== 'Cancelado') {
+      const pending = inscription.total_value - inscription.paid_amount;
+      if (pending > 0) {
+        summary.totalPending += pending;
       }
     }
-    // Conta todos os status de pagamento
-    if (inscription.status_pagamento) {
-      if (Object.hasOwn(counts, inscription.status_pagamento)) {
-        counts[inscription.status_pagamento]++;
-      }
+
+    // **INÍCIO DA CORREÇÃO**
+    // Usa Object.hasOwn para uma verificação mais segura
+    if (inscription.forma_pagamento && Object.hasOwn(summary.paymentMethodCounts, inscription.forma_pagamento)) {
+        summary.paymentMethodCounts[inscription.forma_pagamento]++;
     }
+    // **FIM DA CORREÇÃO**
   });
-  return counts;
+
+  summary.totalPotential = summary.totalPaid + summary.totalPending;
+
+  return summary;
 };
