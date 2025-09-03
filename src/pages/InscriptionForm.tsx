@@ -8,6 +8,36 @@ import Footer from "@/components/Footer";
 import { UserPlus, Send, AlertTriangle, Users, Heart, Phone } from "lucide-react";
 import { useInscriptionFormLogic } from "@/hooks/useInscriptionFormLogic";
 import InscriptionSuccess from "@/components/InscriptionSuccess";
+import { InscriptionFormData } from "@/hooks/useInscriptionFormLogic"; // Importando o tipo
+
+// Interface para o componente de Responsável
+interface ResponsavelInputProps {
+  index: 1 | 2 | 3;
+  formData: InscriptionFormData;
+  handleInputChange: (field: string, value: string) => void;
+}
+
+// Componente para inputs de responsáveis
+const ResponsavelInput = ({ index, formData, handleInputChange }: ResponsavelInputProps) => (
+  <div className="space-y-2">
+    <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}: {index === 1 && '*'}</Label>
+    <Input
+      id={`nomeResponsavel${index}`}
+      type="text"
+      value={formData[`nomeResponsavel${index}`] || ""}
+      onChange={(e) => handleInputChange(e.target.id, e.target.value)}
+    />
+    <Label htmlFor={`whatsappResponsavel${index}`}>WhatsApp Responsável {index}: {index === 1 && '*'}</Label>
+    <Input
+      id={`whatsappResponsavel${index}`}
+      type="tel"
+      value={formData[`whatsappResponsavel${index}`] || ""}
+      onChange={(e) => handleInputChange(e.target.id, e.target.value)}
+      maxLength={15}
+      placeholder="(XX) XXXXX-XXXX"
+    />
+  </div>
+);
 
 const InscriptionForm = () => {
   const {
@@ -64,7 +94,7 @@ const InscriptionForm = () => {
                               <SelectContent>{situacaoOptions.map((situacao) => (<SelectItem key={situacao} value={situacao}>{situacao}</SelectItem>))}</SelectContent>
                             </Select>
                         </div>
-                        {formData.situacao === 'Criança' && ( <div className="flex items-start bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-r-lg shadow-md"><AlertTriangle className="h-8 w-8 mr-3 mt-1 flex-shrink-0" /><div><h4 className="font-bold text-lg">Atenção Responsáveis!</h4><p className="text-sm mt-1">Ao inscrever uma criança, você concorda que a organização do evento **não se responsabiliza** por incidentes que possam ocorrer no local (sítio), incluindo, mas não se limitando a, picadas de insetos ou contato com animais.</p></div></div> )}
+                        {formData.situacao === 'Criança' && ( <div className="flex items-start bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-r-lg shadow-md"><AlertTriangle className="h-8 w-8 mr-3 mt-1 flex-shrink-0" /><div><h4 className="font-bold text-lg">Atenção Responsáveis!</h4><p className="text-sm mt-1">Ao inscrever uma criança, você concorda que a organização do evento **não se responsabiliza** por incidentes que possam ocorrer no local (sítio).</p></div></div> )}
                         <div className="space-y-2">
                             <Label htmlFor="nomeCompleto">Nome Completo: *</Label>
                             <Input id="nomeCompleto" type="text" value={formData.nomeCompleto} onChange={(e) => handleInputChange('nomeCompleto', e.target.value)} placeholder="Digite o nome completo"/>
@@ -86,7 +116,6 @@ const InscriptionForm = () => {
                     </CardContent>
                   </Card>
 
-                  {/* <<< CORREÇÃO APLICADA AQUI >>> */}
                   {['Encontrista', 'Equipe', 'Acompanhante', 'Criança'].includes(formData.situacao) && (
                      <Card>
                         <CardHeader><CardTitle className="flex items-center gap-2 text-xl"><Users className="h-5 w-5" />Sua Liderança na Igreja</CardTitle></CardHeader>
@@ -113,24 +142,9 @@ const InscriptionForm = () => {
                     <Card>
                         <CardHeader><CardTitle className="flex items-center gap-2 text-xl"><Phone className="h-5 w-5" />Contatos de Emergência</CardTitle><CardDescription>Informe pelo menos um contato de familiar.</CardDescription></CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="nomeResponsavel1">Responsável 1: *</Label>
-                                <Input id="nomeResponsavel1" type="text" value={formData.nomeResponsavel1 || ""} onChange={(e) => handleInputChange('nomeResponsavel1', e.target.value)} />
-                                <Label htmlFor="whatsappResponsavel1">WhatsApp do Responsável 1: *</Label>
-                                <Input id="whatsappResponsavel1" type="tel" value={formData.whatsappResponsavel1 || ""} onChange={(e) => handleInputChange('whatsappResponsavel1', e.target.value)} maxLength={15} />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="nomeResponsavel2">Responsável 2:</Label>
-                                <Input id="nomeResponsavel2" type="text" value={formData.nomeResponsavel2 || ""} onChange={(e) => handleInputChange('nomeResponsavel2', e.target.value)} />
-                                <Label htmlFor="whatsappResponsavel2">WhatsApp do Responsável 2:</Label>
-                                <Input id="whatsappResponsavel2" type="tel" value={formData.whatsappResponsavel2 || ""} onChange={(e) => handleInputChange('whatsappResponsavel2', e.target.value)} maxLength={15} />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="nomeResponsavel3">Responsável 3:</Label>
-                                <Input id="nomeResponsavel3" type="text" value={formData.nomeResponsavel3 || ""} onChange={(e) => handleInputChange('nomeResponsavel3', e.target.value)} />
-                                <Label htmlFor="whatsappResponsavel3">WhatsApp do Responsável 3:</Label>
-                                <Input id="whatsappResponsavel3" type="tel" value={formData.whatsappResponsavel3 || ""} onChange={(e) => handleInputChange('whatsappResponsavel3', e.target.value)} maxLength={15} />
-                            </div>
+                           <ResponsavelInput index={1} formData={formData} handleInputChange={handleInputChange} />
+                           <ResponsavelInput index={2} formData={formData} handleInputChange={handleInputChange} />
+                           <ResponsavelInput index={3} formData={formData} handleInputChange={handleInputChange} />
                         </CardContent>
                     </Card>
                   )}
