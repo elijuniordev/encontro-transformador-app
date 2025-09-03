@@ -18,6 +18,11 @@ export const MobileInscriptionCard = ({
   onOpenPaymentModal
 }: MobileInscriptionCardProps) => {
 
+  // **INÍCIO DA CORREÇÃO**
+  // Garante que o valor total exibido seja 0 se o status for "Isento"
+  const displayTotalValue = inscription.status_pagamento === 'Isento' ? 0 : inscription.total_value;
+  // **FIM DA CORREÇÃO**
+
   return (
     <Card className="shadow-sm border mb-4">
       <CardContent className="p-4 space-y-2 text-sm">
@@ -28,18 +33,17 @@ export const MobileInscriptionCard = ({
         </div>
         
         <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            {/* CORREÇÃO: Ajustado o nome da propriedade */}
             <p><strong className="text-primary">Função:</strong> {inscription.irmao_voce_e}</p>
             <p><strong className="text-primary">Discipulador:</strong> {inscription.discipuladores}</p>
             <p><strong className="text-primary">WhatsApp:</strong> {inscription.whatsapp}</p>
         </div>
 
-        {/* Nova Seção de Pagamento */}
         <div className="border-t pt-3 mt-3">
             <p className="font-semibold text-primary mb-2">Status do Pagamento</p>
             <Button variant="ghost" onClick={onOpenPaymentModal} className="h-auto p-1 text-left flex flex-col items-start w-full">
                 <span className="font-semibold text-base">
-                    R$ {inscription.paid_amount.toFixed(2)} / R$ {inscription.total_value.toFixed(2)}
+                    {/* CORREÇÃO AQUI */}
+                    R$ {inscription.paid_amount.toFixed(2).replace('.', ',')} / R$ {displayTotalValue.toFixed(2).replace('.', ',')}
                 </span>
                 {getStatusBadge(inscription.status_pagamento)}
             </Button>

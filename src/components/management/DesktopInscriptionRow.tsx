@@ -12,7 +12,6 @@ interface DesktopInscriptionRowProps {
   getStatusBadge: (status: string) => JSX.Element;
   handleDelete: (id: string) => void;
   onOpenPaymentModal: () => void;
-  // Props de edição
   isEditing: boolean;
   editData: Partial<Inscription>;
   setEditData: (data: Partial<Inscription>) => void;
@@ -34,6 +33,11 @@ export const DesktopInscriptionRow = ({
   onCancel,
 }: DesktopInscriptionRowProps) => {
 
+  // **INÍCIO DA CORREÇÃO**
+  // Garante que o valor total exibido seja 0 se o status for "Isento"
+  const displayTotalValue = inscription.status_pagamento === 'Isento' ? 0 : inscription.total_value;
+  // **FIM DA CORREÇÃO**
+
   return (
     <TableRow>
       <TableCell className="font-medium text-sm">{inscription.nome_completo}</TableCell>
@@ -41,7 +45,6 @@ export const DesktopInscriptionRow = ({
       <TableCell className="text-sm">{inscription.whatsapp}</TableCell>
       <TableCell className="text-sm">{inscription.irmao_voce_e}</TableCell>
       
-      {/* Célula de Pagamento (Valor Total / Pago) */}
       <TableCell>
         {isEditing ? (
             <Input
@@ -54,13 +57,13 @@ export const DesktopInscriptionRow = ({
         ) : (
           <Button variant="ghost" onClick={onOpenPaymentModal} className="h-auto p-0 text-left flex flex-col items-start">
             <span className="font-semibold">
-              R$ {inscription.paid_amount.toFixed(2)} / R$ {inscription.total_value.toFixed(2)}
+              {/* CORREÇÃO AQUI */}
+              R$ {inscription.paid_amount.toFixed(2).replace('.', ',')} / R$ {displayTotalValue.toFixed(2).replace('.', ',')}
             </span>
           </Button>
         )}
       </TableCell>
       
-      {/* Célula de Status */}
       <TableCell>
         {isEditing ? (
             <Select
@@ -83,7 +86,6 @@ export const DesktopInscriptionRow = ({
         ) : getStatusBadge(inscription.status_pagamento)}
       </TableCell>
       
-      {/* Célula de Observação */}
       <TableCell>
         {isEditing ? (
              <Input 
@@ -98,7 +100,6 @@ export const DesktopInscriptionRow = ({
         )}
       </TableCell>
       
-      {/* Célula de Ações */}
       <TableCell>
         <TableRowActions
           inscription={inscription}
