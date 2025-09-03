@@ -7,6 +7,18 @@ import {
   SEXO_OPTIONS,
 } from "@/config/options";
 
+// **INÍCIO DA CORREÇÃO**
+// Define e exporta o tipo para o estado dos filtros
+export type FiltersState = {
+  searchTerm: string;
+  filterDiscipulado: boolean;
+  filterByFuncao: string;
+  filterByStatusPagamento: string;
+  filterByDiscipuladoGroup: string;
+  filterBySexo: string;
+};
+// **FIM DA CORREÇÃO**
+
 export const useManagementFilters = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDiscipulado, setFilterDiscipulado] = useState(false);
@@ -22,7 +34,7 @@ export const useManagementFilters = () => {
     sexoOptions: SEXO_OPTIONS,
   }), []);
 
-  const filters = {
+  const filters: FiltersState = { // Aplica o tipo aqui também
     searchTerm,
     filterDiscipulado,
     filterByFuncao,

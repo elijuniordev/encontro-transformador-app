@@ -12,15 +12,16 @@ export const useManagementLogic = () => {
   const { userRole, userEmail, userDiscipulado, isAuthenticated, handleLogout } = useAuthManagement();
   const { isRegistrationsOpen, isLoadingSettings, handleToggleRegistrations } = useEventSettings();
   const { filters, setFilters, filterOptions } = useManagementFilters();
+  
   // **INÍCIO DA CORREÇÃO**
-  const { inscriptions, payments, filteredInscriptions, isLoadingInscriptions, fetchInscriptions, handleDelete } = useInscriptionsManagement(userDiscipulado);
+  // Passa o objeto 'filters' para o hook
+  const { inscriptions, payments, filteredInscriptions, isLoadingInscriptions, fetchInscriptions, handleDelete } = useInscriptionsManagement(userDiscipulado, filters);
   // **FIM DA CORREÇÃO**
+
   const { handleExportXLSX } = useInscriptionsExporter(filteredInscriptions);
 
   const situationCounts = useMemo(() => calculateSituationCounts(filteredInscriptions), [filteredInscriptions]);
-  // **INÍCIO DA CORREÇÃO**
   const financialSummary = useMemo(() => calculateFinancialSummary(filteredInscriptions, payments), [filteredInscriptions, payments]);
-  // **FIM DA CORREÇÃO**
 
   const getStatusBadge = useCallback((status: string) => {
     const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {

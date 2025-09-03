@@ -2,21 +2,22 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Inscription, Payment } from '@/types/supabase'; // Importe o tipo Payment
+import { Inscription, Payment } from '@/types/supabase';
 import { normalizeText } from '@/lib/utils';
-import { useManagementFilters } from './useManagementFilters';
+import { FiltersState } from './useManagementFilters'; // Importa o novo tipo
 
-export const useInscriptionsManagement = (userDiscipulado: string | null) => {
+// **INÍCIO DA CORREÇÃO**
+// Substitui 'any' pelo tipo específico 'FiltersState'
+export const useInscriptionsManagement = (userDiscipulado: string | null, filters: FiltersState) => {
+// **FIM DA CORREÇÃO**
   const { toast } = useToast();
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]); // Estado para armazenar pagamentos
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { filters } = useManagementFilters();
-
+  
   const fetchInscriptions = useCallback(async () => {
     setIsLoading(true);
     
-    // Busca inscrições e pagamentos em paralelo
     const [inscriptionsResponse, paymentsResponse] = await Promise.all([
       supabase.from('inscriptions').select('*').order('created_at', { ascending: false }),
       supabase.from('payments').select('*')
@@ -78,7 +79,7 @@ export const useInscriptionsManagement = (userDiscipulado: string | null) => {
 
   return {
     inscriptions,
-    payments, // Retorna os pagamentos
+    payments,
     filteredInscriptions,
     isLoadingInscriptions: isLoading,
     fetchInscriptions,
