@@ -21,6 +21,18 @@ export const IRMAO_VOCE_E_OPTIONS = [
   "Pastor, obreiro ou discipulador"
 ];
 
+export const PARENTESCO_OPTIONS = [
+  "Pai",
+  "Mãe",
+  "Avô",
+  "Avó",
+  "Tio",
+  "Tia",
+  "Irmão",
+  "Irmã",
+  "Outro",
+];
+
 export const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Pagamento Incompleto", "Cancelado", "Isento"];
 
 // ATUALIZE A LINHA ABAIXO
