@@ -7,6 +7,8 @@ import { useMemo } from "react";
 import { calculateFinancialSummary, calculateSituationCounts } from '@/lib/statistics';
 import { FinancialChart } from "@/components/management/FinancialChart";
 import { Payment } from "@/types/supabase";
+import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
+import { Users2, CreditCard } from "lucide-react";
 
 const DashboardPage = () => {
   const { isLoading, inscriptions, payments, isRegistrationsOpen } = useManagement();
@@ -29,17 +31,37 @@ const DashboardPage = () => {
     }));
   }, [payments]);
 
-  // A FinancialChart não será exibida na tela, mas seus dados podem ser usados para exportação se desejado
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {isLoading ? <StatisticsCardsSkeleton /> : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SituationStatistics
-            situationCounts={statistics.situationCounts}
-            totalInscriptions={inscriptions.length}
-            isRegistrationsOpen={isRegistrationsOpen}
-          />
-          <PaymentMethodStatistics financialSummary={statistics.financialSummary} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <Card className="shadow-peaceful">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
+                <Users2 className="h-5 w-5 md:h-6 md:w-6" />
+                Inscrições por Função
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SituationStatistics
+                situationCounts={statistics.situationCounts}
+                totalInscriptions={inscriptions.length}
+                isRegistrationsOpen={isRegistrationsOpen}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-peaceful">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
+                <CreditCard className="h-5 w-5 md:h-6 md:w-6" />
+                Resumo Financeiro
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PaymentMethodStatistics financialSummary={statistics.financialSummary} />
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

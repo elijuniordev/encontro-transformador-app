@@ -35,46 +35,32 @@ const SituationStatistics = ({
     });
 
   return (
-    <Card className="shadow-peaceful">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2">
-            <Users2 className="h-5 w-5" />
-            Inscrições por Função
-          </CardTitle>
-          <Badge variant={isRegistrationsOpen ? "default" : "destructive"}>
-            {isRegistrationsOpen ? "Inscrições Abertas" : "Inscrições Fechadas"}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Card de Total com destaque */}
-        <div className="bg-primary text-primary-foreground p-4 rounded-lg mb-4 text-center">
-          <p className="text-sm uppercase font-semibold">Total de Inscrições</p>
-          <p className="text-4xl font-bold">{totalInscriptions}</p>
-        </div>
+    <>
+      {/* Card de Total com destaque */}
+      <div className="bg-primary text-primary-foreground p-3 md:p-4 rounded-lg mb-4 text-center">
+        <p className="text-xs md:text-sm uppercase font-semibold">Total de Inscrições</p>
+        <p className="text-3xl md:text-4xl font-bold">{totalInscriptions}</p>
+      </div>
 
-        {/* Grid responsivo para as funções individuais */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {orderedFunctions.map((funcao) => {
-            const count = situationCounts[funcao];
-            // Não renderiza o card se a contagem for zero
-            if (count === 0) return null;
+      {/* Grid responsivo para as funções individuais */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
+        {orderedFunctions.map((funcao) => {
+          const count = situationCounts[funcao];
+          if (count === 0) return null;
 
-            const details = functionDetails[funcao] || functionDetails["Outros"];
-            const Icon = details.icon;
+          const details = functionDetails[funcao] || functionDetails["Outros"];
+          const Icon = details.icon;
 
-            return (
-              <div key={funcao} className="bg-slate-50 border rounded-lg p-3 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
-                <Icon className={`h-7 w-7 mb-2 ${details.color}`} />
-                <p className="text-2xl font-bold text-slate-800">{count}</p>
-                <p className="text-xs font-medium text-slate-500">{funcao}</p>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+          return (
+            <div key={funcao} className="bg-slate-50 border rounded-lg p-2 md:p-3 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+              <Icon className={`h-6 w-6 md:h-7 md:w-7 mb-1 md:mb-2 ${details.color}`} />
+              <p className="text-xl md:text-2xl font-bold text-slate-800">{count}</p>
+              <p className="text-xs font-medium text-slate-500">{funcao}</p>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 };
 
