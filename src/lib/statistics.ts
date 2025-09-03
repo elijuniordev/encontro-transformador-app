@@ -10,8 +10,7 @@ export interface FinancialSummary {
   totalPending: number;
   totalPotential: number;
   waivedCount: number;
-  // Agora irá armazenar a soma dos valores por método
-  paymentMethodTotals: { [key: string]: number }; 
+  paymentMethodTotals: { [key: string]: number };
 }
 
 export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
@@ -22,6 +21,7 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 
   inscriptions.forEach(inscription => {
     if (inscription.irmao_voce_e) {
+      // CORREÇÃO: Usando o nome correto da propriedade 'irmao_voce_e'
       counts[inscription.irmao_voce_e] = (counts[inscription.irmao_voce_e] || 0) + 1;
     }
   });
@@ -47,29 +47,34 @@ export const calculateFinancialSummary = (inscriptions: Inscription[], allPaymen
 
   const filteredInscriptionIds = new Set(inscriptions.map(i => i.id));
 
+  // **INÍCIO DA CORREÇÃO**
   inscriptions.forEach(inscription => {
-    summary.totalPaid += inscription.paid_amount;
-
+    // Se a inscrição for 'Isento' ou 'Cancelado', ela não contribui para os totais financeiros.
     if (inscription.status_pagamento === 'Isento') {
       summary.waivedCount += 1;
-    } else if (inscription.status_pagamento !== 'Cancelado') {
-      const pending = inscription.total_value - inscription.paid_amount;
-      if (pending > 0) {
-        summary.totalPending += pending;
-      }
+      return; // Pula para a próxima inscrição
+    }
+    if (inscription.status_pagamento === 'Cancelado') {
+      return; // Pula para a próxima inscrição
+    }
+
+    // Para todos os outros status, calculamos os valores.
+    summary.totalPaid += inscription.paid_amount;
+    
+    const pendingAmount = inscription.total_value - inscription.paid_amount;
+    if (pendingAmount > 0) {
+      summary.totalPending += pendingAmount;
     }
   });
+  // **FIM DA CORREÇÃO**
 
   const relevantPayments = allPayments.filter(p => filteredInscriptionIds.has(p.inscription_id));
 
-  // **INÍCIO DA CORREÇÃO**
-  // Soma os valores de cada pagamento em vez de contar
   relevantPayments.forEach(payment => {
     if (Object.hasOwn(summary.paymentMethodTotals, payment.payment_method)) {
       summary.paymentMethodTotals[payment.payment_method] += payment.amount;
     }
   });
-  // **FIM DA CORREÇÃO**
 
   summary.totalPotential = summary.totalPaid + summary.totalPending;
 
