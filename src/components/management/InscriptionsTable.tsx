@@ -114,6 +114,7 @@ const InscriptionsTable = ({
                     <TableHead>Nome</TableHead>
                     <TableHead>Discipuladores</TableHead>
                     <TableHead>WhatsApp</TableHead>
+                    <TableHead>Líder</TableHead> {/* Adicionada a nova coluna */}
                     <TableHead>Função</TableHead>
                     <TableHead>Pagamento</TableHead>
                     <TableHead>Status</TableHead>
