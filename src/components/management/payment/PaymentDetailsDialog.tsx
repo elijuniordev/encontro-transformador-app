@@ -1,4 +1,4 @@
-// src/components/management/payment/PaymentDetailsDialog.tsx
+// src/components/payment/PaymentDetailsDialog.tsx
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Inscription, Payment } from "@/types/supabase";
@@ -8,10 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Info } from "lucide-react"; // Adicionado o ícone de Informação
+import { Loader2, Trash2, Info, AlertCircle } from "lucide-react"; // Importe o Info
 import { FORMA_PAGAMENTO_OPTIONS } from "@/config/options";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { paymentSchema } from "@/lib/validations/paymentSchema";
 import { ZodError } from "zod";
 
