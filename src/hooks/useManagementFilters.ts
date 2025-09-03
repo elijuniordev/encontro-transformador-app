@@ -6,6 +6,7 @@ import {
   IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS,
   SEXO_OPTIONS,
 } from "@/config/options";
+import { Inscription } from '@/types/supabase';
 
 // **INÍCIO DA CORREÇÃO**
 // Define e exporta o tipo para o estado dos filtros
@@ -19,7 +20,7 @@ export type FiltersState = {
 };
 // **FIM DA CORREÇÃO**
 
-export const useManagementFilters = () => {
+export const useManagementFilters = (inscriptions: Inscription[], userRole: string | null, userDiscipulado: string | null) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDiscipulado, setFilterDiscipulado] = useState(false);
   const [filterByFuncao, setFilterByFuncao] = useState("all");

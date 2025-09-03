@@ -8,8 +8,7 @@ import { useInscriptionsExporter } from "./useInscriptionsExporter";
 import { Badge } from "@/components/ui/badge";
 
 export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
-  // Hooks de dados primários
-  const { user, userRole, userDiscipulado, isAuthenticated, handleLogout } = useAuthManagement();
+  const { userEmail, userRole, userDiscipulado, isAuthenticated, handleLogout } = useAuthManagement();
   
   const { 
     inscriptions, 
@@ -19,13 +18,14 @@ export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
     handleDelete 
   } = useInscriptionsManagement(userRole, userDiscipulado);
   
+  // CORREÇÃO: Renomeando 'isLoading' para 'isLoadingSettings' para evitar conflito
   const { 
     isRegistrationsOpen, 
     isLoading: isLoadingSettings, 
     handleToggleRegistrations 
   } = useEventSettings();
 
-  // Hook de filtros - Corrigindo a forma de usar seus retornos
+  // CORREÇÃO: Chamando o hook com os argumentos que ele realmente precisa
   const {
     filters,
     setFilters,
@@ -34,10 +34,8 @@ export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
     statistics,
   } = useManagementFilters(inscriptions, userRole, userDiscipulado);
   
-  // Combina os estados de carregamento de diferentes fontes
   const isLoading = isLoadingInscriptions || isLoadingSettings;
 
-  // Memoização para os dados do gráfico
   const summaryDataForChart = useMemo(() => {
     const summary: { [key: string]: number } = {};
     payments.forEach(payment => {
@@ -68,14 +66,13 @@ export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
     return <Badge variant={variant as any}>{status}</Badge>;
   }, []);
 
-  // Objeto de retorno limpo e organizado
   return {
     inscriptions,
     filteredInscriptions,
     isAuthenticated,
     isLoading,
     isRegistrationsOpen,
-    userEmail: user?.email, 
+    userEmail, 
     userRole, 
     userDiscipulado,
     filters,

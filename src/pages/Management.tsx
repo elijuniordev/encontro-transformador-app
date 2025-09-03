@@ -66,21 +66,11 @@ const Management = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* CORREÇÃO: Espalhando as props para o componente, que espera cada uma individualmente */}
               <ManagementFilters
-                searchTerm={filters.searchTerm}
-                setSearchTerm={setFilters.setSearchTerm}
-                filterByFuncao={filters.filterByFuncao}
-                setFilterByFuncao={setFilters.setFilterByFuncao}
-                filterByStatusPagamento={filters.filterByStatusPagamento}
-                setFilterByStatusPagamento={setFilters.setFilterByStatusPagamento}
-                filterByDiscipuladoGroup={filters.filterByDiscipuladoGroup}
-                setFilterByDiscipuladoGroup={setFilters.setFilterByDiscipuladoGroup}
-                filterBySexo={filters.filterBySexo}
-                setFilterBySexo={setFilters.setFilterBySexo}
-                funcaoOptions={filterOptions.funcaoOptions}
-                statusPagamentoOptions={filterOptions.statusPagamentoOptions}
-                discipuladoGroupOptions={filterOptions.discipuladoGroupOptions}
-                sexoOptions={filterOptions.sexoOptions}
+                {...filters}
+                {...setFilters}
+                {...filterOptions}
               />
               <ManagementActions
                 filterDiscipulado={filters.filterDiscipulado}
