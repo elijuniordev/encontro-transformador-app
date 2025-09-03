@@ -33,10 +33,7 @@ export const DesktopInscriptionRow = ({
   onCancel,
 }: DesktopInscriptionRowProps) => {
 
-  // **INÍCIO DA CORREÇÃO**
-  // Garante que o valor total exibido seja 0 se o status for "Isento"
   const displayTotalValue = inscription.status_pagamento === 'Isento' ? 0 : inscription.total_value;
-  // **FIM DA CORREÇÃO**
 
   return (
     <TableRow>
@@ -57,7 +54,6 @@ export const DesktopInscriptionRow = ({
         ) : (
           <Button variant="ghost" onClick={onOpenPaymentModal} className="h-auto p-0 text-left flex flex-col items-start">
             <span className="font-semibold">
-              {/* CORREÇÃO AQUI */}
               R$ {inscription.paid_amount.toFixed(2).replace('.', ',')} / R$ {displayTotalValue.toFixed(2).replace('.', ',')}
             </span>
           </Button>

@@ -28,7 +28,6 @@ export const MobileCardEditMode = ({
         value={editData.status_pagamento || ''}
         onValueChange={(value) => {
           const newData: Partial<Inscription> = { ...editData, status_pagamento: value };
-          // **INÍCIO DA CORREÇÃO**
           if (value === 'Isento') {
             newData.total_value = 0;
             newData.forma_pagamento = null;
@@ -36,7 +35,6 @@ export const MobileCardEditMode = ({
           if (['Pendente', 'Cancelado'].includes(value)) {
             newData.forma_pagamento = null;
           }
-          // **FIM DA CORREÇÃO**
           setEditData(newData);
         }}
       >
@@ -69,7 +67,7 @@ export const MobileCardEditMode = ({
         onChange={(e) => setEditData({ ...editData, total_value: Number(e.target.value) })}
         className="w-full text-sm"
         placeholder="Valor"
-        disabled={editData.status_pagamento === 'Isento'} // Desabilita o campo se for isento
+        disabled={editData.status_pagamento === 'Isento'}
       />
       <Input
         value={editData.observacao || ''}

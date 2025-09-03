@@ -24,7 +24,6 @@ export const useInscriptionEditor = (onSaveSuccess: () => void) => {
     setEditData({});
   }, []);
 
-  // CORREÇÃO: Nova função para lidar com a mudança de dados
   const handleEditDataChange = (newData: Partial<Inscription>) => {
     if (newData.status_pagamento === 'Isento') {
       newData.total_value = 0;
@@ -32,7 +31,6 @@ export const useInscriptionEditor = (onSaveSuccess: () => void) => {
     }
     setEditData(newData);
   };
-
 
   const handleSaveEdit = useCallback(async () => {
     if (!editingId) return;
@@ -60,8 +58,9 @@ export const useInscriptionEditor = (onSaveSuccess: () => void) => {
 
   return {
     editingId,
+    setEditingId,
     editData,
-    setEditData: handleEditDataChange, // <-- Usa a nova função
+    setEditData: handleEditDataChange,
     handleEdit,
     handleSaveEdit,
     handleCancelEdit,

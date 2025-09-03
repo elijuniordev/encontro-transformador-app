@@ -14,15 +14,13 @@ import { StatisticsCardsSkeleton } from "@/components/management/StatisticsCards
 import { InscriptionsTableSkeleton } from "@/components/management/InscriptionsTableSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search } from "lucide-react";
-import { useBatchPayment } from "@/hooks/useBatchPayment"; // Importe o novo hook
-import { BatchPaymentDialog } from "@/components/management/BatchPaymentDialog"; // Importe o novo componente
+import { useBatchPayment } from "@/hooks/useBatchPayment";
+import { BatchPaymentDialog } from "@/components/management/BatchPaymentDialog";
 
 const Management = () => {
   const {
-    // ... (props existentes)
     filteredInscriptions,
     fetchInscriptions,
-    // ... (resto das props)
     searchTerm,
     setSearchTerm,
     filterDiscipulado,
@@ -57,10 +55,7 @@ const Management = () => {
 
   const navigate = useNavigate();
   
-  // **INÍCIO DA MUDANÇA**
-  // Lógica do modal de lote
   const batchPayment = useBatchPayment(fetchInscriptions);
-  // **FIM DA MUDANÇA**
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -113,7 +108,7 @@ const Management = () => {
                 userRole={userRole}
                 userDiscipulado={userDiscipulado}
                 handleExportXLSX={handleExportXLSX}
-                onOpenBatchModal={() => batchPayment.setIsModalOpen(true)} // Ação do botão
+                onOpenBatchModal={() => batchPayment.setIsModalOpen(true)}
               />
             </CardContent>
           </Card>
@@ -151,11 +146,10 @@ const Management = () => {
         <Footer />
       </div>
       
-      {/* Renderiza o novo modal */}
       <BatchPaymentDialog
         isOpen={batchPayment.isModalOpen}
         onClose={() => batchPayment.setIsModalOpen(false)}
-        inscriptions={filteredInscriptions.filter(i => i.status_pagamento !== 'Isento')} // Filtra isentos
+        inscriptions={filteredInscriptions.filter(i => i.status_pagamento !== 'Isento')}
         selectedIds={batchPayment.selectedIds}
         onSelectionChange={batchPayment.handleSelectionChange}
         onSelectAll={() => batchPayment.handleSelectAll(filteredInscriptions.filter(i => i.status_pagamento !== 'Isento'))}

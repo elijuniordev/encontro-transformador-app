@@ -32,7 +32,7 @@ const InscriptionsTable = ({
   const [selectedInscription, setSelectedInscription] = useState<Inscription | null>(null);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
 
-  const { editingId, editData, setEditData, handleEdit, handleSaveEdit, handleCancelEdit } = useInscriptionEditor(fetchInscriptions);
+  const { editingId, setEditingId, editData, setEditData, handleEdit, handleSaveEdit, handleCancelEdit } = useInscriptionEditor(fetchInscriptions);
 
   const handleOpenPaymentModal = (inscription: Inscription) => {
     setSelectedInscription(inscription);
@@ -61,6 +61,13 @@ const InscriptionsTable = ({
                     getStatusBadge={getStatusBadge}
                     handleDelete={handleDelete}
                     onOpenPaymentModal={() => handleOpenPaymentModal(inscription)}
+                    isEditing={editingId === inscription.id}
+                    editData={editData}
+                    setEditData={setEditData}
+                    onEdit={() => handleEdit(inscription)}
+                    onSave={handleSaveEdit}
+                    onCancel={handleCancelEdit}
+                    setEditingId={setEditingId}
                   />
                 ))
               )}
