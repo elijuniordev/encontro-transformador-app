@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/config/options";
+import { useNavigate } from "react-router-dom";
 import { formatPhoneNumber } from "@/lib/utils";
 
 interface InscriptionFormData {
@@ -24,16 +25,13 @@ interface InscriptionFormData {
   whatsappResponsavel3?: string;
 }
 
-const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
+const whatsappSchema = z.string().trim().regex(/^\(\d{2}\) \d{5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
 
 const inscriptionSchema = z.object({
   situacao: z.string().nonempty("Por favor, selecione sua situação."),
   nomeCompleto: z.string().trim().min(3, "O nome completo é obrigatório."),
   sexo: z.string().nonempty("Por favor, selecione o sexo."),
-  idade: z.string().nonempty("A idade é obrigatória.").refine((val) => {
-    const idadeNum = parseInt(val, 10);
-    return !isNaN(idadeNum) && idadeNum >= 0 && idadeNum <= 100;
-  }, "Idade inválida (entre 0 e 100 anos)."),
+  idade: z.string().nonempty("A idade é obrigatória."),
   whatsapp: whatsappSchema.nonempty("O WhatsApp é obrigatório."),
   discipuladores: z.string().optional(),
   lider: z.string().optional(),
@@ -44,31 +42,30 @@ const inscriptionSchema = z.object({
   whatsappResponsavel2: whatsappSchema.optional().or(z.literal('')),
   nomeResponsavel3: z.string().trim().optional(),
   whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
-}).refine((data) => {
-  // Validação de discipulador/líder só se aplica a 'Equipe' e 'Acompanhante'
-  if (['Equipe', 'Acompanhante'].includes(data.situacao)) {
-    return !!data.discipuladores && !!data.lider;
+}).superRefine((data, ctx) => {
+  const idadeNum = parseInt(data.idade, 10);
+  if (!isNaN(idadeNum)) {
+    if (data.situacao !== 'Criança' && (idadeNum < 12 || idadeNum > 100)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Idade inválida (deve ser entre 12 e 100 anos para adultos).", path: ['idade'] });
+    }
+    if (data.situacao === 'Criança' && idadeNum >= 12) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para 'Criança', a idade deve ser menor que 12 anos.", path: ['idade'] });
+    }
   }
-  return true;
-}, {
-  message: "Discipulador e Líder são obrigatórios para Equipe e Acompanhantes.",
-  path: ['discipuladores'],
-}).refine((data) => {
-  if (data.situacao === "Encontrista") {
-    return !!data.nomeResponsavel1 && !!data.whatsappResponsavel1;
+  if (['Equipe', 'Acompanhante'].includes(data.situacao) && (!data.discipuladores || !data.lider)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Discipulador e Líder são obrigatórios para esta situação.", path: ['discipuladores'] });
   }
-  return true;
-}, {
-  message: "Para encontristas, o nome e WhatsApp do primeiro responsável são obrigatórios.",
-  path: ['nomeResponsavel1'],
+  if ((data.situacao === "Encontrista" || data.situacao === "Criança") && (!data.nomeResponsavel1 || !data.whatsappResponsavel1)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e WhatsApp do primeiro responsável são obrigatórios.", path: ['nomeResponsavel1'] });
+  }
 });
 
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
-    idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
-    nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
+    idade: "", whatsapp: "", situacao: "",
   });
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,24 +74,16 @@ export const useInscriptionFormLogic = () => {
   const discipuladoresOptions = useMemo(() => DISCIPULADORES_OPTIONS.sort((a, b) => a.localeCompare(b, 'pt-BR')), []);
   const lideresMap = useMemo(() => LIDERES_MAP, []);
   const situacaoOptions = useMemo(() => IRMAO_VOCE_E_OPTIONS, []);
-
-  const filteredLideresOptions = useMemo(() => {
-    return formData.discipuladores ? lideresMap[formData.discipuladores] : [];
-  }, [formData.discipuladores, lideresMap]);
+  const filteredLideresOptions = useMemo(() => formData.discipuladores ? lideresMap[formData.discipuladores] : [], [formData.discipuladores, lideresMap]);
 
   useEffect(() => {
     const fetchRegistrationStatus = async () => {
       const { data, error } = await supabase.from('event_settings').select('registrations_open').single();
-      if (error) {
-        console.error("Erro ao buscar status das inscrições:", error);
-        setIsRegistrationsOpen(false);
-      } else {
-        setIsRegistrationsOpen(data.registrations_open);
-      }
+      setIsRegistrationsOpen(error ? false : data.registrations_open);
     };
     fetchRegistrationStatus();
   }, []);
-
+  
   const handleInputChange = (field: string, value: string) => {
     let processedValue = value;
     if (field.toLowerCase().includes('whatsapp')) {
@@ -107,7 +96,7 @@ export const useInscriptionFormLogic = () => {
     setFormData({
       discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
       idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
-      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
+      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: ""
     });
     setIsSuccess(false);
   }, []);
@@ -117,20 +106,12 @@ export const useInscriptionFormLogic = () => {
     setIsLoading(true);
 
     if (!isRegistrationsOpen) {
-      toast({ title: "Inscrições Encerradas", description: "As inscrições para o Encontro com Deus estão encerradas.", variant: "destructive" });
+      toast({ title: "Inscrições Encerradas", variant: "destructive" });
       setIsLoading(false);
       return;
     }
     
-    const processedData = { ...formData };
-
-    processedData.nomeCompleto = processedData.nomeCompleto?.toUpperCase();
-    processedData.anjoGuarda = processedData.anjoGuarda?.toUpperCase();
-    processedData.nomeResponsavel1 = processedData.nomeResponsavel1?.toUpperCase();
-    processedData.nomeResponsavel2 = processedData.nomeResponsavel2?.toUpperCase();
-    processedData.nomeResponsavel3 = processedData.nomeResponsavel3?.toUpperCase();
-
-    const parsedData = inscriptionSchema.safeParse(processedData);
+    const parsedData = inscriptionSchema.safeParse(formData);
     if (!parsedData.success) {
       toast({ title: "Erro de validação", description: parsedData.error.errors[0].message, variant: "destructive" });
       setIsLoading(false);
@@ -138,45 +119,60 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      const isEncontrista = processedData.situacao === "Encontrista";
-      
-      const inscriptionData = {
-        nome_completo: processedData.nomeCompleto,
-        anjo_guarda: isEncontrista ? (processedData.anjoGuarda || processedData.nomeCompleto) : processedData.nomeCompleto,
-        sexo: processedData.sexo,
-        idade: processedData.idade,
-        whatsapp: processedData.whatsapp,
-        discipuladores: processedData.situacao === "Pastor, obreiro ou discipulador" ? processedData.nomeCompleto : (processedData.discipuladores || null),
-        lider: processedData.situacao === "Pastor, obreiro ou discipulador" ? processedData.nomeCompleto : (processedData.lider || null),
-        irmao_voce_e: processedData.situacao,
-        responsavel_1_nome: processedData.nomeResponsavel1 || null,
-        responsavel_1_whatsapp: processedData.whatsappResponsavel1 || null,
-        responsavel_2_nome: processedData.nomeResponsavel2 || null,
-        responsavel_2_whatsapp: processedData.whatsappResponsavel2 || null,
-        responsavel_3_nome: processedData.nomeResponsavel3 || null,
-        responsavel_3_whatsapp: processedData.whatsappResponsavel3 || null,
-        status_pagamento: processedData.situacao === "Cozinha" ? 'Isento' : 'Pendente',
-        forma_pagamento: processedData.situacao === "Cozinha" ? null : null,
-        valor: 200.00
+      const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
+      const isStaff = ["Cozinha"].includes(formData.situacao);
+      const isChild = formData.situacao === 'Criança';
+
+      const calculateValue = () => {
+        if (isChild) {
+            const age = parseInt(formData.idade || '0', 10);
+            if (age <= 2) return 0.00;
+            if (age >= 3 && age <= 8) return 100.00;
+        }
+        return 200.00;
       };
 
-      const { error } = await supabase.from('inscriptions').insert([inscriptionData]);
+      const finalValue = calculateValue();
+      
+      const inscriptionData = {
+        nome_completo: formData.nomeCompleto,
+        anjo_guarda: isPastorObreiro ? formData.nomeCompleto : (formData.anjoGuarda || null),
+        sexo: formData.sexo,
+        idade: formData.idade,
+        whatsapp: formData.whatsapp,
+        discipuladores: isPastorObreiro || isStaff || isChild ? formData.nomeCompleto : (formData.discipuladores || null),
+        lider: isPastorObreiro || isStaff || isChild ? formData.nomeCompleto : (formData.lider || null),
+        irmao_voce_e: formData.situacao,
+        responsavel_1_nome: formData.nomeResponsavel1 || null,
+        responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
+        responsavel_2_nome: formData.nomeResponsavel2 || null,
+        responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
+        responsavel_3_nome: formData.nomeResponsavel3 || null,
+        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
+        status_pagamento: isStaff || (isChild && finalValue === 0) ? 'Isento' : 'Pendente',
+        forma_pagamento: null,
+        valor: finalValue
+      };
 
-      if (error) throw new Error(error.message);
+      const { error } = await supabase.from('inscriptions').insert([inscriptionData]).select();
+      if (error) throw error;
 
       toast({ title: "Inscrição realizada com sucesso!", description: "Sua inscrição foi registrada." });
       setIsSuccess(true);
 
-    } catch (error: unknown) {
-        toast({ title: "Erro na inscrição", description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.", variant: "destructive" });
+    } catch (error: unknown) { // <<< CORREÇÃO APLICADA AQUI
+      let errorMessage = "Ocorreu um erro inesperado.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      toast({ title: "Erro na inscrição", description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   }, [formData, isRegistrationsOpen, toast]);
 
   return {
-    formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading,
-    isSuccess, resetForm, discipuladoresOptions, filteredLideresOptions,
-    situacaoOptions, handleInputChange,
+    formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading, isSuccess,
+    discipuladoresOptions, filteredLideresOptions, situacaoOptions, handleInputChange, resetForm
   };
 };
