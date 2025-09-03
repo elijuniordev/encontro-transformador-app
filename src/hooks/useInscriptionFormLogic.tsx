@@ -23,6 +23,8 @@ export interface InscriptionFormData {
   whatsappResponsavel2?: string;
   nomeResponsavel3?: string;
   whatsappResponsavel3?: string;
+  nomeAcompanhante?: string;
+  parentescoAcompanhante?: string;
 }
 
 const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
@@ -42,6 +44,8 @@ const inscriptionSchema = z.object({
   whatsappResponsavel2: whatsappSchema.optional().or(z.literal('')),
   nomeResponsavel3: z.string().trim().optional(),
   whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
+  nomeAcompanhante: z.string().optional(),
+  parentescoAcompanhante: z.string().optional(),
 }).superRefine((data, ctx) => {
   const idadeNum = parseInt(data.idade, 10);
   if (!isNaN(idadeNum)) {
@@ -52,12 +56,14 @@ const inscriptionSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para 'Criança', a idade deve ser menor que 12 anos. Para idades maiores, selecione 'Encontrista'.", path: ['idade'] });
     }
   }
-  // Discipulador e líder são obrigatórios para todos, exceto Pastor e Cozinha
   if (['Encontrista', 'Equipe', 'Acompanhante', 'Criança'].includes(data.situacao) && (!data.discipuladores || !data.lider)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Discipulador e Líder são obrigatórios. Para crianças, preencha com os dados dos pais/responsáveis.", path: ['discipuladores'] });
   }
   if ((data.situacao === "Encontrista" || data.situacao === "Criança") && (!data.nomeResponsavel1 || !data.whatsappResponsavel1)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e WhatsApp do primeiro responsável são obrigatórios.", path: ['nomeResponsavel1'] });
+  }
+  if (data.situacao === 'Criança' && (!data.nomeAcompanhante || !data.parentescoAcompanhante)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e o parentesco do acompanhante são obrigatórios para a inscrição da criança.", path: ['nomeAcompanhante'] });
   }
 });
 
@@ -67,6 +73,7 @@ export const useInscriptionFormLogic = () => {
   const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
     idade: "", whatsapp: "", situacao: "",
+    nomeAcompanhante: "", parentescoAcompanhante: "",
   });
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,6 +82,7 @@ export const useInscriptionFormLogic = () => {
   const discipuladoresOptions = useMemo(() => DISCIPULADORES_OPTIONS.sort((a, b) => a.localeCompare(b, 'pt-BR')), []);
   const lideresMap = useMemo(() => LIDERES_MAP, []);
   const situacaoOptions = useMemo(() => IRMAO_VOCE_E_OPTIONS, []);
+  const parentescoOptions = useMemo(() => PARENTESCO_OPTIONS, []);
   const filteredLideresOptions = useMemo(() => formData.discipuladores ? lideresMap[formData.discipuladores] : [], [formData.discipuladores, lideresMap]);
 
   useEffect(() => {
@@ -97,7 +105,8 @@ export const useInscriptionFormLogic = () => {
     setFormData({
       discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
       idade: "", whatsapp: "", situacao: "", nomeResponsavel1: "", whatsappResponsavel1: "",
-      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: ""
+      nomeResponsavel2: "", whatsappResponsavel2: "", nomeResponsavel3: "", whatsappResponsavel3: "",
+      nomeAcompanhante: "", parentescoAcompanhante: "",
     });
     setIsSuccess(false);
   }, []);
@@ -111,10 +120,8 @@ export const useInscriptionFormLogic = () => {
       setIsLoading(false);
       return;
     }
-
-    const processedData = { ...formData };
     
-    const parsedData = inscriptionSchema.safeParse(processedData);
+    const parsedData = inscriptionSchema.safeParse(formData);
     if (!parsedData.success) {
       toast({ title: "Erro de validação", description: parsedData.error.errors[0].message, variant: "destructive" });
       setIsLoading(false);
@@ -122,39 +129,51 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      const isPastorObreiro = processedData.situacao === "Pastor, obreiro ou discipulador";
-      const isStaff = ["Cozinha"].includes(processedData.situacao);
-      const isChild = processedData.situacao === 'Criança';
-      const isEncontrista = processedData.situacao === 'Encontrista';
+      const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
+      const isStaff = ["Cozinha"].includes(formData.situacao);
+      const isChild = formData.situacao === 'Criança';
+      const isEncontrista = formData.situacao === 'Encontrista';
 
       const calculateValue = () => {
         if (isChild) {
-            const age = parseInt(processedData.idade || '0', 10);
+            const age = parseInt(formData.idade || '0', 10);
             if (age <= 2) return 0.00;
             if (age >= 3 && age <= 8) return 100.00;
         }
         return 200.00;
       };
+
       const finalValue = calculateValue();
       
+      let anjoGuardaFinal = "";
+      if (isChild) {
+        anjoGuardaFinal = `${formData.nomeAcompanhante} (${formData.parentescoAcompanhante})`.toUpperCase();
+      } else if (isEncontrista) {
+        anjoGuardaFinal = (formData.anjoGuarda || "N/A").toUpperCase();
+      } else {
+        anjoGuardaFinal = formData.nomeCompleto.toUpperCase();
+      }
+      
       const inscriptionData = {
-        nome_completo: processedData.nomeCompleto.toUpperCase(),
-        anjo_guarda: (isPastorObreiro || isStaff || isChild) ? processedData.nomeCompleto.toUpperCase() : (processedData.anjoGuarda?.toUpperCase() || null),
-        sexo: processedData.sexo,
-        idade: processedData.idade,
-        whatsapp: processedData.whatsapp,
-        discipuladores: (isPastorObreiro || isStaff) ? processedData.nomeCompleto.toUpperCase() : processedData.discipuladores,
-        lider: (isPastorObreiro || isStaff) ? processedData.nomeCompleto.toUpperCase() : processedData.lider,
-        irmao_voce_e: processedData.situacao,
-        responsavel_1_nome: processedData.nomeResponsavel1?.toUpperCase() || null,
-        responsavel_1_whatsapp: processedData.whatsappResponsavel1 || null,
-        responsavel_2_nome: processedData.nomeResponsavel2?.toUpperCase() || null,
-        responsavel_2_whatsapp: processedData.whatsappResponsavel2 || null,
-        responsavel_3_nome: processedData.nomeResponsavel3?.toUpperCase() || null,
-        responsavel_3_whatsapp: processedData.whatsappResponsavel3 || null,
+        nome_completo: formData.nomeCompleto.toUpperCase(),
+        anjo_guarda: anjoGuardaFinal,
+        sexo: formData.sexo,
+        idade: formData.idade,
+        whatsapp: formData.whatsapp,
+        discipuladores: (isPastorObreiro || isStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
+        lider: (isPastorObreiro || isStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
+        irmao_voce_e: formData.situacao,
+        responsavel_1_nome: formData.nomeResponsavel1?.toUpperCase() || null,
+        responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
+        responsavel_2_nome: formData.nomeResponsavel2?.toUpperCase() || null,
+        responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
+        responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
+        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
         status_pagamento: isStaff || (isChild && finalValue === 0) ? 'Isento' : 'Pendente',
         forma_pagamento: null,
-        valor: finalValue
+        valor: finalValue,
+        acompanhante_nome: isChild ? formData.nomeAcompanhante?.toUpperCase() : null,
+        acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
       };
 
       const { error } = await supabase.from('inscriptions').insert([inscriptionData]).select();
@@ -176,7 +195,6 @@ export const useInscriptionFormLogic = () => {
 
   return {
     formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading, isSuccess,
-    discipuladoresOptions, filteredLideresOptions, situacaoOptions, handleInputChange, resetForm,
-    parentescoOptions: PARENTESCO_OPTIONS,
+    discipuladoresOptions, filteredLideresOptions, situacaoOptions, parentescoOptions, handleInputChange, resetForm
   };
 };

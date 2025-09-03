@@ -9,14 +9,12 @@ import { UserPlus, Send, AlertTriangle, Users, Heart, Phone } from "lucide-react
 import { useInscriptionFormLogic, InscriptionFormData } from "@/hooks/useInscriptionFormLogic";
 import InscriptionSuccess from "@/components/InscriptionSuccess";
 
-// Interface para as props do componente ResponsavelInput
 interface ResponsavelInputProps {
   index: 1 | 2 | 3;
   formData: InscriptionFormData;
   handleInputChange: (field: string, value: string) => void;
 }
 
-// Componente para inputs de responsáveis
 const ResponsavelInput = ({ index, formData, handleInputChange }: ResponsavelInputProps) => (
     <div className="space-y-2">
         <Label htmlFor={`nomeResponsavel${index}`}>Responsável {index}: {index === 1 && '*'}</Label>
@@ -49,6 +47,7 @@ const InscriptionForm = () => {
     discipuladoresOptions,
     filteredLideresOptions,
     situacaoOptions,
+    parentescoOptions,
     handleInputChange,
   } = useInscriptionFormLogic();
 
@@ -115,11 +114,27 @@ const InscriptionForm = () => {
                     </CardContent>
                   </Card>
 
-                  {/* Mostra a seção de Liderança para todos, exceto Pastor e Cozinha */}
                   {['Encontrista', 'Equipe', 'Acompanhante', 'Criança'].includes(formData.situacao) && (
                      <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2 text-xl"><Users className="h-5 w-5" />Sua Liderança na Igreja</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2 text-xl"><Users className="h-5 w-5" />Informações Adicionais</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
+                            {formData.situacao === 'Criança' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="nomeAcompanhante">Nome do Acompanhante: *</Label>
+                                        <Input id="nomeAcompanhante" type="text" value={formData.nomeAcompanhante} onChange={(e) => handleInputChange('nomeAcompanhante', e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="parentescoAcompanhante">Parentesco: *</Label>
+                                        <Select value={formData.parentescoAcompanhante} onValueChange={(value) => setFormData({ ...formData, parentescoAcompanhante: value })}>
+                                            <SelectTrigger id="parentescoAcompanhante"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                                            <SelectContent>
+                                                {parentescoOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            )}
                             {formData.situacao === 'Encontrista' && (
                                 <div className="space-y-2">
                                 <Label htmlFor="anjoGuarda">Quem te convidou (Anjo da Guarda)?</Label>
