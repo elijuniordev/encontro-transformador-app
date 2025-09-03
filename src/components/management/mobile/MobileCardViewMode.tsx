@@ -20,7 +20,8 @@ export const MobileCardViewMode = ({ inscription, getStatusBadge }: MobileCardVi
         <p><strong className="text-primary">Discipulador:</strong> {inscription.discipuladores}</p>
         <p><strong className="text-primary">Líder:</strong> {inscription.lider}</p>
         <p><strong className="text-primary">WhatsApp:</strong> {inscription.whatsapp}</p>
-        <p><strong className="text-primary">Valor:</strong> R$ {inscription.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        {/* CORREÇÃO APLICADA AQUI */}
+        <p><strong className="text-primary">Valor:</strong> R$ {(inscription.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         <p><strong className="text-primary">Forma Pagamento:</strong> {inscription.forma_pagamento || "-"}</p>
         <p><strong className="text-primary">Observação:</strong> {inscription.observacao || "-"}</p>
       </div>
