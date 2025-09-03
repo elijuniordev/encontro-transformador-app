@@ -1,134 +1,93 @@
 // src/pages/Management.tsx
-import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { useEffect } from "react";
+import { useNavigate, Outlet, Link } from "react-router-dom";
 import ManagementHeader from "@/components/management/ManagementHeader";
-import ManagementFilters from "@/components/management/ManagementFilters";
-import ManagementActions from "@/components/management/ManagementActions";
-import SituationStatistics from "@/components/management/SituationStatistics";
-import PaymentMethodStatistics from "@/components/management/PaymentMethodStatistics";
-import InscriptionsTable from "@/components/management/InscriptionsTable";
 import Footer from "@/components/Footer";
-import DormitoryReport from "@/components/management/DormitoryReport";
-import { BatchPaymentDialog } from "@/components/management/BatchPaymentDialog";
-import { FinancialChart } from "@/components/management/FinancialChart";
-import { useManagementLogic } from "@/hooks/useManagementLogic";
-import { useBatchPayment } from "@/hooks/useBatchPayment";
-import { StatisticsCardsSkeleton } from "@/components/management/StatisticsCardsSkeleton";
-import { InscriptionsTableSkeleton } from "@/components/management/InscriptionsTableSkeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Inscription } from "@/types/supabase";
+import { Sidebar, SidebarProvider, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarContent, SidebarHeader, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { LayoutDashboard, Users, BedDouble } from "lucide-react";
+import { ManagementProvider } from './Management/ManagementProvider';
+import { useManagement } from './Management/useManagement';
 
-const Management = () => {
-  const chartRef = useRef<HTMLDivElement>(null);
+const ManagementContent = () => {
   const navigate = useNavigate();
-
-  const {
-    inscriptions, filteredInscriptions, fetchInscriptions, situationCounts,
-    financialSummary, isRegistrationsOpen, userRole, userEmail, userDiscipulado,
-    isAuthenticated, isLoading, handleLogout, handleToggleRegistrations,
-    getStatusBadge, handleDelete, handleExportXLSX, summaryDataForChart,
-    filters, setFilters, filterOptions
-  } = useManagementLogic(chartRef);
-
-  const batchPayment = useBatchPayment(fetchInscriptions);
+  const { isAuthenticated, userEmail, userRole, handleLogout, isRegistrationsOpen, handleToggleRegistrations } = useManagement();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isAuthenticated) {
       navigate("/login");
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, navigate]);
 
-  if (isLoading || !isAuthenticated) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <div className="flex-grow p-8"><InscriptionsTableSkeleton /></div>
-      </div>
-    );
+  if (!isAuthenticated) {
+    return <div>Redirecionando para o login...</div>;
   }
 
   return (
-    <>
-      <div className="flex flex-col min-h-screen bg-gradient-peaceful">
-        <ManagementHeader
-          userEmail={userEmail ?? null}
-          userRole={userRole}
-          handleLogout={handleLogout}
-          isRegistrationsOpen={isRegistrationsOpen}
-          handleToggleRegistrations={handleToggleRegistrations}
-        />
-        <main className="flex-grow p-4 md:p-6 lg:p-8 space-y-6">
-          <Card className="shadow-peaceful">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                Filtros e Ações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* CORREÇÃO: Espalhando as props para o componente, que espera cada uma individualmente */}
-              <ManagementFilters
-                {...filters}
-                {...setFilters}
-                {...filterOptions}
-              />
-              <ManagementActions
-                filterDiscipulado={filters.filterDiscipulado}
-                setFilterDiscipulado={setFilters.setFilterDiscipulado}
-                userRole={userRole}
-                userDiscipulado={userDiscipulado}
-                handleExportXLSX={handleExportXLSX}
-                onOpenBatchModal={() => batchPayment.setIsModalOpen(true)}
-              />
-            </CardContent>
-          </Card>
-
-          {isLoading ? <StatisticsCardsSkeleton /> : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SituationStatistics
-                situationCounts={situationCounts}
-                totalInscriptions={filteredInscriptions.length}
-                isRegistrationsOpen={isRegistrationsOpen}
-              />
-              <PaymentMethodStatistics financialSummary={financialSummary} />
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen bg-gradient-peaceful">
+        <Sidebar className="fixed inset-y-0 left-0">
+          <SidebarHeader>
+            <div className="flex items-center gap-2 p-2">
+              <SidebarTrigger />
+              <Link to="/management/dashboard" className="text-lg font-bold">Gestão</Link>
             </div>
-          )}
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/management/dashboard">
+                    <LayoutDashboard />
+                    Dashboard
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/management/inscriptions">
+                    <Users />
+                    Inscrições
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/management/dormitories">
+                    <BedDouble />
+                    Quartos
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarSeparator />
+          <SidebarContent>
+            {/* Adicione outras seções aqui, se necessário */}
+          </SidebarContent>
+        </Sidebar>
 
-          {userRole === "admin" && !isLoading && (
-            <DormitoryReport inscriptions={inscriptions} />
-          )}
-
-          {isLoading ? <InscriptionsTableSkeleton /> : (
-            <InscriptionsTable
-              filteredInscriptions={filteredInscriptions}
-              userRole={userRole}
-              userDiscipulado={userDiscipulado}
-              getStatusBadge={getStatusBadge}
-              handleDelete={handleDelete}
-              fetchInscriptions={fetchInscriptions}
-            />
-          )}
-        </main>
-        <Footer />
+        <SidebarInset>
+          <ManagementHeader
+            userEmail={userEmail}
+            userRole={userRole}
+            handleLogout={handleLogout}
+            isRegistrationsOpen={isRegistrationsOpen}
+            handleToggleRegistrations={handleToggleRegistrations}
+          />
+          <main className="flex-grow p-4 md:p-6 lg:p-8">
+            <Outlet />
+          </main>
+          <Footer />
+        </SidebarInset>
       </div>
-      
-      <FinancialChart ref={chartRef} summaryData={summaryDataForChart} />
-      
-      <BatchPaymentDialog
-        isOpen={batchPayment.isModalOpen}
-        onClose={() => batchPayment.setIsModalOpen(false)}
-        inscriptions={filteredInscriptions.filter((i: Inscription) => i.status_pagamento !== 'Isento')}
-        selectedIds={batchPayment.selectedIds}
-        onSelectionChange={batchPayment.handleSelectionChange}
-        onSelectAll={() => batchPayment.handleSelectAll(filteredInscriptions.filter((i: Inscription) => i.status_pagamento !== 'Isento'))}
-        onClearAll={batchPayment.handleClearAll}
-        amount={batchPayment.amount} setAmount={batchPayment.setAmount}
-        method={batchPayment.method} setMethod={batchPayment.setMethod}
-        onSubmit={batchPayment.handleSubmit}
-        isLoading={batchPayment.isLoading}
-      />
-    </>
+    </SidebarProvider>
   );
 };
 
-export default Management;
+const ManagementLayout = () => (
+  <ManagementProvider>
+    <ManagementContent />
+  </ManagementProvider>
+);
+
+export default ManagementLayout;

@@ -6,7 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import InscriptionForm from "./pages/InscriptionForm";
 import Login from "./pages/Login";
-import Management from "./pages/Management";
+import ManagementLayout from "./pages/Management";
+import DashboardPage from "./pages/Management/DashboardPage";
+import InscriptionsPage from "./pages/Management/InscriptionsPage";
+import DormitoryPage from "./pages/Management/DormitoryPage";
 import NotFound from "./pages/NotFound";
 import RegistrationsClosedPage from "./pages/RegistrationsClosedPage";
 
@@ -22,7 +25,15 @@ const App = () => (
             <Route path="/" element={<LandingPage />} />
             <Route path="/inscription" element={<InscriptionForm />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/management" element={<Management />} />
+            
+            {/* Rotas de Gerenciamento Aninhadas */}
+            <Route path="/management" element={<ManagementLayout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="inscriptions" element={<InscriptionsPage />} />
+                <Route path="dormitories" element={<DormitoryPage />} />
+            </Route>
+
             <Route path="/inscricoes-encerradas" element={<RegistrationsClosedPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
