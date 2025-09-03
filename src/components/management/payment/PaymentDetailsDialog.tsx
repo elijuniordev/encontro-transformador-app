@@ -57,8 +57,9 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   }, [isOpen, fetchPayments]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
-    // Garante que a página não recarregue ao submeter o formulário
+    // A LINHA MAIS IMPORTANTE: Impede que o navegador recarregue a página.
     e.preventDefault();
+
     setError(null);
 
     try {
