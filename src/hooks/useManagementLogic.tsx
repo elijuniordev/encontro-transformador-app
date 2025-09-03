@@ -1,11 +1,11 @@
-// src/hooks/useManagementLogic.tsx
 import { useMemo, useEffect, useCallback, RefObject } from 'react';
 import { useAuthManagement } from "./useAuthManagement";
 import { useInscriptionsManagement } from "./useInscriptionsManagement";
 import { useEventSettings } from "./useEventSettings";
 import { useManagementFilters } from "./useManagementFilters";
 import { useInscriptionsExporter } from "./useInscriptionsExporter";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeProps } from "@/components/ui/badge";
+import { calculateFinancialSummary, calculateSituationCounts } from '@/lib/statistics';
 
 export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
   const { userEmail, userRole, userDiscipulado, isAuthenticated, handleLogout } = useAuthManagement();
@@ -18,21 +18,41 @@ export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
     handleDelete 
   } = useInscriptionsManagement(userRole, userDiscipulado);
   
-  // CORREÇÃO: Renomeando 'isLoading' para 'isLoadingSettings' para evitar conflito
   const { 
     isRegistrationsOpen, 
     isLoading: isLoadingSettings, 
     handleToggleRegistrations 
   } = useEventSettings();
 
-  // CORREÇÃO: Chamando o hook com os argumentos que ele realmente precisa
   const {
     filters,
     setFilters,
     filterOptions,
-    filteredInscriptions,
-    statistics,
   } = useManagementFilters(inscriptions, userRole, userDiscipulado);
+  
+  const filteredInscriptions = useMemo(() => {
+    let filtered = [...inscriptions];
+
+    if (userRole === "discipulador" && userDiscipulado) {
+      filtered = filtered.filter(i => i.discipuladores === userDiscipulado);
+    } else if (filters.filterDiscipulado) {
+      filtered = filtered.filter(i => i.discipuladores === userDiscipulado);
+    }
+    
+    return filtered.filter(i => {
+      const searchTermMatch = (i.nome_completo || '').toLowerCase().includes(filters.searchTerm.toLowerCase());
+      const funcaoMatch = filters.filterByFuncao === 'all' || i.irmao_voce_e === filters.filterByFuncao;
+      const statusMatch = filters.filterByStatusPagamento === 'all' || i.status_pagamento === filters.filterByStatusPagamento;
+      const discipuladoMatch = filters.filterByDiscipuladoGroup === 'all' || i.discipuladores === filters.filterByDiscipuladoGroup;
+      const sexoMatch = filters.filterBySexo === 'all' || i.sexo === filters.filterBySexo;
+      return searchTermMatch && funcaoMatch && statusMatch && discipuladoMatch && sexoMatch;
+    });
+  }, [inscriptions, filters, userRole, userDiscipulado]);
+
+  const statistics = useMemo(() => ({
+    situationCounts: calculateSituationCounts(filteredInscriptions),
+    financialSummary: calculateFinancialSummary(filteredInscriptions, payments)
+  }), [filteredInscriptions, payments]);
   
   const isLoading = isLoadingInscriptions || isLoadingSettings;
 
@@ -58,12 +78,16 @@ export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
   }, [isAuthenticated, fetchInscriptions]);
 
   const getStatusBadge = useCallback((status: string) => {
-    const variant = {
-      "Pago": "success", "Pendente": "warning", "Parcial": "info",
-      "Cancelado": "destructive", "Isento": "secondary"
-    }[status] || "default";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return <Badge variant={variant as any}>{status}</Badge>;
+    // Apenas variantes válidas
+    const variantMap: { [key: string]: BadgeProps["variant"] } = {
+      "Pago": "default",       // verde → pode customizar no CSS se quiser
+      "Pendente": "secondary", // cinza
+      "Parcial": "outline",    // borda
+      "Cancelado": "destructive", 
+      "Isento": "secondary"
+    };
+    const variant = variantMap[status] || "default";
+    return <Badge variant={variant}>{status}</Badge>;
   }, []);
 
   return {

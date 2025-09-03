@@ -8,18 +8,6 @@ import {
 } from "@/config/options";
 import { Inscription } from '@/types/supabase';
 
-// **INÍCIO DA CORREÇÃO**
-// Define e exporta o tipo para o estado dos filtros
-export type FiltersState = {
-  searchTerm: string;
-  filterDiscipulado: boolean;
-  filterByFuncao: string;
-  filterByStatusPagamento: string;
-  filterByDiscipuladoGroup: string;
-  filterBySexo: string;
-};
-// **FIM DA CORREÇÃO**
-
 export const useManagementFilters = (inscriptions: Inscription[], userRole: string | null, userDiscipulado: string | null) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDiscipulado, setFilterDiscipulado] = useState(false);
@@ -35,7 +23,7 @@ export const useManagementFilters = (inscriptions: Inscription[], userRole: stri
     sexoOptions: SEXO_OPTIONS,
   }), []);
 
-  const filters: FiltersState = { // Aplica o tipo aqui também
+  const filters = {
     searchTerm,
     filterDiscipulado,
     filterByFuncao,

@@ -17,7 +17,7 @@ export const useEventSettings = () => {
 
     if (error) {
       console.error("Erro ao buscar status das inscrições:", error);
-      setIsRegistrationsOpen(true); // Default to open on error
+      setIsRegistrationsOpen(true); // Default para aberto em caso de erro
     } else {
       setIsRegistrationsOpen(data.registrations_open);
     }
@@ -42,7 +42,7 @@ export const useEventSettings = () => {
       toast({
         title: "Erro ao atualizar",
         description: "Não foi possível alterar o status das inscrições.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       setIsRegistrationsOpen(newStatus);
@@ -55,7 +55,7 @@ export const useEventSettings = () => {
 
   return {
     isRegistrationsOpen,
-    isLoadingSettings: isLoading,
+    isLoading, // mantém como isLoading
     handleToggleRegistrations,
   };
 };
