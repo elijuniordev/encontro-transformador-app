@@ -1,16 +1,16 @@
 // src/components/forms/EmergencyContactsSection.tsx
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Phone } from "lucide-react";
-import { InscriptionFormData } from "@/hooks/useInscriptionFormLogic";
+import { InscriptionFormData } from "@/types/forms"; // <-- CORREÇÃO AQUI
 import { ResponsavelInput } from "./ResponsavelInput";
 
 interface EmergencyContactsSectionProps {
   formData: InscriptionFormData;
   handleInputChange: (field: string, value: string) => void;
+  errors: { [key: string]: string | undefined };
 }
 
-export const EmergencyContactsSection = ({ formData, handleInputChange }: EmergencyContactsSectionProps) => {
-  // Renderiza a seção apenas se a situação exigir (Encontrista ou Criança)
+export const EmergencyContactsSection = ({ formData, handleInputChange, errors }: EmergencyContactsSectionProps) => {
   if (!["Encontrista", "Criança"].includes(formData.situacao)) {
     return null;
   }
@@ -27,9 +27,9 @@ export const EmergencyContactsSection = ({ formData, handleInputChange }: Emerge
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ResponsavelInput index={1} formData={formData} handleInputChange={handleInputChange} />
-        <ResponsavelInput index={2} formData={formData} handleInputChange={handleInputChange} />
-        <ResponsavelInput index={3} formData={formData} handleInputChange={handleInputChange} />
+        <ResponsavelInput index={1} formData={formData} handleInputChange={handleInputChange} errors={errors} />
+        <ResponsavelInput index={2} formData={formData} handleInputChange={handleInputChange} errors={errors} />
+        <ResponsavelInput index={3} formData={formData} handleInputChange={handleInputChange} errors={errors} />
       </CardContent>
     </Card>
   );

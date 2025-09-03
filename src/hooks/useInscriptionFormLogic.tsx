@@ -6,8 +6,14 @@ import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS, PARENTESCO_O
 import { useNavigate } from "react-router-dom";
 import { formatPhoneNumber } from "@/lib/utils";
 import { eventDetails } from "@/config/eventDetails";
-import { InscriptionFormData } from "@/types/forms"; // Importando o tipo
-import { inscriptionSchema } from "@/lib/validations/inscriptionSchema"; // Importando o schema
+import { InscriptionFormData } from "@/types/forms"; // Importa o tipo centralizado
+import { inscriptionSchema } from "@/lib/validations/inscriptionSchema";
+import { ZodError } from "zod";
+
+// A definição local de ValidationErrors permanece, pois só é usada aqui.
+type ValidationErrors = {
+  [key: string]: string | undefined;
+};
 
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
@@ -20,6 +26,7 @@ export const useInscriptionFormLogic = () => {
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
 
   const discipuladoresOptions = useMemo(() => DISCIPULADORES_OPTIONS.sort((a, b) => a.localeCompare(b, 'pt-BR')), []);
   const lideresMap = useMemo(() => LIDERES_MAP, []);
@@ -34,13 +41,16 @@ export const useInscriptionFormLogic = () => {
     };
     fetchRegistrationStatus();
   }, []);
-  
+
   const handleInputChange = (field: string, value: string) => {
     let processedValue = value;
     if (field.toLowerCase().includes('whatsapp')) {
       processedValue = formatPhoneNumber(value);
     }
     setFormData(prev => ({ ...prev, [field]: processedValue }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const resetForm = useCallback(() => {
@@ -53,6 +63,27 @@ export const useInscriptionFormLogic = () => {
     setIsSuccess(false);
   }, []);
 
+  // CORREÇÃO: Envolve validateForm em useCallback
+  const validateForm = useCallback(() => {
+    try {
+      inscriptionSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const newErrors: ValidationErrors = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0]] = err.message;
+          }
+        });
+        setErrors(newErrors);
+        toast({ title: "Existem erros no formulário", description: "Por favor, corrija os campos destacados.", variant: "destructive" });
+      }
+      return false;
+    }
+  }, [formData, toast]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -62,10 +93,8 @@ export const useInscriptionFormLogic = () => {
       setIsLoading(false);
       return;
     }
-    
-    const parsedData = inscriptionSchema.safeParse(formData);
-    if (!parsedData.success) {
-      toast({ title: "Erro de validação", description: parsedData.error.errors[0].message, variant: "destructive" });
+
+    if (!validateForm()) {
       setIsLoading(false);
       return;
     }
@@ -133,10 +162,10 @@ export const useInscriptionFormLogic = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [formData, isRegistrationsOpen, toast]);
+  }, [formData, isRegistrationsOpen, toast, validateForm]); // CORREÇÃO: Adiciona validateForm à lista de dependências
 
   return {
     formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading, isSuccess,
-    discipuladoresOptions, filteredLideresOptions, situacaoOptions, parentescoOptions, handleInputChange, resetForm
+    discipuladoresOptions, filteredLideresOptions, situacaoOptions, parentescoOptions, handleInputChange, errors, resetForm
   };
 };

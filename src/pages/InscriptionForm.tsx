@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Footer from "@/components/Footer";
-import { UserPlus, Send, AlertTriangle, Loader2 } from "lucide-react"; // Importe Loader2
+import { UserPlus, Send, AlertTriangle, Loader2 } from "lucide-react";
 import { useInscriptionFormLogic } from "@/hooks/useInscriptionFormLogic";
 import InscriptionSuccess from "@/components/InscriptionSuccess";
 import { eventDetails } from "@/config/eventDetails";
@@ -23,6 +23,7 @@ const InscriptionForm = () => {
     situacaoOptions,
     parentescoOptions,
     handleInputChange,
+    errors,
   } = useInscriptionFormLogic();
 
   if (isSuccess) {
@@ -61,6 +62,7 @@ const InscriptionForm = () => {
                     setFormData={setFormData}
                     handleInputChange={handleInputChange}
                     situacaoOptions={situacaoOptions}
+                    errors={errors}
                   />
 
                   <AdditionalInfoSection
@@ -70,11 +72,13 @@ const InscriptionForm = () => {
                     discipuladoresOptions={discipuladoresOptions}
                     parentescoOptions={parentescoOptions}
                     filteredLideresOptions={filteredLideresOptions}
+                    errors={errors}
                   />
                   
                   <EmergencyContactsSection
                     formData={formData}
                     handleInputChange={handleInputChange}
+                    errors={errors}
                   />
                   
                   <div className="!mt-8 flex items-start bg-red-100 border-l-4 border-red-600 p-4 rounded-lg shadow-md">

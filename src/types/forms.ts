@@ -4,7 +4,7 @@ export interface InscriptionFormData {
   discipuladores: string;
   lider: string;
   nomeCompleto: string;
-  anjoGuarda: string;
+  anjoGuarda?: string;
   sexo: string;
   idade: string;
   whatsapp: string;
