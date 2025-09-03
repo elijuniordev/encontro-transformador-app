@@ -1,15 +1,15 @@
 // src/pages/Management.tsx
 import { useEffect } from "react";
-import { useNavigate, Outlet, Link } from "react-router-dom";
+import { useNavigate, Outlet, Link, useLocation } from "react-router-dom"; // Adicionado useLocation
 import ManagementHeader from "@/components/management/ManagementHeader";
 import Footer from "@/components/Footer";
-import { Sidebar, SidebarProvider, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarContent, SidebarHeader, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, BedDouble } from "lucide-react";
 import { ManagementProvider } from './Management/ManagementProvider';
 import { useManagement } from './Management/useManagement';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; // Importado Tabs
 
 const ManagementContent = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Hook para obter a localização atual
   const { isAuthenticated, userEmail, userRole, handleLogout, isRegistrationsOpen, handleToggleRegistrations } = useManagement();
 
   useEffect(() => {
@@ -18,69 +18,46 @@ const ManagementContent = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Determina o valor da aba ativa com base na rota atual
+  const activeTab = location.pathname.split('/').pop() || 'dashboard';
+
   if (!isAuthenticated) {
     return <div>Redirecionando para o login...</div>;
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen bg-gradient-peaceful">
-        <Sidebar className="fixed inset-y-0 left-0">
-          <SidebarHeader>
-            <div className="flex items-center gap-2 p-2">
-              <SidebarTrigger />
-              <Link to="/management/dashboard" className="text-lg font-bold">Gestão</Link>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/management/dashboard">
-                    <LayoutDashboard />
-                    Dashboard
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/management/inscriptions">
-                    <Users />
-                    Inscrições
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/management/dormitories">
-                    <BedDouble />
-                    Quartos
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarSeparator />
-          <SidebarContent>
-            {/* Adicione outras seções aqui, se necessário */}
-          </SidebarContent>
-        </Sidebar>
-
-        <SidebarInset>
-          <ManagementHeader
-            userEmail={userEmail}
-            userRole={userRole}
-            handleLogout={handleLogout}
-            isRegistrationsOpen={isRegistrationsOpen}
-            handleToggleRegistrations={handleToggleRegistrations}
-          />
-          <main className="flex-grow p-4 md:p-6 lg:p-8">
-            <Outlet />
-          </main>
-          <Footer />
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+    <div className="flex flex-col min-h-screen bg-gradient-peaceful">
+      <ManagementHeader
+        userEmail={userEmail}
+        userRole={userRole}
+        handleLogout={handleLogout}
+        isRegistrationsOpen={isRegistrationsOpen}
+        handleToggleRegistrations={handleToggleRegistrations}
+      />
+      
+      <main className="flex-grow p-4 md:p-6 lg:p-8">
+        <Tabs value={activeTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="dashboard" asChild>
+              <Link to="/management/dashboard">Dashboard</Link>
+            </TabsTrigger>
+            <TabsTrigger value="inscriptions" asChild>
+              <Link to="/management/inscriptions">Inscrições</Link>
+            </TabsTrigger>
+            <TabsTrigger value="dormitories" asChild>
+              <Link to="/management/dormitories">Quartos</Link>
+            </TabsTrigger>
+            {/* Adicione outras abas aqui conforme novas páginas forem criadas */}
+          </TabsList>
+          
+          {/* As TabsContent não precisam ser explicitamente renderizadas aqui,
+              o Outlet se encarrega de renderizar o conteúdo da rota aninhada.
+              As TabsTrigger apenas controlam a visualização da aba ativa. */}
+          <Outlet />
+        </Tabs>
+      </main>
+      <Footer />
+    </div>
   );
 };
 
