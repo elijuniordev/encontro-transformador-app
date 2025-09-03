@@ -1,5 +1,5 @@
 // src/pages/Management/InscriptionsPage.tsx
-import { useRef, useMemo, useCallback, useState } from "react";
+import { useRef, useMemo, useCallback, useState, useEffect } from "react";
 import ManagementFilters from "@/components/management/ManagementFilters";
 import ManagementActions from "@/components/management/ManagementActions";
 import InscriptionsTable from "@/components/management/InscriptionsTable";
@@ -29,8 +29,12 @@ const InscriptionsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  useEffect(() => {
+    // Resetar para a primeira página sempre que os filtros mudarem
+    setCurrentPage(1);
+  }, [filters]);
+
   const filteredInscriptions = useMemo(() => {
-    setCurrentPage(1); // Resetar para a primeira página sempre que os filtros mudarem
     return inscriptions.filter((i: Inscription) => {
       const searchTermMatch = normalizeText(i.nome_completo).includes(normalizeText(filters.searchTerm)) ||
                               normalizeText(i.whatsapp).includes(normalizeText(filters.searchTerm));
@@ -99,7 +103,9 @@ const InscriptionsPage = () => {
         </CardContent>
       </Card>
       
-      {isLoading ? <InscriptionsTableSkeleton /> : (
+      {isLoading ? (
+        <InscriptionsTableSkeleton />
+      ) : (
         <InscriptionsTable
           filteredInscriptions={paginatedInscriptions}
           userRole={userRole}
