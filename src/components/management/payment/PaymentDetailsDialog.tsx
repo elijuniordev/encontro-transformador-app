@@ -58,7 +58,7 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
 
   const handleAddPayment = async (e: React.FormEvent) => {
     // **INÍCIO DA CORREÇÃO**
-    // Esta linha previne que a página recarregue ao submeter o formulário
+    // Esta é a linha crucial que impede o recarregamento da página.
     e.preventDefault();
     // **FIM DA CORREÇÃO**
 
