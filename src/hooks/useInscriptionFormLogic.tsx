@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/config/options";
 import { useNavigate } from "react-router-dom";
-import { formatPhoneNumber } from "@/lib/utils"; // Importa a função da máscara
+import { formatPhoneNumber } from "@/lib/utils";
 
 interface InscriptionFormData {
   [key: string]: string | undefined;
@@ -49,17 +49,16 @@ const inscriptionSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Idade inválida (deve ser entre 12 e 100 anos para adultos).", path: ['idade'] });
     }
     if (data.situacao === 'Criança' && idadeNum >= 12) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para 'Criança', a idade deve ser menor que 12 anos.", path: ['idade'] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para 'Criança', a idade deve ser menor que 12 anos. Para idades maiores, selecione 'Encontrista'.", path: ['idade'] });
     }
   }
-  if (['Equipe', 'Acompanhante'].includes(data.situacao) && (!data.discipuladores || !data.lider)) {
+  if (['Equipe', 'Acompanhante', 'Encontrista'].includes(data.situacao) && (!data.discipuladores || !data.lider)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Discipulador e Líder são obrigatórios para esta situação.", path: ['discipuladores'] });
   }
   if ((data.situacao === "Encontrista" || data.situacao === "Criança") && (!data.nomeResponsavel1 || !data.whatsappResponsavel1)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e WhatsApp do primeiro responsável são obrigatórios.", path: ['nomeResponsavel1'] });
   }
 });
-
 
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
@@ -85,7 +84,6 @@ export const useInscriptionFormLogic = () => {
     fetchRegistrationStatus();
   }, []);
   
-  // LÓGICA DA MÁSCARA REINTRODUZIDA AQUI
   const handleInputChange = (field: string, value: string) => {
     let processedValue = value;
     if (field.toLowerCase().includes('whatsapp')) {
@@ -171,6 +169,7 @@ export const useInscriptionFormLogic = () => {
     } finally {
       setIsLoading(false);
     }
+  // <<< CORREÇÃO APLICADA AQUI >>>
   }, [formData, isRegistrationsOpen, toast]);
 
   return {
