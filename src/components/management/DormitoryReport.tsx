@@ -9,41 +9,65 @@ import { useDormitoryReportLogic } from '@/hooks/useDormitoryReportLogic';
 import { Inscription as Participant } from '@/types/supabase';
 import { Room } from '@/config/rooms';
 import { useToast } from "@/hooks/use-toast";
-import DormitoryCard from './DormitoryCard'; // Importe o novo componente
+import DormitoryCard from './DormitoryCard';
 
-// Componente principal do relatório
 const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptions }) => {
   const { toast } = useToast();
   const [showReport, setShowReport] = useState(false);
   const roomRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const initialReportData = useDormitoryReportLogic(inscriptions, showReport);
   const [roomsState, setRoomsState] = useState<{ [key: string]: Room }>({});
+  const [unallocated, setUnallocated] = useState<Participant[]>([]);
 
   useEffect(() => {
     roomRefs.current = {};
     if (initialReportData) {
       const allRooms = [...initialReportData.mulheresAlocadas, ...initialReportData.homensAlocados];
       const roomsMap = allRooms.reduce((acc, room) => {
-        const gender = room.ocupantes[0]?.sexo.toLowerCase() as 'masculino' | 'feminino' | undefined;
-        acc[room.nome] = { ...room, genero: gender };
+        acc[room.nome] = room;
         return acc;
       }, {} as { [key: string]: Room });
       setRoomsState(roomsMap);
+      setUnallocated([...initialReportData.mulheresNaoAlocados, ...initialReportData.homensNaoAlocados]);
     } else {
       setRoomsState({});
+      setUnallocated([]);
     }
   }, [initialReportData]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
+
     const participant = active.data.current?.participant as Participant;
     const fromRoomName = active.data.current?.fromRoom as string;
+
+    // Se veio da lista de não alocados
+    if (fromRoomName === 'nao-alocados') {
+        const toRoom = over.data.current?.room as Room;
+        if (!toRoom || !participant) return;
+        
+        // Validação de gênero
+        if (toRoom.genero !== participant.sexo) {
+            toast({ title: "Movimento Inválido", description: "Não é possível mover para um bloco de sexo diferente.", variant: "destructive" });
+            return;
+        }
+
+        setRoomsState(prev => {
+            const newRooms = { ...prev };
+            newRooms[toRoom.nome].ocupantes.push(participant);
+            return newRooms;
+        });
+        setUnallocated(prev => prev.filter(p => p.id !== participant.id));
+        return;
+    }
+
+    // Se moveu entre quartos
     const toRoom = over.data.current?.room as Room;
     if (!participant || !fromRoomName || !toRoom || fromRoomName === toRoom.nome || !roomsState[fromRoomName] || !roomsState[toRoom.nome]) return;
 
     if (roomsState[fromRoomName].genero !== roomsState[toRoom.nome].genero) {
-      toast({ title: "Movimento Inválido", description: "Não é possível mover participantes entre blocos de sexo diferente.", variant: "destructive" });
+      toast({ title: "Movimento Inválido", description: "Não é possível mover entre blocos de sexo diferente.", variant: "destructive" });
       return;
     }
 
@@ -66,7 +90,6 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
 
   const mulheresAlocadas = Object.values(roomsState).filter(r => r.genero === 'feminino');
   const homensAlocados = Object.values(roomsState).filter(r => r.genero === 'masculino');
-  const naoAlocados = initialReportData ? [...initialReportData.mulheresNaoAlocados, ...initialReportData.homensNaoAlocados] : [];
 
   return (
     <Card className="shadow-peaceful mb-6">
@@ -85,7 +108,7 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
             {mulheresAlocadas.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-2xl font-bold text-pink-600 mb-4 border-b-2 border-pink-200 pb-2">Bloco Feminino</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
                   {mulheresAlocadas.map(quarto => (
                     <DormitoryCard key={`mulheres-${quarto.nome}`} ref={el => (roomRefs.current[quarto.nome] = el)} quarto={quarto} borderColorClass="border-pink-300" />
                   ))}
@@ -95,18 +118,18 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
             {homensAlocados.length > 0 && (
               <div>
                 <h3 className="text-2xl font-bold text-blue-600 mb-4 border-b-2 border-blue-200 pb-2">Bloco Masculino</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
                   {homensAlocados.map(quarto => (
                     <DormitoryCard key={`homens-${quarto.nome}`} ref={el => (roomRefs.current[quarto.nome] = el)} quarto={quarto} borderColorClass="border-blue-300" />
                   ))}
                 </div>
               </div>
             )}
-            {naoAlocados.length > 0 && (
+            {unallocated.length > 0 && (
                <Card className="mt-6 border-orange-500 bg-orange-50">
-                  <CardHeader><CardTitle className="text-orange-700 flex items-center gap-2"><AlertTriangle /> Participantes Não Alocados</CardTitle></CardHeader>
-                  <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {naoAlocados.map(p => <p key={p.id} className='font-semibold'>{p.nome_completo}</p>)}
+                  <CardHeader><CardTitle className="text-orange-700 flex items-center gap-2"><AlertTriangle /> Participantes Não Alocados ({unallocated.length})</CardTitle></CardHeader>
+                  <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2">
+                      {unallocated.map(p => <p key={p.id} className='font-semibold'>{p.nome_completo}</p>)}
                   </CardContent>
               </Card>
             )}

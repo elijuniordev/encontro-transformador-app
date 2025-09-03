@@ -1,127 +1,128 @@
 // src/hooks/useDormitoryReportLogic.ts
-import { useMemo, useState } from "react";
-import { Inscription } from "@/types/supabase";
+import { useMemo } from "react";
+import { Inscription, Inscription as Participant } from "@/types/supabase";
+import { ROOMS_CONFIG, Room } from '@/config/rooms';
 
-interface Bloco {
-  nome: string;
-  capacidade: number;
-  genero: 'MASCULINO' | 'FEMININO';
-}
+/**
+ * Agrupa os participantes por uma chave (ex: 'lider' ou 'discipuladores').
+ * @param participants - A lista de participantes a ser agrupada.
+ * @param key - A propriedade pela qual agrupar ('lider' ou 'discipuladores').
+ * @returns Um Record onde as chaves são os nomes dos grupos e os valores são listas de participantes.
+ */
+const groupParticipantsBy = (participants: Participant[], key: keyof Participant): Record<string, Participant[]> => {
+  return participants.reduce((acc, participant) => {
+    const groupKey = (participant[key] as string) || 'N/A';
+    if (!acc[groupKey]) {
+      acc[groupKey] = [];
+    }
+    acc[groupKey].push(participant);
+    return acc;
+  }, {} as Record<string, Participant[]>);
+};
 
-interface Quarto {
-  genero: string;
-  nome: string;
-  capacidade: number;
-  pessoas: Inscription[];
-  vagas: number;
-}
+export const useDormitoryReportLogic = (inscriptions: Inscription[], shouldRun: boolean) => {
+  return useMemo(() => {
+    if (!shouldRun || !inscriptions) {
+      return null;
+    }
 
-const BLOCOS: Bloco[] = [
-  { nome: 'Bloco A', capacidade: 12, genero: 'MASCULINO' },
-  { nome: 'Bloco B', capacidade: 10, genero: 'FEMININO' },
-  { nome: 'Bloco C', capacidade: 10, genero: 'MASCULINO' },
-  { nome: 'Bloco D', capacidade: 8, genero: 'FEMININO' },
-  { nome: 'Bloco E', capacidade: 8, genero: 'MASCULINO' },
-  { nome: 'Bloco F', capacidade: 6, genero: 'FEMININO' },
-  { nome: 'Bloco G', capacidade: 6, genero: 'MASCULINO' },
-];
-
-export const useDormitoryReportLogic = (inscriptions: Inscription[]) => {
-  const [reportType, setReportType] = useState<'individual' | 'dormitory'>('dormitory');
-
-  const dormitoriesReport = useMemo(() => {
-    // Filtra apenas Encontristas e Equipe Confirmados para alocação
     const peopleToAllocate = inscriptions.filter(
       (p) =>
-        ["Encontrista", "Equipe", "Pastor, obreiro ou discipulador"].includes(p.irmao_voce_e) &&
-        p.status_pagamento === "Confirmado"
+        ["Encontrista", "Equipe"].includes(p.irmao_voce_e) &&
+        (p.status_pagamento === "Confirmado" || p.status_pagamento === "Isento")
     );
 
     const masculino = peopleToAllocate.filter(p => p.sexo === 'masculino');
     const feminino = peopleToAllocate.filter(p => p.sexo === 'feminino');
 
-    // Inicializa quartos com base nos blocos e suas capacidades
-    const initialQuartos: Quarto[] = BLOCOS.flatMap(bloco =>
-      Array.from({ length: Math.ceil(bloco.capacidade / 4) }, (_, i) => ({
-        nome: `${bloco.nome} - Quarto ${i + 1}`,
-        capacidade: 4, // Assume 4 pessoas por quarto dentro de um bloco
-        pessoas: [],
-        vagas: 4,
-        genero: bloco.genero, // Adiciona o gênero ao quarto
-      }))
-    );
+    const availableRooms: Room[] = JSON.parse(JSON.stringify(ROOMS_CONFIG));
 
-    // Função principal de alocação
-    const alocarPessoasEmBloco = (pessoas: Inscription[], quartosPorGenero: Quarto[]) => {
-      // 1. Agrupar pessoas por discipulador para tentar mantê-los juntos
-      const gruposPorDiscipulador: { [key: string]: Inscription[] } = {};
-      pessoas.forEach(pessoa => {
-        const discipulador = pessoa.discipuladores || 'SEM_DISCIPULADOR';
-        if (!gruposPorDiscipulador[discipulador]) {
-          gruposPorDiscipulador[discipulador] = [];
+    /**
+     * Algoritmo de alocação dinâmica com prioridade de agrupamento.
+     * Tenta alocar por Célula > Discipulado > Individualmente.
+     */
+    const allocateDynamically = (participants: Participant[], rooms: Room[]) => {
+      const gender = participants[0]?.sexo;
+      if (!gender) return;
+
+      // 1. Agrupar por Célula (Líder) - Prioridade Máxima
+      const groupsByLider = Object.values(groupParticipantsBy(participants, 'lider')).sort((a, b) => b.length - a.length);
+      
+      // Correção: Mude 'let' para 'const'
+      const remainingParticipants = new Set(participants);
+
+      // Tenta alocar os grupos de CÉLULA inteiros
+      for (const group of groupsByLider) {
+        // Encontra o melhor quarto vazio ou já iniciado que caiba o grupo
+        const bestRoom = rooms.find(r => (!r.genero || r.genero === gender) && r.capacidade - r.ocupantes.length >= group.length);
+        if (bestRoom) {
+          if (!bestRoom.genero) bestRoom.genero = gender; // Define o gênero do quarto
+          bestRoom.ocupantes.push(...group);
+          group.forEach(p => remainingParticipants.delete(p)); // Remove os alocados da lista de espera
         }
-        gruposPorDiscipulador[discipulador].push(pessoa);
-      });
+      }
+      
+      // 2. Com os participantes restantes, agrupar por DISCIPULADO
+      const participantsForDiscipuladoGrouping = Array.from(remainingParticipants);
+      const groupsByDiscipulado = Object.values(groupParticipantsBy(participantsForDiscipuladoGrouping, 'discipuladores')).sort((a, b) => b.length - a.length);
+      
+      // Tenta alocar os grupos de DISCIPULADO inteiros
+      for (const group of groupsByDiscipulado) {
+        const bestRoom = rooms.find(r => (!r.genero || r.genero === gender) && r.capacidade - r.ocupantes.length >= group.length);
+         if (bestRoom) {
+          if (!bestRoom.genero) bestRoom.genero = gender;
+          bestRoom.ocupantes.push(...group);
+          group.forEach(p => remainingParticipants.delete(p));
+        }
+      }
 
-      // 2. Tentar alocar grupos completos em quartos
-      Object.values(gruposPorDiscipulador).forEach(grupo => {
-        let grupoAlocado = false;
-        // Prioriza quartos com vagas suficientes para o grupo inteiro
-        for (const quarto of quartosPorGenero) {
-          if (quarto.vagas >= grupo.length) {
-            quarto.pessoas.push(...grupo);
-            quarto.vagas -= grupo.length;
-            grupoAlocado = true;
-            break;
+      // 3. Alocar INDIVIDUALMENTE os que sobraram
+      // Esta etapa garante que todos sejam alocados se houver espaço.
+      for (const person of Array.from(remainingParticipants)) {
+        // Busca o melhor quarto para esta pessoa com base na hierarquia
+        let bestFitRoom: Room | null = null;
+        let bestFitScore = -1; // -1: sem lugar, 0: quarto vazio, 1: quarto do mesmo gênero, 2: quarto com mesmo discipulado
+
+        for (const room of rooms) {
+          if (room.capacidade > room.ocupantes.length) {
+            let currentScore = -1;
+            if (!room.genero) {
+              currentScore = 0; // Quarto vazio é uma opção
+            } else if (room.genero === gender) {
+              currentScore = 1; // Quarto do mesmo gênero é melhor
+              if (room.ocupantes.some(p => p.discipuladores === person.discipuladores)) {
+                currentScore = 2; // Quarto com mesmo discipulado é o ideal
+              }
+            }
+            
+            if (currentScore > bestFitScore) {
+              bestFitScore = currentScore;
+              bestFitRoom = room;
+            }
           }
         }
 
-        // Se o grupo não couber em um único quarto, alocar um por um
-        if (!grupoAlocado) {
-          grupo.forEach(pessoa => {
-            // Tenta encontrar um quarto com pelo menos 1 vaga
-            let pessoaAlocada = false;
-            for (const quarto of quartosPorGenero) {
-              if (quarto.vagas > 0) {
-                quarto.pessoas.push(pessoa);
-                quarto.vagas--;
-                pessoaAlocada = true;
-                break;
-              }
-            }
-            // Se não houver vaga em nenhum quarto existente, idealmente deveríamos criar mais quartos ou indicar lotação
-            // Para este caso, a pessoa pode ficar sem alocação ou ser colocada em um quarto excedente.
-            // Aqui, a lógica assume que teremos quartos suficientes ou que o excedente será tratado.
-          });
+        if (bestFitRoom) {
+          if (!bestFitRoom.genero) bestFitRoom.genero = gender;
+          bestFitRoom.ocupantes.push(person);
         }
-      });
+      }
     };
+    
+    // Aloca os dois gêneros
+    allocateDynamically(feminino, availableRooms);
+    allocateDynamically(masculino, availableRooms);
 
-    // Filtra quartos por gênero antes de alocar
-    const quartosMasculinos = initialQuartos.filter(q => q.genero === 'MASCULINO');
-    const quartosFemininos = initialQuartos.filter(q => q.genero === 'FEMININO');
+    const allocatedIds = new Set(availableRooms.flatMap(room => room.ocupantes.map(p => p.id)));
 
-    // Aloca as pessoas
-    alocarPessoasEmBloco(masculino, quartosMasculinos);
-    alocarPessoasEmBloco(feminino, quartosFemininos);
-
-    // Filtra quartos que foram realmente utilizados e calcula o total de vagas
-    const finalQuartos = initialQuartos.filter(q => q.pessoas.length > 0);
-
-    const totalVagasUtilizadas = finalQuartos.reduce((sum, quarto) => sum + quarto.pessoas.length, 0);
-    const totalCapacidadeDisponivel = initialQuartos.reduce((sum, quarto) => sum + quarto.capacidade, 0);
+    const mulheresNaoAlocados = feminino.filter(p => !allocatedIds.has(p.id));
+    const homensNaoAlocados = masculino.filter(p => !allocatedIds.has(p.id));
 
     return {
-      quartos: finalQuartos,
-      totalAlocados: totalVagasUtilizadas,
-      totalCapacidade: totalCapacidadeDisponivel,
-      naoAlocados: peopleToAllocate.length - totalVagasUtilizadas,
+      mulheresAlocadas: availableRooms.filter(r => r.genero === 'feminino' && r.ocupantes.length > 0),
+      homensAlocados: availableRooms.filter(r => r.genero === 'masculino' && r.ocupantes.length > 0),
+      mulheresNaoAlocados,
+      homensNaoAlocados,
     };
-  }, [inscriptions]);
-
-  return {
-    dormitoriesReport,
-    reportType,
-    setReportType,
-  };
+  }, [inscriptions, shouldRun]);
 };

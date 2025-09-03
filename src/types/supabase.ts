@@ -1,11 +1,5 @@
 // src/types/supabase.ts
-// REMOVA a linha de importação abaixo
-// import { Database as DB } from "@/integrations/supabase/types";
 
-// Substitua a linha abaixo
-// type Tables<T extends keyof DB['public']['Tables']> = DB['public']['Tables'][T]['Row'];
-
-// Por esta definição direta
 export type Inscription = {
     anjo_guarda: string;
     created_at: string;
@@ -23,14 +17,19 @@ export type Inscription = {
     responsavel_2_whatsapp: string | null;
     responsavel_3_nome: string | null;
     responsavel_3_whatsapp: string | null;
-    sexo: string;
+    // REMOVA a linha abaixo
+    // sexo: string;
+    // ADICIONE a linha abaixo
+    sexo: 'masculino' | 'feminino';
     status_pagamento: string;
     updated_at: string;
     valor: number;
     whatsapp: string;
+    acompanhante_nome?: string | null; // Adicionado para consistência
+    acompanhante_parentesco?: string | null; // Adicionado para consistência
 };
 
-// Mantenha as outras exportações como estão
+// ... o resto do arquivo permanece o mesmo
 export type User = {
     created_at: string;
     discipulado: string | null;
