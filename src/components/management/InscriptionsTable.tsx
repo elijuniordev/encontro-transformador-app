@@ -65,6 +65,11 @@ const InscriptionsTable = ({
       startPage = Math.max(1, totalPages - 4);
     }
 
+    // Se o total de páginas for menor que 5, ajuste o fim para o total de páginas
+    if (totalPages < 5) {
+      endPage = totalPages;
+    }
+
     for (let i = startPage; i <= endPage; i++) {
       items.push(
         <PaginationItem key={i}>
