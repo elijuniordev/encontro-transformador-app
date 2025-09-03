@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Inscription } from "@/types/supabase";
 import { TableRowActions } from "./table/TableRowActions";
 import { Input } from "../ui/input";
-import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { STATUS_PAGAMENTO_OPTIONS } from "@/config/options";
 
@@ -34,13 +33,13 @@ export const DesktopInscriptionRow = ({
   onSave,
   onCancel,
 }: DesktopInscriptionRowProps) => {
-    const { toast } = useToast();
 
   return (
     <TableRow>
       <TableCell className="font-medium text-sm">{inscription.nome_completo}</TableCell>
       <TableCell className="text-sm">{inscription.discipuladores}</TableCell>
       <TableCell className="text-sm">{inscription.whatsapp}</TableCell>
+      <TableCell className="text-sm">{inscription.irmao_voce_e}</TableCell>
       
       {/* Célula de Pagamento (Valor Total / Pago) */}
       <TableCell>
@@ -49,7 +48,7 @@ export const DesktopInscriptionRow = ({
               type="number"
               value={editData.total_value ?? ''}
               onChange={e => setEditData({ ...editData, total_value: Number(e.target.value) })}
-              className="h-9 w-28"
+              className="h-9 w-28 text-sm"
               disabled={editData.status_pagamento === 'Isento'}
             />
         ) : (
@@ -74,7 +73,7 @@ export const DesktopInscriptionRow = ({
                 setEditData(newData);
               }}
             >
-                <SelectTrigger className="h-9 w-[130px]">
+                <SelectTrigger className="h-9 w-[130px] text-xs">
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -90,10 +89,10 @@ export const DesktopInscriptionRow = ({
              <Input 
                 value={editData.observacao || ''} 
                 onChange={e => setEditData({ ...editData, observacao: e.target.value })} 
-                className="h-9"
+                className="h-9 text-sm"
              />
         ) : (
-            <div className="min-h-8">
+            <div className="min-h-8 text-sm">
                 {inscription.observacao || "-"}
             </div>
         )}
