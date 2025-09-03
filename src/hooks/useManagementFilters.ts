@@ -16,21 +16,23 @@ export const useManagementFilters = () => {
   const [filterByDiscipuladoGroup, setFilterByDiscipuladoGroup] = useState("all");
   const [filterBySexo, setFilterBySexo] = useState("all");
 
+  const filters = useMemo(() => {
+    return {
+      searchTerm,
+      filterDiscipulado,
+      filterByFuncao,
+      filterByStatusPagamento,
+      filterByDiscipuladoGroup,
+      filterBySexo,
+    };
+  }, [searchTerm, filterDiscipulado, filterByFuncao, filterByStatusPagamento, filterByDiscipuladoGroup, filterBySexo]);
+
   const filterOptions = useMemo(() => ({
     funcaoOptions: FUNCAO_OPTIONS,
     statusPagamentoOptions: STATUS_PAGAMENTO_OPTIONS,
     discipuladoGroupOptions: DISCIPULADORES_OPTIONS_FOR_FILTER,
     sexoOptions: SEXO_OPTIONS,
   }), []);
-
-  const filters = {
-    searchTerm,
-    filterDiscipulado,
-    filterByFuncao,
-    filterByStatusPagamento,
-    filterByDiscipuladoGroup,
-    filterBySexo,
-  };
 
   const setFilters = {
     setSearchTerm,
