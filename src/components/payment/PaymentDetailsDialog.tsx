@@ -1,4 +1,3 @@
-// src/components/payment/PaymentDetailsDialog.tsx
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Inscription, Payment } from "@/types/supabase";
@@ -47,6 +46,35 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
     setIsLoading(false);
   }, [inscription, toast]);
 
+  // Função auxiliar para atualizar a coluna `forma_pagamento`
+  const updateInscriptionPaymentMethods = useCallback(async (inscriptionId: string) => {
+    // Busque todas as formas de pagamento para esta inscrição
+    const { data: currentPayments, error } = await supabase
+      .from('payments')
+      .select('payment_method')
+      .eq('inscription_id', inscriptionId);
+
+    if (error) {
+      console.error("Erro ao buscar pagamentos para atualização:", error);
+      return;
+    }
+
+    // Crie uma lista de métodos únicos e os concatene em uma string
+    const uniqueMethods = [...new Set(currentPayments.map(p => p.payment_method))].filter(Boolean);
+    const updatedPaymentMethods = uniqueMethods.join(', ');
+
+    // Atualize a coluna `forma_pagamento` na tabela `inscriptions`
+    const { error: updateError } = await supabase
+      .from('inscriptions')
+      .update({ forma_pagamento: updatedPaymentMethods })
+      .eq('id', inscriptionId);
+    
+    if (updateError) {
+      console.error("Erro ao atualizar a inscrição com a nova forma de pagamento:", updateError);
+      toast({ title: "Aviso", description: "O pagamento foi processado, mas a inscrição principal não foi atualizada.", variant: "default" });
+    }
+  }, [toast]);
+
   useEffect(() => {
     if (isOpen) {
       fetchPayments();
@@ -91,16 +119,9 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
       setError(`Erro do banco de dados: ${insertError.message}`);
       toast({ title: "Erro ao adicionar pagamento", description: "Verifique os detalhes do erro acima do formulário.", variant: "destructive" });
     } else {
-      // --- ADIÇÃO AQUI: Atualiza a inscrição principal ---
-      const { error: updateError } = await supabase.from('inscriptions').update({ forma_pagamento: newMethod }).eq('id', inscription!.id);
-      if (updateError) {
-        console.error("Erro ao atualizar a inscrição:", updateError);
-        toast({ title: "Aviso", description: "Pagamento adicionado, mas a inscrição principal não foi atualizada.", variant: "default" });
-      } else {
-        toast({ title: "Pagamento adicionado com sucesso!" });
-      }
-      // --- FIM DA ADIÇÃO ---
-
+      toast({ title: "Pagamento adicionado com sucesso!" });
+      // Chame a nova função para atualizar a inscrição principal
+      await updateInscriptionPaymentMethods(inscription!.id);
       onPaymentUpdate();
       onClose();
     }
@@ -115,19 +136,9 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
       setError(`Erro ao deletar: ${deleteError.message}`);
       toast({ title: "Erro ao deletar pagamento", variant: "destructive" });
     } else {
-      // --- ADIÇÃO AQUI: Atualiza a inscrição principal após a exclusão ---
-      // Busque os pagamentos restantes para definir a nova forma de pagamento
-      const { data: remainingPayments } = await supabase.from('payments').select('payment_method').eq('inscription_id', inscription!.id);
-      const lastPaymentMethod = remainingPayments?.length ? remainingPayments[0].payment_method : null;
-
-      const { error: updateError } = await supabase.from('inscriptions').update({ forma_pagamento: lastPaymentMethod }).eq('id', inscription!.id);
-      if (updateError) {
-        console.error("Erro ao atualizar a inscrição:", updateError);
-        toast({ title: "Aviso", description: "Pagamento excluído, mas a inscrição principal não foi atualizada.", variant: "default" });
-      } else {
-        toast({ title: "Pagamento deletado com sucesso!" });
-      }
-      // --- FIM DA ADIÇÃO ---
+      toast({ title: "Pagamento deletado com sucesso!" });
+      // Chame a nova função para atualizar a inscrição principal
+      await updateInscriptionPaymentMethods(inscription!.id);
       onPaymentUpdate();
       onClose();
     }

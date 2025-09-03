@@ -1,4 +1,3 @@
-// src/hooks/useBatchPayment.ts
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +10,32 @@ export const useBatchPayment = (onSuccess: () => void) => {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Função auxiliar para atualizar a coluna `forma_pagamento`
+  const updateInscriptionPaymentMethods = useCallback(async (inscriptionId: string) => {
+    const { data: currentPayments, error } = await supabase
+      .from('payments')
+      .select('payment_method')
+      .eq('inscription_id', inscriptionId);
+
+    if (error) {
+      console.error("Erro ao buscar pagamentos para atualização:", error);
+      return;
+    }
+
+    const uniqueMethods = [...new Set(currentPayments.map(p => p.payment_method))].filter(Boolean);
+    const updatedPaymentMethods = uniqueMethods.join(', ');
+
+    const { error: updateError } = await supabase
+      .from('inscriptions')
+      .update({ forma_pagamento: updatedPaymentMethods })
+      .eq('id', inscriptionId);
+    
+    if (updateError) {
+      console.error("Erro ao atualizar a inscrição com a nova forma de pagamento:", updateError);
+      toast({ title: "Aviso", description: "O pagamento foi processado, mas a inscrição principal não foi atualizada.", variant: "default" });
+    }
+  }, [toast]);
 
   const handleSelectionChange = (inscriptionId: string) => {
     setSelectedIds(prev => {
@@ -65,6 +90,13 @@ export const useBatchPayment = (onSuccess: () => void) => {
         title: "Sucesso!",
         description: `${selectedIds.size} pagamentos foram registrados com sucesso.`,
       });
+
+      // Atualize as inscrições em lote após a inserção
+      const updatePromises = Array.from(selectedIds).map(inscriptionId => 
+        updateInscriptionPaymentMethods(inscriptionId)
+      );
+      await Promise.all(updatePromises);
+
       onSuccess(); // Atualiza a lista de inscrições
       setIsModalOpen(false); // Fecha o modal
     }
