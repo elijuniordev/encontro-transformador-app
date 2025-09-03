@@ -8,7 +8,7 @@ import {
 } from "@/config/options";
 import { Inscription } from '@/types/supabase';
 
-export const useManagementFilters = (inscriptions: Inscription[], userRole: string | null, userDiscipulado: string | null) => {
+export const useManagementFilters = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDiscipulado, setFilterDiscipulado] = useState(false);
   const [filterByFuncao, setFilterByFuncao] = useState("all");

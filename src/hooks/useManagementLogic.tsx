@@ -6,6 +6,7 @@ import { useManagementFilters } from "./useManagementFilters";
 import { useInscriptionsExporter } from "./useInscriptionsExporter";
 import { Badge, BadgeProps } from "@/components/ui/badge";
 import { calculateFinancialSummary, calculateSituationCounts } from '@/lib/statistics';
+import { normalizeText } from '@/lib/utils'; // Importação adicionada
 
 export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
   const { userEmail, userRole, userDiscipulado, isAuthenticated, handleLogout } = useAuthManagement();
@@ -28,23 +29,30 @@ export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
     filters,
     setFilters,
     filterOptions,
-  } = useManagementFilters(inscriptions, userRole, userDiscipulado);
+  } = useManagementFilters(); // Argumentos removidos
   
   const filteredInscriptions = useMemo(() => {
-    let filtered = [...inscriptions];
+    return inscriptions.filter(i => {
+      // Filtro por termo de busca (nome, whatsapp, etc.)
+      const searchTermMatch = normalizeText(i.nome_completo).includes(normalizeText(filters.searchTerm)) ||
+                              normalizeText(i.whatsapp).includes(normalizeText(filters.searchTerm));
+      
+      // Lógica para filtrar por discipulado
+      let discipuladoMatch = true;
+      if (userRole === "discipulador" && filters.filterDiscipulado && userDiscipulado) {
+        // Se o usuário é um discipulador e o switch está ligado, filtra apenas o seu grupo.
+        discipuladoMatch = i.discipuladores === userDiscipulado;
+      } else if (filters.filterByDiscipuladoGroup !== 'all') {
+        // Se o filtro de grupo de discipulado está selecionado, usa ele.
+        discipuladoMatch = i.discipuladores === filters.filterByDiscipuladoGroup;
+      }
 
-    if (userRole === "discipulador" && userDiscipulado) {
-      filtered = filtered.filter(i => i.discipuladores === userDiscipulado);
-    } else if (filters.filterDiscipulado) {
-      filtered = filtered.filter(i => i.discipuladores === userDiscipulado);
-    }
-    
-    return filtered.filter(i => {
-      const searchTermMatch = (i.nome_completo || '').toLowerCase().includes(filters.searchTerm.toLowerCase());
+      // Filtros de dropdown
       const funcaoMatch = filters.filterByFuncao === 'all' || i.irmao_voce_e === filters.filterByFuncao;
       const statusMatch = filters.filterByStatusPagamento === 'all' || i.status_pagamento === filters.filterByStatusPagamento;
-      const discipuladoMatch = filters.filterByDiscipuladoGroup === 'all' || i.discipuladores === filters.filterByDiscipuladoGroup;
       const sexoMatch = filters.filterBySexo === 'all' || i.sexo === filters.filterBySexo;
+
+      // Retorna true apenas se todos os filtros corresponderem
       return searchTermMatch && funcaoMatch && statusMatch && discipuladoMatch && sexoMatch;
     });
   }, [inscriptions, filters, userRole, userDiscipulado]);
