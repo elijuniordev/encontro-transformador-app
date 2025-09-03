@@ -12,11 +12,15 @@ export const useManagementLogic = () => {
   const { userRole, userEmail, userDiscipulado, isAuthenticated, handleLogout } = useAuthManagement();
   const { isRegistrationsOpen, isLoadingSettings, handleToggleRegistrations } = useEventSettings();
   const { filters, setFilters, filterOptions } = useManagementFilters();
-  const { inscriptions, filteredInscriptions, isLoadingInscriptions, fetchInscriptions, handleDelete } = useInscriptionsManagement(userDiscipulado);
+  // **INÍCIO DA CORREÇÃO**
+  const { inscriptions, payments, filteredInscriptions, isLoadingInscriptions, fetchInscriptions, handleDelete } = useInscriptionsManagement(userDiscipulado);
+  // **FIM DA CORREÇÃO**
   const { handleExportXLSX } = useInscriptionsExporter(filteredInscriptions);
 
   const situationCounts = useMemo(() => calculateSituationCounts(filteredInscriptions), [filteredInscriptions]);
-  const financialSummary = useMemo(() => calculateFinancialSummary(filteredInscriptions), [filteredInscriptions]);
+  // **INÍCIO DA CORREÇÃO**
+  const financialSummary = useMemo(() => calculateFinancialSummary(filteredInscriptions, payments), [filteredInscriptions, payments]);
+  // **FIM DA CORREÇÃO**
 
   const getStatusBadge = useCallback((status: string) => {
     const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
@@ -37,7 +41,7 @@ export const useManagementLogic = () => {
     inscriptions,
     filteredInscriptions,
     situationCounts,
-    financialSummary, // Mantém o correto
+    financialSummary,
     isRegistrationsOpen,
     userRole,
     userEmail,

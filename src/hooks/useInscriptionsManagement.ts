@@ -2,32 +2,46 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Inscription } from '@/types/supabase';
+import { Inscription, Payment } from '@/types/supabase'; // Importe o tipo Payment
 import { normalizeText } from '@/lib/utils';
 import { useManagementFilters } from './useManagementFilters';
 
 export const useInscriptionsManagement = (userDiscipulado: string | null) => {
   const { toast } = useToast();
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]); // Estado para armazenar pagamentos
   const [isLoading, setIsLoading] = useState(true);
   const { filters } = useManagementFilters();
 
   const fetchInscriptions = useCallback(async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('inscriptions')
-      .select('*')
-      .order('created_at', { ascending: false });
+    
+    // Busca inscrições e pagamentos em paralelo
+    const [inscriptionsResponse, paymentsResponse] = await Promise.all([
+      supabase.from('inscriptions').select('*').order('created_at', { ascending: false }),
+      supabase.from('payments').select('*')
+    ]);
 
-    if (error) {
+    if (inscriptionsResponse.error) {
       toast({
-        title: "Erro ao carregar dados",
-        description: "Não foi possível carregar as inscrições.",
+        title: "Erro ao carregar inscrições",
+        description: inscriptionsResponse.error.message,
         variant: "destructive"
       });
     } else {
-      setInscriptions(data as Inscription[]);
+      setInscriptions(inscriptionsResponse.data as Inscription[]);
     }
+
+    if (paymentsResponse.error) {
+      toast({
+        title: "Erro ao carregar pagamentos",
+        description: paymentsResponse.error.message,
+        variant: "destructive"
+      });
+    } else {
+      setPayments(paymentsResponse.data as Payment[]);
+    }
+
     setIsLoading(false);
   }, [toast]);
 
@@ -64,6 +78,7 @@ export const useInscriptionsManagement = (userDiscipulado: string | null) => {
 
   return {
     inscriptions,
+    payments, // Retorna os pagamentos
     filteredInscriptions,
     isLoadingInscriptions: isLoading,
     fetchInscriptions,
