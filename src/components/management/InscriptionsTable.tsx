@@ -8,8 +8,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Inscription } from "@/types/supabase";
 import { MobileInscriptionCard } from "./MobileInscriptionCard";
 import { DesktopInscriptionRow } from "./DesktopInscriptionRow";
-// CORREÇÃO: Ajustando o caminho da importação
-import { PaymentDetailsDialog } from "../payment/PaymentDetailsDialog"
+import { PaymentDetailsDialog } from "../payment/PaymentDetailsDialog";
+import { useInscriptionEditor } from "@/hooks/useInscriptionEditor"; // Importe o hook
 
 interface InscriptionsTableProps {
   filteredInscriptions: Inscription[];
@@ -31,6 +31,11 @@ const InscriptionsTable = ({
   const isMobile = useIsMobile();
   const [selectedInscription, setSelectedInscription] = useState<Inscription | null>(null);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+
+  // **INÍCIO DA MUDANÇA**
+  // Hook para controlar a edição inline
+  const { editingId, editData, setEditData, handleEdit, handleSaveEdit, handleCancelEdit } = useInscriptionEditor(fetchInscriptions);
+  // **FIM DA MUDANÇA**
 
   const handleOpenPaymentModal = (inscription: Inscription) => {
     setSelectedInscription(inscription);
@@ -71,8 +76,8 @@ const InscriptionsTable = ({
                     <TableHead>Nome</TableHead>
                     <TableHead>Discipuladores</TableHead>
                     <TableHead>WhatsApp</TableHead>
-                    <TableHead>Função</TableHead>
                     <TableHead>Pagamento</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Observação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -85,6 +90,15 @@ const InscriptionsTable = ({
                       getStatusBadge={getStatusBadge}
                       handleDelete={handleDelete}
                       onOpenPaymentModal={() => handleOpenPaymentModal(inscription)}
+                      // **INÍCIO DA MUDANÇA**
+                      // Passe as props de edição
+                      isEditing={editingId === inscription.id}
+                      editData={editData}
+                      setEditData={setEditData}
+                      onEdit={() => handleEdit(inscription)}
+                      onSave={handleSaveEdit}
+                      onCancel={handleCancelEdit}
+                      // **FIM DA MUDANÇA**
                     />
                   ))}
                 </TableBody>
