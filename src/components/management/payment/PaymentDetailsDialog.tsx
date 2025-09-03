@@ -57,11 +57,8 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   }, [isOpen, fetchPayments]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
-    // **INÍCIO DA CORREÇÃO**
-    // Esta é a linha crucial que impede o recarregamento da página.
+    // Garante que a página não recarregue ao submeter o formulário
     e.preventDefault();
-    // **FIM DA CORREÇÃO**
-
     setError(null);
 
     try {
@@ -69,8 +66,8 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
     } catch (err) {
       if (err instanceof ZodError) {
         setError(err.errors[0].message);
+        return;
       }
-      return;
     }
 
     const sanitizedAmount = newAmount.replace(',', '.');
@@ -115,6 +112,7 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   }
 
   const saldoDevedor = inscription ? inscription.total_value - inscription.paid_amount : 0;
+  const isWaived = inscription?.status_pagamento === 'Isento';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -138,7 +136,7 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
             </Alert>
         )}
 
-        {inscription?.status_pagamento === 'Isento' ? (
+        {isWaived ? (
           <div className="border-t pt-4 text-center text-muted-foreground flex items-center justify-center gap-2 bg-slate-50 p-4 rounded-md">
             <Info className="h-5 w-5"/>
             <p className="font-semibold">Este participante é isento de pagamento.</p>
