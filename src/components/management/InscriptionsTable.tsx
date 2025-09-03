@@ -11,13 +11,6 @@ import { DesktopInscriptionRow } from "./DesktopInscriptionRow";
 import { PaymentDetailsDialog } from "../payment/PaymentDetailsDialog";
 import { useInscriptionEditor } from "@/hooks/useInscriptionEditor";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
-import { useManagement } from "@/pages/Management/useManagement";
-import { useBatchPayment } from "@/hooks/useBatchPayment";
-import { useManagementFilters } from "@/hooks/useManagementFilters";
-import { useInscriptionsExporter } from "@/hooks/useInscriptionsExporter";
-import { normalizeText } from '@/lib/utils';
-import { BadgeProps } from "@/components/ui/badge";
-import { Payment } from "@/types/supabase";
 
 interface InscriptionsTableProps {
   filteredInscriptions: Inscription[];
@@ -64,8 +57,6 @@ const InscriptionsTable = ({
     if (currentPage > totalPages - 2) {
       startPage = Math.max(1, totalPages - 4);
     }
-
-    // Certifica-se de que a paginação não exibe links para páginas inexistentes
     if (totalPages < 5) {
       endPage = totalPages;
     }
