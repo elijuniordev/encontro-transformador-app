@@ -15,7 +15,7 @@ interface PaymentDetailsDialogProps {
   inscription: Inscription | null;
   isOpen: boolean;
   onClose: () => void;
-  onPaymentUpdate: () => void; // Para recarregar a lista principal
+  onPaymentUpdate: () => void;
 }
 
 export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUpdate }: PaymentDetailsDialogProps) => {
@@ -25,9 +25,8 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   const [newAmount, setNewAmount] = useState('');
   const [newMethod, setNewMethod] = useState('');
 
-  // Busca os pagamentos existentes para a inscrição selecionada
   useEffect(() => {
-    if (inscription) {
+    if (isOpen && inscription) {
       const fetchPayments = async () => {
         setIsLoading(true);
         const { data, error } = await supabase
@@ -37,7 +36,8 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
           .order('created_at', { ascending: false });
 
         if (error) {
-          toast({ title: "Erro ao buscar pagamentos", variant: "destructive" });
+          console.error("Erro ao buscar pagamentos:", error); // Adicionado para depuração
+          toast({ title: "Erro ao buscar pagamentos", description: error.message, variant: "destructive" });
         } else {
           setPayments(data as Payment[]);
         }
@@ -45,7 +45,7 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
       };
       fetchPayments();
     }
-  }, [inscription, toast]);
+  }, [isOpen, inscription, toast]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,21 +53,39 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
       toast({ title: "Preencha o valor e a forma de pagamento.", variant: "destructive" });
       return;
     }
+
+    // **INÍCIO DA CORREÇÃO**
+    // 1. Substitui a vírgula por ponto para garantir que o parseFloat funcione.
+    const sanitizedAmount = newAmount.replace(',', '.');
+    const parsedAmount = parseFloat(sanitizedAmount);
+
+    // 2. Valida se o valor é um número válido e positivo.
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast({
+        title: "Valor Inválido",
+        description: "Por favor, insira um valor numérico positivo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // **FIM DA CORREÇÃO**
+
     setIsLoading(true);
     const { error } = await supabase.from('payments').insert({
       inscription_id: inscription.id,
-      amount: parseFloat(newAmount),
+      amount: parsedAmount, // 3. Usa o valor corrigido
       payment_method: newMethod
     });
 
     if (error) {
-      toast({ title: "Erro ao adicionar pagamento", variant: "destructive" });
+      console.error("Erro ao adicionar pagamento:", error); // Adicionado para depuração
+      toast({ title: "Erro ao adicionar pagamento", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Pagamento adicionado com sucesso!" });
       setNewAmount('');
       setNewMethod('');
-      onPaymentUpdate(); // Atualiza a lista principal
-      onClose(); // Fecha o modal
+      onPaymentUpdate();
+      onClose();
     }
     setIsLoading(false);
   };
@@ -76,7 +94,8 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
     setIsLoading(true);
     const { error } = await supabase.from('payments').delete().eq('id', paymentId);
     if(error){
-      toast({ title: "Erro ao deletar pagamento", variant: "destructive" });
+      console.error("Erro ao deletar pagamento:", error); // Adicionado para depuração
+      toast({ title: "Erro ao deletar pagamento", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Pagamento deletado com sucesso!" });
       onPaymentUpdate();
@@ -95,20 +114,18 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
           <DialogDescription>Para: {inscription?.nome_completo}</DialogDescription>
         </DialogHeader>
         
-        {/* Resumo Financeiro */}
         <div className="grid grid-cols-3 gap-2 text-center my-4">
-            <div><p className="text-sm text-muted-foreground">Valor Total</p><p className="font-bold">R$ {inscription?.total_value.toFixed(2)}</p></div>
-            <div><p className="text-sm text-muted-foreground">Valor Pago</p><p className="font-bold text-green-600">R$ {inscription?.paid_amount.toFixed(2)}</p></div>
-            <div><p className="text-sm text-muted-foreground">Saldo Devedor</p><p className="font-bold text-red-600">R$ {saldoDevedor.toFixed(2)}</p></div>
+            <div><p className="text-sm text-muted-foreground">Valor Total</p><p className="font-bold">R$ {inscription?.total_value.toFixed(2).replace('.', ',')}</p></div>
+            <div><p className="text-sm text-muted-foreground">Valor Pago</p><p className="font-bold text-green-600">R$ {inscription?.paid_amount.toFixed(2).replace('.', ',')}</p></div>
+            <div><p className="text-sm text-muted-foreground">Saldo Devedor</p><p className="font-bold text-red-600">R$ {saldoDevedor.toFixed(2).replace('.', ',')}</p></div>
         </div>
 
-        {/* Formulário para Adicionar Novo Pagamento */}
         <form onSubmit={handleAddPayment} className="space-y-4 border-t pt-4">
           <h4 className="font-semibold">Adicionar Novo Pagamento</h4>
           <div className="flex gap-2 items-end">
             <div className="flex-grow">
               <Label htmlFor="amount">Valor (R$)</Label>
-              <Input id="amount" type="number" step="0.01" placeholder="100.00" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
+              <Input id="amount" type="text" inputMode="decimal" placeholder="100,00" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="method">Forma</Label>
@@ -121,7 +138,6 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
           </div>
         </form>
 
-        {/* Histórico de Pagamentos */}
         <div className="space-y-2 border-t pt-4">
           <h4 className="font-semibold">Histórico</h4>
           {isLoading && <p>Carregando histórico...</p>}
@@ -130,7 +146,7 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
             {payments.map(p => (
               <div key={p.id} className="flex justify-between items-center text-sm p-2 bg-slate-50 rounded">
                 <div>
-                  <span className="font-semibold">R$ {p.amount.toFixed(2)}</span>
+                  <span className="font-semibold">R$ {p.amount.toFixed(2).replace('.', ',')}</span>
                   <span className="text-muted-foreground"> via {p.payment_method}</span>
                 </div>
                 <div className="flex items-center gap-2">
