@@ -6,7 +6,7 @@ import { useEventSettings } from './useEventSettings';
 import { useManagementFilters } from './useManagementFilters';
 import { useInscriptionsManagement } from './useInscriptionsManagement';
 import { useInscriptionsExporter } from './useInscriptionsExporter';
-import { calculateSituationCounts, calculateFinancialSummary } from "@/lib/statistics"; // Alteração aqui
+import { calculateSituationCounts, calculateFinancialSummary } from "@/lib/statistics";
 
 export const useManagementLogic = () => {
   const { userRole, userEmail, userDiscipulado, isAuthenticated, handleLogout } = useAuthManagement();
@@ -16,7 +16,6 @@ export const useManagementLogic = () => {
   const { handleExportXLSX } = useInscriptionsExporter(filteredInscriptions);
 
   const situationCounts = useMemo(() => calculateSituationCounts(filteredInscriptions), [filteredInscriptions]);
-  // CORREÇÃO: Usa a nova função para obter o resumo financeiro completo
   const financialSummary = useMemo(() => calculateFinancialSummary(filteredInscriptions), [filteredInscriptions]);
 
   const getStatusBadge = useCallback((status: string) => {
@@ -38,7 +37,7 @@ export const useManagementLogic = () => {
     inscriptions,
     filteredInscriptions,
     situationCounts,
-    financialSummary, // Alteração aqui
+    financialSummary, // Mantém o correto
     isRegistrationsOpen,
     userRole,
     userEmail,
