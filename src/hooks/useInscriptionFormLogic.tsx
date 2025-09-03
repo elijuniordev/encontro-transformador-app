@@ -188,7 +188,7 @@ export const useInscriptionFormLogic = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [formData, isRegistrationsOpen, toast, navigate]);
+  }, [formData, isRegistrationsOpen, toast]);
 
   return {
     formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading, isSuccess,
