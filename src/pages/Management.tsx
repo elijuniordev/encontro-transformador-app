@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ManagementHeader from "@/components/management/ManagementHeader";
 import ManagementFilters from "@/components/management/ManagementFilters";
-import ManagementActions from "@/components/management/ManagementActions"; // Importe o novo componente
+import ManagementActions from "@/components/management/ManagementActions";
 import SituationStatistics from "@/components/management/SituationStatistics";
 import PaymentMethodStatistics from "@/components/management/PaymentMethodStatistics";
 import InscriptionsTable from "@/components/management/InscriptionsTable";
@@ -30,7 +30,7 @@ const Management = () => {
     inscriptions,
     filteredInscriptions,
     situationCounts,
-    paymentMethodCounts,
+    financialSummary, // <-- A variável correta
     isRegistrationsOpen,
     userRole,
     userEmail,
@@ -116,7 +116,9 @@ const Management = () => {
               totalInscriptions={filteredInscriptions.length}
               isRegistrationsOpen={isRegistrationsOpen}
             />
-            <PaymentMethodStatistics paymentMethodCounts={paymentMethodCounts} />
+            {/* **INÍCIO DA CORREÇÃO** */}
+            <PaymentMethodStatistics financialSummary={financialSummary} />
+            {/* **FIM DA CORREÇÃO** */}
           </div>
         )}
 
