@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS } from "@/config/options";
 import { useNavigate } from "react-router-dom";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/utils"; // Importa a função da máscara
 
 interface InscriptionFormData {
   [key: string]: string | undefined;
@@ -60,6 +60,7 @@ const inscriptionSchema = z.object({
   }
 });
 
+
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -84,6 +85,7 @@ export const useInscriptionFormLogic = () => {
     fetchRegistrationStatus();
   }, []);
   
+  // LÓGICA DA MÁSCARA REINTRODUZIDA AQUI
   const handleInputChange = (field: string, value: string) => {
     let processedValue = value;
     if (field.toLowerCase().includes('whatsapp')) {
@@ -150,7 +152,7 @@ export const useInscriptionFormLogic = () => {
         responsavel_3_nome: formData.nomeResponsavel3 || null,
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
         status_pagamento: isStaff || (isChild && finalValue === 0) ? 'Isento' : 'Pendente',
-        forma_pagamento: null, // Forma de pagamento é SEMPRE nula na criação
+        forma_pagamento: null,
         valor: finalValue
       };
 

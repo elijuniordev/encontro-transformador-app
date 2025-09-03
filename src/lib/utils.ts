@@ -6,6 +6,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Adiciona a função para formatar o número de telefone
 export function formatPhoneNumber(value: string): string {
   if (!value) return "";
   
@@ -27,6 +28,7 @@ export function formatPhoneNumber(value: string): string {
   return `(${clippedValue.slice(0, 2)}) ${clippedValue.slice(2, 7)}-${clippedValue.slice(7)}`;
 }
 
+// Função para normalizar texto (remover acentos e converter para minúsculas)
 export const normalizeText = (text?: string | null): string => {
   if (!text) return '';
   return text
