@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Download } from "lucide-react";
+import { Download, Layers } from "lucide-react"; // Importe o novo ícone
 
 interface ManagementActionsProps {
   filterDiscipulado: boolean;
@@ -10,6 +10,7 @@ interface ManagementActionsProps {
   userRole: string | null;
   userDiscipulado: string | null;
   handleExportXLSX: () => void;
+  onOpenBatchModal: () => void; // Nova prop para abrir o modal
 }
 
 const ManagementActions = ({
@@ -18,10 +19,10 @@ const ManagementActions = ({
   userRole,
   userDiscipulado,
   handleExportXLSX,
+  onOpenBatchModal, // Nova prop
 }: ManagementActionsProps) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mt-4 border-t pt-4">
-      {/* Filtro por Discipulado (visível apenas para discipuladores) */}
       {userRole === "discipulador" && userDiscipulado && (
         <div className="flex items-center space-x-2 flex-shrink-0">
           <Switch
@@ -35,15 +36,19 @@ const ManagementActions = ({
         </div>
       )}
       
-      {/* Espaçador para alinhar o botão à direita */}
       <div className="flex-grow"></div>
 
-      {/* Botão de Exportar (visível apenas para admin) */}
       {userRole === "admin" && (
-        <Button onClick={handleExportXLSX} className="flex items-center gap-2 w-full md:w-auto justify-center">
-          <Download className="h-4 w-4" />
-          Exportar XLSX
-        </Button>
+        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+          <Button onClick={onOpenBatchModal} variant="secondary" className="flex items-center gap-2 w-full md:w-auto justify-center">
+            <Layers className="h-4 w-4" />
+            Lançamento em Lote
+          </Button>
+          <Button onClick={handleExportXLSX} className="flex items-center gap-2 w-full md:w-auto justify-center">
+            <Download className="h-4 w-4" />
+            Exportar XLSX
+          </Button>
+        </div>
       )}
     </div>
   );
