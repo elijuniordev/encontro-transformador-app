@@ -1,4 +1,4 @@
-// src/components/management/payment/PaymentDetailsDialog.tsx
+// src/components/payment/PaymentDetailsDialog.tsx
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Inscription, Payment } from "@/types/supabase";
@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Info, AlertCircle } from "lucide-react";
 import { FORMA_PAGAMENTO_OPTIONS } from "@/config/options";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { paymentSchema } from "@/lib/validations/paymentSchema";
+import { ZodError } from "zod";
 
 interface PaymentDetailsDialogProps {
   inscription: Inscription | null;
@@ -49,7 +50,7 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   useEffect(() => {
     if (isOpen) {
       fetchPayments();
-      setError(null); // Limpa erros ao abrir o modal
+      setError(null);
       setNewAmount('');
       setNewMethod('');
     }
@@ -57,64 +58,84 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setError(null);
 
-    if (!inscription || !newAmount || !newMethod) {
-      setError("Preencha o valor e a forma de pagamento.");
-      return;
+    try {
+      paymentSchema.parse({ newAmount, newMethod });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setError(err.errors[0].message);
+        return;
+      }
     }
 
     const sanitizedAmount = newAmount.replace(',', '.');
     const parsedAmount = parseFloat(sanitizedAmount);
 
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setError("O valor do pagamento deve ser um número positivo.");
-      return;
-    }
-    
-    // Validação de segurança extra
-    if(parsedAmount > 10000){ // Limite para evitar erros de digitação
+    if(parsedAmount > 10000){
         setError("O valor do pagamento parece muito alto. Verifique o valor inserido.")
         return;
     }
 
     setIsLoading(true);
+    
+    // Insere o novo pagamento na tabela `payments`
     const { error: insertError } = await supabase.from('payments').insert({
-      inscription_id: inscription.id,
+      inscription_id: inscription!.id,
       amount: parsedAmount,
       payment_method: newMethod
     });
-    setIsLoading(false);
 
     if (insertError) {
-      console.error("Erro ao adicionar pagamento:", insertError);
-      // Mostra o erro exato do Supabase para o admin
       setError(`Erro do banco de dados: ${insertError.message}`);
       toast({ title: "Erro ao adicionar pagamento", description: "Verifique os detalhes do erro acima do formulário.", variant: "destructive" });
     } else {
-      toast({ title: "Pagamento adicionado com sucesso!" });
+      // --- ADIÇÃO AQUI: Atualiza a inscrição principal ---
+      const { error: updateError } = await supabase.from('inscriptions').update({ forma_pagamento: newMethod }).eq('id', inscription!.id);
+      if (updateError) {
+        console.error("Erro ao atualizar a inscrição:", updateError);
+        toast({ title: "Aviso", description: "Pagamento adicionado, mas a inscrição principal não foi atualizada.", variant: "default" });
+      } else {
+        toast({ title: "Pagamento adicionado com sucesso!" });
+      }
+      // --- FIM DA ADIÇÃO ---
+
       onPaymentUpdate();
       onClose();
     }
+    setIsLoading(false);
   };
 
   const handleDeletePayment = async (paymentId: string) => {
     setIsLoading(true);
     const { error: deleteError } = await supabase.from('payments').delete().eq('id', paymentId);
-    setIsLoading(false);
 
     if(deleteError){
-      console.error("Erro ao deletar pagamento:", deleteError);
       setError(`Erro ao deletar: ${deleteError.message}`);
       toast({ title: "Erro ao deletar pagamento", variant: "destructive" });
     } else {
-      toast({ title: "Pagamento deletado com sucesso!" });
+      // --- ADIÇÃO AQUI: Atualiza a inscrição principal após a exclusão ---
+      // Busque os pagamentos restantes para definir a nova forma de pagamento
+      const { data: remainingPayments } = await supabase.from('payments').select('payment_method').eq('inscription_id', inscription!.id);
+      const lastPaymentMethod = remainingPayments?.length ? remainingPayments[0].payment_method : null;
+
+      const { error: updateError } = await supabase.from('inscriptions').update({ forma_pagamento: lastPaymentMethod }).eq('id', inscription!.id);
+      if (updateError) {
+        console.error("Erro ao atualizar a inscrição:", updateError);
+        toast({ title: "Aviso", description: "Pagamento excluído, mas a inscrição principal não foi atualizada.", variant: "default" });
+      } else {
+        toast({ title: "Pagamento deletado com sucesso!" });
+      }
+      // --- FIM DA ADIÇÃO ---
       onPaymentUpdate();
-      onClose(); // Fecha para forçar a reabertura com dados atualizados
+      onClose();
     }
+    setIsLoading(false);
   }
 
   const saldoDevedor = inscription ? inscription.total_value - inscription.paid_amount : 0;
+  const isWaived = inscription?.status_pagamento === 'Isento';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -133,28 +154,35 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
         {error && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Erro na Operação</AlertTitle>
+                <AlertTitle>Erro de Validação</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
             </Alert>
         )}
 
-        <form onSubmit={handleAddPayment} className="space-y-4 border-t pt-4">
-          <h4 className="font-semibold">Adicionar Novo Pagamento</h4>
-          <div className="flex gap-2 items-end">
-            <div className="flex-grow">
-              <Label htmlFor="amount">Valor (R$)</Label>
-              <Input id="amount" type="text" inputMode="decimal" placeholder="100,00" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="method">Forma</Label>
-              <Select value={newMethod} onValueChange={setNewMethod}>
-                <SelectTrigger id="method" className="w-[120px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{FORMA_PAGAMENTO_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}</Button>
+        {isWaived ? (
+          <div className="border-t pt-4 text-center text-muted-foreground flex items-center justify-center gap-2 bg-slate-50 p-4 rounded-md">
+            <Info className="h-5 w-5"/>
+            <p className="font-semibold">Este participante é isento de pagamento.</p>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleAddPayment} className="space-y-4 border-t pt-4">
+            <h4 className="font-semibold">Adicionar Novo Pagamento</h4>
+            <div className="flex gap-2 items-end">
+              <div className="flex-grow">
+                <Label htmlFor="amount">Valor (R$)</Label>
+                <Input id="amount" type="text" inputMode="decimal" placeholder="100,00" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="method">Forma</Label>
+                <Select value={newMethod} onValueChange={setNewMethod}>
+                  <SelectTrigger id="method" className="w-[120px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{FORMA_PAGAMENTO_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}</Button>
+            </div>
+          </form>
+        )}
 
         <div className="space-y-2 border-t pt-4">
           <h4 className="font-semibold">Histórico de Pagamentos</h4>
