@@ -2,71 +2,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { z } from "zod";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS, PARENTESCO_OPTIONS } from "@/config/options";
 import { useNavigate } from "react-router-dom";
 import { formatPhoneNumber } from "@/lib/utils";
-import { eventDetails } from "@/config/eventDetails"; // Importe eventDetails
-
-export interface InscriptionFormData {
-  [key: string]: string | undefined;
-  discipuladores: string;
-  lider: string;
-  nomeCompleto: string;
-  anjoGuarda: string;
-  sexo: string;
-  idade: string;
-  whatsapp: string;
-  situacao: string;
-  nomeResponsavel1?: string;
-  whatsappResponsavel1?: string;
-  nomeResponsavel2?: string;
-  whatsappResponsavel2?: string;
-  nomeResponsavel3?: string;
-  whatsappResponsavel3?: string;
-  nomeAcompanhante?: string;
-  parentescoAcompanhante?: string;
-}
-
-const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato de WhatsApp inválido. Use (XX) XXXXX-XXXX.");
-
-const inscriptionSchema = z.object({
-  situacao: z.string().nonempty("Por favor, selecione sua situação."),
-  nomeCompleto: z.string().trim().min(3, "O nome completo é obrigatório."),
-  sexo: z.string().nonempty("Por favor, selecione o sexo."),
-  idade: z.string().nonempty("A idade é obrigatória."),
-  whatsapp: whatsappSchema.nonempty("O WhatsApp é obrigatório."),
-  discipuladores: z.string().optional(),
-  lider: z.string().optional(),
-  anjoGuarda: z.string().optional(),
-  nomeResponsavel1: z.string().trim().optional(),
-  whatsappResponsavel1: whatsappSchema.optional().or(z.literal('')),
-  nomeResponsavel2: z.string().trim().optional(),
-  whatsappResponsavel2: whatsappSchema.optional().or(z.literal('')),
-  nomeResponsavel3: z.string().trim().optional(),
-  whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
-  nomeAcompanhante: z.string().optional(),
-  parentescoAcompanhante: z.string().optional(),
-}).superRefine((data, ctx) => {
-  const idadeNum = parseInt(data.idade, 10);
-  if (!isNaN(idadeNum)) {
-    if (data.situacao !== 'Criança' && (idadeNum < 12 || idadeNum > 100)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para adultos e equipes, a idade deve ser de 12 a 100 anos.", path: ['idade'] });
-    }
-    if (data.situacao === 'Criança' && idadeNum >= 12) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para 'Criança', a idade deve ser menor que 12 anos. Para idades maiores, selecione 'Encontrista'.", path: ['idade'] });
-    }
-  }
-  if (['Encontrista', 'Equipe', 'Acompanhante', 'Criança'].includes(data.situacao) && (!data.discipuladores || !data.lider)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Discipulador e Líder são obrigatórios. Para crianças, preencha com os dados dos pais/responsáveis.", path: ['discipuladores'] });
-  }
-  if ((data.situacao === "Encontrista" || data.situacao === "Criança") && (!data.nomeResponsavel1 || !data.whatsappResponsavel1)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e WhatsApp do primeiro responsável são obrigatórios.", path: ['nomeResponsavel1'] });
-  }
-  if (data.situacao === 'Criança' && (!data.nomeAcompanhante || !data.parentescoAcompanhante)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e o parentesco do acompanhante são obrigatórios para a inscrição da criança.", path: ['nomeAcompanhante'] });
-  }
-});
+import { eventDetails } from "@/config/eventDetails";
+import { InscriptionFormData } from "@/types/forms"; // Importando o tipo
+import { inscriptionSchema } from "@/lib/validations/inscriptionSchema"; // Importando o schema
 
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
@@ -138,18 +79,9 @@ export const useInscriptionFormLogic = () => {
       const calculateValue = () => {
         if (isChild) {
             const age = parseInt(formData.idade || '0', 10);
-            // REMOVA as 2 linhas abaixo
-            // if (age <= 2) return 0.00;
-            // if (age >= 3 && age <= 8) return 100.00;
-            
-            // ADICIONE as 2 linhas abaixo
             if (age <= eventDetails.childFreeCutoffAge) return 0.00;
             if (age > eventDetails.childFreeCutoffAge && age <= eventDetails.childValueCutoffAge) return eventDetails.childValue;
         }
-        // REMOVA a linha abaixo
-        // return 200.00;
-
-        // ADICIONE a linha abaixo
         return eventDetails.fullValue;
       };
 

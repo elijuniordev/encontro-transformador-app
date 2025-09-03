@@ -1,6 +1,5 @@
 // src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -17,8 +16,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
-      {/* Container principal para garantir que o footer fique sempre no final */}
       <div className="flex flex-col min-h-screen"> 
         <BrowserRouter>
           <Routes>
@@ -27,11 +24,10 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/management" element={<Management />} />
             <Route path="/inscricoes-encerradas" element={<RegistrationsClosedPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </div> {/* Fechamento do container principal */}
+      </div>
     </TooltipProvider>
   </QueryClientProvider>
 );

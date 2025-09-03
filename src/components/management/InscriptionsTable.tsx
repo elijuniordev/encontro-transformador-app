@@ -1,15 +1,13 @@
 // src/components/management/InscriptionsTable.tsx
-import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Inscription } from "@/types/supabase";
 import { MobileInscriptionCard } from "./MobileInscriptionCard";
 import { DesktopInscriptionRow } from "./DesktopInscriptionRow";
+import { useInscriptionEditor } from "@/hooks/useInscriptionEditor"; // Importe o novo hook
 
 interface InscriptionsTableProps {
   filteredInscriptions: Inscription[];
@@ -29,43 +27,14 @@ const InscriptionsTable = ({
   fetchInscriptions
 }: InscriptionsTableProps) => {
   const isMobile = useIsMobile();
-  const { toast } = useToast();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<Inscription>>({});
-
-  const handleEdit = useCallback((inscription: Inscription) => {
-    setEditingId(inscription.id);
-    setEditData({
-      status_pagamento: inscription.status_pagamento,
-      forma_pagamento: inscription.forma_pagamento,
-      valor: inscription.valor,
-      observacao: inscription.observacao
-    });
-  }, []);
-
-  const handleSaveEdit = useCallback(async () => {
-    if (!editingId) return;
-
-    const { error } = await supabase
-      .from('inscriptions')
-      .update(editData)
-      .eq('id', editingId);
-
-    if (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível atualizar a inscrição.",
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Dados atualizados",
-        description: "As informações foram salvas com sucesso.",
-      });
-      fetchInscriptions();
-    }
-    setEditingId(null);
-  }, [editingId, editData, fetchInscriptions, toast]);
+  const { 
+    editingId, 
+    editData, 
+    setEditData, 
+    handleEdit, 
+    handleSaveEdit, 
+    handleCancelEdit 
+  } = useInscriptionEditor(fetchInscriptions);
 
   return (
     <Card className="shadow-divine">
@@ -95,7 +64,7 @@ const InscriptionsTable = ({
                   editData={editData}
                   handleEdit={handleEdit}
                   handleSaveEdit={handleSaveEdit}
-                  setEditingId={setEditingId}
+                  setEditingId={handleCancelEdit} // Use handleCancelEdit para o botão "Cancelar"
                   setEditData={setEditData}
                   handleDelete={handleDelete}
                 />
@@ -131,7 +100,7 @@ const InscriptionsTable = ({
                     editData={editData}
                     handleEdit={handleEdit}
                     handleSaveEdit={handleSaveEdit}
-                    setEditingId={setEditingId}
+                    setEditingId={handleCancelEdit} // Use handleCancelEdit para o botão "Cancelar"
                     setEditData={setEditData}
                     handleDelete={handleDelete}
                   />

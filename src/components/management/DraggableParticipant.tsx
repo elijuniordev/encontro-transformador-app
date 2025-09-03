@@ -14,7 +14,7 @@ interface DraggableParticipantProps {
 export function DraggableParticipant({ participant, roomName, borderColorClass }: DraggableParticipantProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: `participant-${participant.id}`,
-    data: { participant, fromRoom: roomName }, // Passa dados extras
+    data: { participant, fromRoom: roomName },
   });
 
   const style = {
@@ -27,14 +27,13 @@ export function DraggableParticipant({ participant, roomName, borderColorClass }
       style={style}
       {...listeners}
       {...attributes}
-      className={`text-sm mb-2 p-2 rounded bg-white border-l-4 touch-none ${borderColorClass} shadow-sm`}
+      className={`text-sm mb-2 p-2 rounded bg-white border-l-4 touch-none ${borderColorClass} shadow-sm cursor-grab`}
     >
       <p className="font-semibold flex items-center gap-2">
         <User className="h-4 w-4" />
         {participant.nome_completo}
       </p>
       <p className="text-xs text-muted-foreground pl-6">Líder: {participant.lider || 'N/A'}</p>
-      <p className="text-xs text-muted-foreground pl-6">Discipulado: {participant.discipuladores}</p>
     </li>
   );
 }

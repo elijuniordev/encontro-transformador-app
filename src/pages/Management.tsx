@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ManagementHeader from "@/components/management/ManagementHeader";
 import ManagementFilters from "@/components/management/ManagementFilters";
+import ManagementActions from "@/components/management/ManagementActions"; // Importe o novo componente
 import SituationStatistics from "@/components/management/SituationStatistics";
 import PaymentMethodStatistics from "@/components/management/PaymentMethodStatistics";
 import InscriptionsTable from "@/components/management/InscriptionsTable";
@@ -11,6 +12,8 @@ import { useManagementLogic } from "@/hooks/useManagementLogic";
 import DormitoryReport from "@/components/management/DormitoryReport";
 import { StatisticsCardsSkeleton } from "@/components/management/StatisticsCardsSkeleton";
 import { InscriptionsTableSkeleton } from "@/components/management/InscriptionsTableSkeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search } from "lucide-react";
 
 const Management = () => {
   const {
@@ -43,9 +46,9 @@ const Management = () => {
     funcaoOptions,
     statusPagamentoOptions,
     discipuladoGroupOptions,
-    sexoOptions, // <-- ADICIONE ESTA LINHA
-    filterBySexo, // <-- ADICIONE ESTA LINHA
-    setFilterBySexo, // <-- ADICIONE ESTA LINHA
+    sexoOptions,
+    filterBySexo,
+    setFilterBySexo,
   } = useManagementLogic();
 
   const navigate = useNavigate();
@@ -57,7 +60,7 @@ const Management = () => {
   }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) {
-    return null; 
+    return null;
   }
 
   return (
@@ -70,35 +73,47 @@ const Management = () => {
         handleToggleRegistrations={handleToggleRegistrations}
       />
       <main className="flex-grow p-4 md:p-6 lg:p-8 space-y-6">
-        <ManagementFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filterDiscipulado={filterDiscipulado}
-          setFilterDiscipulado={setFilterDiscipulado}
-          userRole={userRole}
-          userDiscipulado={userDiscipulado}
-          handleExportXLSX={handleExportXLSX}
-          filterByFuncao={filterByFuncao}
-          setFilterByFuncao={setFilterByFuncao}
-          filterByStatusPagamento={filterByStatusPagamento}
-          setFilterByStatusPagamento={setFilterByStatusPagamento}
-          filterByDiscipuladoGroup={filterByDiscipuladoGroup}
-          setFilterByDiscipuladoGroup={setFilterByDiscipuladoGroup}
-          funcaoOptions={funcaoOptions}
-          statusPagamentoOptions={statusPagamentoOptions}
-          discipuladoGroupOptions={discipuladoGroupOptions}
-          sexoOptions={sexoOptions} // <-- ADICIONE ESTA LINHA
-          filterBySexo={filterBySexo} // <-- ADICIONE ESTA LINHA
-          setFilterBySexo={setFilterBySexo} // <-- ADICIONE ESTA LINHA
-        />
-        
+        <Card className="shadow-peaceful">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Filtros e Ações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ManagementFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filterByFuncao={filterByFuncao}
+              setFilterByFuncao={setFilterByFuncao}
+              filterByStatusPagamento={filterByStatusPagamento}
+              setFilterByStatusPagamento={setFilterByStatusPagamento}
+              filterByDiscipuladoGroup={filterByDiscipuladoGroup}
+              setFilterByDiscipuladoGroup={setFilterByDiscipuladoGroup}
+              funcaoOptions={funcaoOptions}
+              statusPagamentoOptions={statusPagamentoOptions}
+              discipuladoGroupOptions={discipuladoGroupOptions}
+              sexoOptions={sexoOptions}
+              filterBySexo={filterBySexo}
+              setFilterBySexo={setFilterBySexo}
+            />
+            <ManagementActions
+              filterDiscipulado={filterDiscipulado}
+              setFilterDiscipulado={setFilterDiscipulado}
+              userRole={userRole}
+              userDiscipulado={userDiscipulado}
+              handleExportXLSX={handleExportXLSX}
+            />
+          </CardContent>
+        </Card>
+
         {isLoading ? (
           <StatisticsCardsSkeleton />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SituationStatistics 
-              situationCounts={situationCounts} 
-              totalInscriptions={filteredInscriptions.length} 
+            <SituationStatistics
+              situationCounts={situationCounts}
+              totalInscriptions={filteredInscriptions.length}
               isRegistrationsOpen={isRegistrationsOpen}
             />
             <PaymentMethodStatistics paymentMethodCounts={paymentMethodCounts} />

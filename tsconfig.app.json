@@ -13,12 +13,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitAny": false,
-    "noFallthroughCasesInSwitch": false,
+    // ADICIONE a linha abaixo
+    "strict": true,
 
     "baseUrl": ".",
     "paths": {

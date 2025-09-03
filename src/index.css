@@ -1,3 +1,4 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -77,6 +78,7 @@
     --alert-info-border: 215 15% 80%;
   }
 
+  /* REMOVA TODO O BLOCO .dark ABAIXO */
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
