@@ -1,5 +1,5 @@
 // src/components/management/InscriptionsTable.tsx
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -114,7 +114,7 @@ const InscriptionsTable = ({
                     <TableHead>Nome</TableHead>
                     <TableHead>Discipuladores</TableHead>
                     <TableHead>WhatsApp</TableHead>
-                    <TableHead>Líder</TableHead> {/* Adicionada a nova coluna */}
+                    <TableHead>Líder</TableHead>
                     <TableHead>Função</TableHead>
                     <TableHead>Pagamento</TableHead>
                     <TableHead>Status</TableHead>

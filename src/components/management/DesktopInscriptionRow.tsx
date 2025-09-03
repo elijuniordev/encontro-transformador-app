@@ -44,7 +44,8 @@ export const DesktopInscriptionRow = ({
       <TableRow>
         <TableCell className="font-medium text-sm">{inscription.nome_completo}</TableCell>
         <TableCell className="text-sm">{inscription.discipuladores}</TableCell>
-        <TableCell className="text-sm">{inscription.lider || '-'}</TableCell> {/* Adicionado */}
+        <TableCell className="text-sm">{inscription.whatsapp}</TableCell>
+        <TableCell className="text-sm">{inscription.lider || '-'}</TableCell>
         <TableCell className="text-sm">{inscription.irmao_voce_e}</TableCell>
         
         <TableCell>
@@ -101,22 +102,21 @@ export const DesktopInscriptionRow = ({
           )}
         </TableCell>
 
-        {/* Célula para o botão de detalhes (olho) */}
-        <TableCell className="text-right">
-            <Button variant="ghost" className="p-2 h-8 w-8" onClick={() => setDetailsModalOpen(true)}>
-                <EyeIcon className="h-4 w-4" />
-            </Button>
-        </TableCell>
-        
+        {/* Célula que consolida todas as ações */}
         <TableCell>
-          <TableRowActions
-            inscription={inscription}
-            isEditing={isEditing}
-            onEdit={onEdit}
-            onSave={onSave}
-            onCancel={onCancel}
-            onDelete={handleDelete}
-          />
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" className="p-2 h-8 w-8" onClick={() => setDetailsModalOpen(true)}>
+                    <EyeIcon className="h-4 w-4" />
+                </Button>
+                <TableRowActions
+                  inscription={inscription}
+                  isEditing={isEditing}
+                  onEdit={onEdit}
+                  onSave={onSave}
+                  onCancel={onCancel}
+                  onDelete={handleDelete}
+                />
+            </div>
         </TableCell>
       </TableRow>
 
