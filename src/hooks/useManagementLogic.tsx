@@ -39,18 +39,19 @@ export const useManagementLogic = (chartRef: RefObject<HTMLDivElement>) => {
       
       // Lógica para filtrar por discipulado
       let discipuladoMatch = true;
-      if (userRole === "discipulador" && filters.filterDiscipulado && userDiscipulado) {
+      if (userRole === "discipulador" && userDiscipulado && filters.filterDiscipulado) {
         // Se o usuário é um discipulador e o switch está ligado, filtra apenas o seu grupo.
-        discipuladoMatch = i.discipuladores === userDiscipulado;
+        discipuladoMatch = normalizeText(i.discipuladores) === normalizeText(userDiscipulado);
       } else if (filters.filterByDiscipuladoGroup !== 'all') {
         // Se o filtro de grupo de discipulado está selecionado, usa ele.
-        discipuladoMatch = i.discipuladores === filters.filterByDiscipuladoGroup;
+        discipuladoMatch = normalizeText(i.discipuladores) === normalizeText(filters.filterByDiscipuladoGroup);
       }
 
       // Filtros de dropdown
       const funcaoMatch = filters.filterByFuncao === 'all' || i.irmao_voce_e === filters.filterByFuncao;
       const statusMatch = filters.filterByStatusPagamento === 'all' || i.status_pagamento === filters.filterByStatusPagamento;
-      const sexoMatch = filters.filterBySexo === 'all' || i.sexo === filters.filterBySexo;
+      
+      const sexoMatch = filters.filterBySexo === 'all' || i.sexo.toLowerCase() === filters.filterBySexo.toLowerCase();
 
       // Retorna true apenas se todos os filtros corresponderem
       return searchTermMatch && funcaoMatch && statusMatch && discipuladoMatch && sexoMatch;
