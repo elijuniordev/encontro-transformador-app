@@ -18,17 +18,46 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log("LOGIN INICIADO: Tentando autenticar...");
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      // 1. Tenta autenticar via Supabase
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (authError) {
+        console.error("ERRO DE AUTENTICAÇÃO:", authError);
+        throw authError;
+      }
+      
+      // 2. Busca o perfil (role e discipulado) no banco de dados
+      const { data: userData, error: userFetchError } = await supabase
+        .from('users')
+        .select('role, discipulado')
+        .eq('email', email)
+        .single();
+        
+      if (userFetchError || !userData) {
+          console.error("ERRO AO BUSCAR PERFIL:", userFetchError || "Dados não encontrados.");
+          throw new Error("Seu perfil de usuário não foi localizado. Contate o administrador.");
+      }
+
+      // 3. Salva no localStorage para a gestão de rotas e permissões
+      localStorage.setItem("userRole", userData.role);
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userDiscipulado", userData.discipulado || '');
+      
+      // 4. Notifica e Redireciona
       toast({ title: "Login bem-sucedido!", description: "Você foi redirecionado para o painel de gerenciamento." });
+      console.log("LOGIN SUCESSO. Redirecionando para /management...");
       navigate("/management");
+      
     } catch (error: unknown) {
       let errorMessage = "Erro ao fazer login. Verifique suas credenciais.";
       if (error instanceof Error) {
         errorMessage = error.message;
       }
       toast({ title: "Erro de Login", description: errorMessage, variant: "destructive" });
+      console.log("LOGIN FALHOU. Mensagem:", errorMessage);
     } finally {
       setIsLoading(false);
     }
