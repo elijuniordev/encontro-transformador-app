@@ -99,7 +99,8 @@ export const useInscriptionFormLogic = () => {
 
     try {
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-      const isStaff = ["Cozinha", "Equipe"].includes(formData.situacao);
+      // CORREÇÃO APLICADA AQUI: Apenas "Cozinha" é considerado Isento junto com Pastores/Obreiros. "Equipe" paga o valor integral.
+      const isExemptStaff = formData.situacao === "Cozinha";
       const isChild = formData.situacao === 'Criança';
       const isEncontrista = formData.situacao === 'Encontrista';
 
@@ -116,7 +117,7 @@ export const useInscriptionFormLogic = () => {
         }
       }
 
-      if (isStaff || isPastorObreiro) {
+      if (isExemptStaff || isPastorObreiro) { // Condição corrigida
         finalValue = 0.00;
         paymentStatus = 'Isento';
       }
@@ -136,8 +137,8 @@ export const useInscriptionFormLogic = () => {
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
-        discipuladores: (isPastorObreiro || isStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
-        lider: (isPastorObreiro || isStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
+        discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
+        lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
         irmao_voce_e: formData.situacao,
         responsavel_1_nome: formData.nomeResponsavel1?.toUpperCase() || null,
         responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
@@ -147,8 +148,8 @@ export const useInscriptionFormLogic = () => {
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
         status_pagamento: paymentStatus,
         forma_pagamento: null,
-        total_value: finalValue, // <-- CORREÇÃO AQUI
-        paid_amount: 0,          // <-- ADIÇÃO AQUI
+        total_value: finalValue,
+        paid_amount: 0,
         acompanhante_nome: isChild ? formData.nomeAcompanhante?.toUpperCase() : null,
         acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
       };
