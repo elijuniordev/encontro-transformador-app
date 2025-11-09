@@ -9,22 +9,29 @@ import { DraggableParticipant } from './DraggableParticipant';
 interface DormitoryCardProps {
   quarto: Room;
   borderColorClass: string;
+  isReadOnly: boolean; // NOVO
 }
 
 const DormitoryCard = React.forwardRef<HTMLDivElement, DormitoryCardProps>(
-  ({ quarto, borderColorClass }, ref) => {
+  ({ quarto, borderColorClass, isReadOnly }, ref) => { // ADICIONADO isReadOnly
     const { isOver, setNodeRef } = useDroppable({
       id: `droppable-${quarto.nome}`,
       data: { room: quarto },
+      disabled: isReadOnly, // DESABILITA O DROP SE FOR READ-ONLY
     });
 
     const style = {
-      backgroundColor: isOver ? '#e0f7fa' : undefined, // Feedback visual ao arrastar sobre
+      backgroundColor: isOver && !isReadOnly ? '#e0f7fa' : undefined, // Feedback visual apenas se não for read-only
     };
 
     return (
       <div ref={ref} className="break-inside-avoid">
-        <Card ref={setNodeRef} style={style} className="flex flex-col transition-colors h-full">
+        <Card 
+            ref={setNodeRef} 
+            style={style} 
+            className="flex flex-col transition-colors h-full"
+            data-is-readonly={isReadOnly} // Para CSS futuro se necessário
+        >
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <span>{quarto.nome}</span>
@@ -41,6 +48,7 @@ const DormitoryCard = React.forwardRef<HTMLDivElement, DormitoryCardProps>(
                   participant={p}
                   roomName={quarto.nome}
                   borderColorClass={borderColorClass}
+                  isReadOnly={isReadOnly} // NOVO: Passar a prop
                 />
               ))}
             </ul>

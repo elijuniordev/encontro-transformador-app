@@ -12,6 +12,7 @@ interface MobileCardEditModeProps {
   handleSaveEdit: () => void;
   setEditingId: (id: string | null) => void;
   handleDelete: (id: string) => void;
+  userRole: string | null; // ADICIONADO
 }
 
 export const MobileCardEditMode = ({
@@ -20,8 +21,12 @@ export const MobileCardEditMode = ({
   setEditData,
   handleSaveEdit,
   setEditingId,
-  handleDelete
+  handleDelete,
+  userRole, // ADICIONADO
 }: MobileCardEditModeProps) => {
+  // NOVO: A permissão de edição/deleção é para 'admin' e 'discipulador'.
+  const isReadOnly = userRole === 'viewer';
+  
   return (
     <div className="flex flex-col gap-2 w-full">
       <Select
@@ -37,6 +42,7 @@ export const MobileCardEditMode = ({
           }
           setEditData(newData);
         }}
+        disabled={isReadOnly} // DESABILITA A EDIÇÃO DE STATUS
       >
         <SelectTrigger className="w-full text-sm">
           <SelectValue placeholder="Status Pagamento" />
@@ -50,7 +56,7 @@ export const MobileCardEditMode = ({
       <Select
         value={editData.forma_pagamento || ''}
         onValueChange={(value) => setEditData({ ...editData, forma_pagamento: value })}
-        disabled={['Pendente', 'Cancelado', 'Isento'].includes(editData.status_pagamento || '')}
+        disabled={['Pendente', 'Cancelado', 'Isento'].includes(editData.status_pagamento || '') || isReadOnly} // DESABILITA A EDIÇÃO DE FORMA
       >
         <SelectTrigger className="w-full text-sm">
           <SelectValue placeholder="Forma Pagamento" />
@@ -67,13 +73,14 @@ export const MobileCardEditMode = ({
         onChange={(e) => setEditData({ ...editData, total_value: Number(e.target.value) })}
         className="w-full text-sm"
         placeholder="Valor"
-        disabled={editData.status_pagamento === 'Isento'}
+        disabled={editData.status_pagamento === 'Isento' || isReadOnly} // DESABILITA A EDIÇÃO DE VALOR
       />
       <Input
         value={editData.observacao || ''}
         onChange={(e) => setEditData({ ...editData, observacao: e.target.value })}
         className="w-full text-sm"
         placeholder="Observação..."
+        disabled={isReadOnly} // DESABILITA A EDIÇÃO DE OBS
       />
       <MobileCardActions
         inscription={inscription}
@@ -82,6 +89,7 @@ export const MobileCardEditMode = ({
         onSave={handleSaveEdit}
         onCancel={() => setEditingId(null)}
         onDelete={handleDelete}
+        userRole={userRole}
       />
     </div>
   );

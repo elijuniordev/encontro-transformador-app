@@ -1,4 +1,4 @@
-// src/components/payment/PaymentDetailsDialog.tsx
+// src/components/management/payment/PaymentDetailsDialog.tsx
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Inscription, Payment } from "@/types/supabase";
@@ -19,9 +19,10 @@ interface PaymentDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onPaymentUpdate: () => void;
+  userRole: string | null; // <-- CORREÇÃO: UserRole definido aqui
 }
 
-export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUpdate }: PaymentDetailsDialogProps) => {
+export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUpdate, userRole }: PaymentDetailsDialogProps) => {
   const { toast } = useToast();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +30,9 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   const [newMethod, setNewMethod] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // A permissão de adicionar/deletar pagamento é restrita a 'admin' e 'discipulador'.
+  const isReadOnly = userRole === 'viewer';
+  
   const fetchPayments = useCallback(async () => {
     if (!inscription) return;
     setIsLoading(true);
@@ -47,6 +51,34 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
     setIsLoading(false);
   }, [inscription, toast]);
 
+  const updateInscriptionPaymentMethods = useCallback(async (inscriptionId: string) => {
+    // Busque todas as formas de pagamento para esta inscrição
+    const { data: currentPayments, error } = await supabase
+      .from('payments')
+      .select('payment_method')
+      .eq('inscription_id', inscriptionId);
+
+    if (error) {
+      console.error("Erro ao buscar pagamentos para atualização:", error);
+      return;
+    }
+
+    // Crie uma lista de métodos únicos e os concatene em uma string
+    const uniqueMethods = [...new Set(currentPayments.map(p => p.payment_method))].filter(Boolean);
+    const updatedPaymentMethods = uniqueMethods.join(', ');
+
+    // Atualize a coluna `forma_pagamento` na tabela `inscriptions`
+    const { error: updateError } = await supabase
+      .from('inscriptions')
+      .update({ forma_pagamento: updatedPaymentMethods })
+      .eq('id', inscriptionId);
+    
+    if (updateError) {
+      console.error("Erro ao atualizar a inscrição com a nova forma de pagamento:", updateError);
+      toast({ title: "Aviso", description: "O pagamento foi processado, mas a inscrição principal não foi atualizada.", variant: "default" });
+    }
+  }, [toast]);
+  
   useEffect(() => {
     if (isOpen) {
       fetchPayments();
@@ -57,8 +89,9 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
   }, [isOpen, fetchPayments]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
-    // A LINHA MAIS IMPORTANTE: Impede que o navegador recarregue a página.
     e.preventDefault();
+    
+    if(isReadOnly) return; // Bloqueia se for read-only
 
     setError(null);
 
@@ -80,36 +113,43 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
     }
 
     setIsLoading(true);
+    // Insere o novo pagamento na tabela `payments`
     const { error: insertError } = await supabase.from('payments').insert({
       inscription_id: inscription!.id,
       amount: parsedAmount,
       payment_method: newMethod
     });
-    setIsLoading(false);
 
     if (insertError) {
       setError(`Erro do banco de dados: ${insertError.message}`);
       toast({ title: "Erro ao adicionar pagamento", description: "Verifique os detalhes do erro acima do formulário.", variant: "destructive" });
     } else {
       toast({ title: "Pagamento adicionado com sucesso!" });
+      // Chame a nova função para atualizar a inscrição principal
+      await updateInscriptionPaymentMethods(inscription!.id);
       onPaymentUpdate();
       onClose();
     }
+    setIsLoading(false);
   };
 
   const handleDeletePayment = async (paymentId: string) => {
+    if(isReadOnly) return; // Bloqueia se for read-only
+    
     setIsLoading(true);
     const { error: deleteError } = await supabase.from('payments').delete().eq('id', paymentId);
-    setIsLoading(false);
 
     if(deleteError){
       setError(`Erro ao deletar: ${deleteError.message}`);
       toast({ title: "Erro ao deletar pagamento", variant: "destructive" });
     } else {
       toast({ title: "Pagamento deletado com sucesso!" });
+      // Chame a nova função para atualizar a inscrição principal
+      await updateInscriptionPaymentMethods(inscription!.id);
       onPaymentUpdate();
       onClose();
     }
+    setIsLoading(false);
   }
 
   const saldoDevedor = inscription ? inscription.total_value - inscription.paid_amount : 0;
@@ -148,16 +188,16 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
             <div className="flex gap-2 items-end">
               <div className="flex-grow">
                 <Label htmlFor="amount">Valor (R$)</Label>
-                <Input id="amount" type="text" inputMode="decimal" placeholder="100,00" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
+                <Input id="amount" type="text" inputMode="decimal" placeholder="100,00" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} disabled={isReadOnly} />
               </div>
               <div>
                 <Label htmlFor="method">Forma</Label>
-                <Select value={newMethod} onValueChange={setNewMethod}>
+                <Select value={newMethod} onValueChange={setNewMethod} disabled={isReadOnly}>
                   <SelectTrigger id="method" className="w-[120px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>{FORMA_PAGAMENTO_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <Button type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}</Button>
+              <Button type="submit" disabled={isLoading || isReadOnly}>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}</Button>
             </div>
           </form>
         )}
@@ -175,7 +215,7 @@ export const PaymentDetailsDialog = ({ inscription, isOpen, onClose, onPaymentUp
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString('pt-BR')}</span>
-                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleDeletePayment(p.id)} disabled={isLoading}>
+                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleDeletePayment(p.id)} disabled={isLoading || isReadOnly}>
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>

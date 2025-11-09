@@ -8,7 +8,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Inscription } from "@/types/supabase";
 import { MobileInscriptionCard } from "./MobileInscriptionCard";
 import { DesktopInscriptionRow } from "./DesktopInscriptionRow";
-import { PaymentDetailsDialog } from "../payment/PaymentDetailsDialog";
+
+// CORREÇÃO AQUI: Usando o alias de caminho (@/) para garantir que a importação
+// aponte para a fonte correta e evite ambiguidade de caminhos relativos.
+import { PaymentDetailsDialog } from "@/components/payment/PaymentDetailsDialog"; 
+
 import { useInscriptionEditor } from "@/hooks/useInscriptionEditor";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 
@@ -81,7 +85,7 @@ const InscriptionsTable = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5" /> Inscrições
-            {userRole === "discipulador" && (<Badge variant="secondary" className="ml-2">Filtrado: {userDiscipulado}</Badge>)}
+            {userRole && userRole !== "admin" && (<Badge variant="secondary" className="ml-2">Filtrado: {userDiscipulado}</Badge>)}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -103,6 +107,7 @@ const InscriptionsTable = ({
                   onSave={handleSaveEdit}
                   onCancel={handleCancelEdit}
                   setEditingId={setEditingId}
+                  userRole={userRole}
                 />
               ))}
             </div>
@@ -136,6 +141,7 @@ const InscriptionsTable = ({
                       onEdit={() => handleEdit(inscription)}
                       onSave={handleSaveEdit}
                       onCancel={handleCancelEdit}
+                      userRole={userRole}
                     />
                   ))}
                 </TableBody>
@@ -167,6 +173,7 @@ const InscriptionsTable = ({
         onPaymentUpdate={() => {
           fetchInscriptions();
         }}
+        userRole={userRole}
       />
     </>
   );

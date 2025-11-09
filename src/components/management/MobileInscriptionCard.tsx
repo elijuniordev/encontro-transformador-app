@@ -17,6 +17,7 @@ interface MobileInscriptionCardProps {
   onSave: () => void;
   onCancel: () => void;
   setEditingId: (id: string | null) => void;
+  userRole: string | null; // ADICIONADO
 }
 
 export const MobileInscriptionCard = ({
@@ -30,7 +31,8 @@ export const MobileInscriptionCard = ({
   onEdit,
   onSave,
   onCancel,
-  setEditingId
+  setEditingId,
+  userRole // ADICIONADO
 }: MobileInscriptionCardProps) => {
 
   return (
@@ -44,6 +46,7 @@ export const MobileInscriptionCard = ({
             handleSaveEdit={onSave}
             setEditingId={setEditingId}
             handleDelete={handleDelete}
+            userRole={userRole} // ADICIONADO
           />
         ) : (
           <>
@@ -55,6 +58,7 @@ export const MobileInscriptionCard = ({
               onSave={onSave}
               onCancel={onCancel}
               onDelete={handleDelete}
+              userRole={userRole} // ADICIONADO
             />
           </>
         )}

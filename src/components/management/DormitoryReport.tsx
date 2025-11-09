@@ -11,7 +11,7 @@ import { Room } from '@/config/rooms';
 import { useToast } from "@/hooks/use-toast";
 import DormitoryCard from './DormitoryCard';
 
-const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptions }) => {
+const DormitoryReport: React.FC<{ inscriptions: Participant[], isReadOnly: boolean }> = ({ inscriptions, isReadOnly }) => {
   const { toast } = useToast();
   const [showReport, setShowReport] = useState(false);
   const roomRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -36,6 +36,8 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
   }, [initialReportData]);
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (isReadOnly) return; 
+
     const { active, over } = event;
     if (!over) return;
 
@@ -90,7 +92,10 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
 
   const mulheresAlocadas = Object.values(roomsState).filter(r => r.genero === 'feminino');
   const homensAlocados = Object.values(roomsState).filter(r => r.genero === 'masculino');
-
+  
+  // NOVO: Renderiza DndContext apenas para usuários com permissão de edição
+  const DndWrapper = isReadOnly ? React.Fragment : DndContext;
+  
   return (
     <Card className="shadow-peaceful mb-6">
       <CardHeader>
@@ -103,14 +108,20 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
         </CardTitle>
       </CardHeader>
       {showReport && initialReportData && (
-        <DndContext onDragEnd={handleDragEnd}>
+        <DndWrapper {...(!isReadOnly ? { onDragEnd: handleDragEnd } : {})}>
           <CardContent>
             {mulheresAlocadas.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-2xl font-bold text-pink-600 mb-4 border-b-2 border-pink-200 pb-2">Bloco Feminino</h3>
                 <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
                   {mulheresAlocadas.map(quarto => (
-                    <DormitoryCard key={`mulheres-${quarto.nome}`} ref={el => (roomRefs.current[quarto.nome] = el)} quarto={quarto} borderColorClass="border-pink-300" />
+                    <DormitoryCard 
+                        key={`mulheres-${quarto.nome}`} 
+                        ref={el => (roomRefs.current[quarto.nome] = el)} 
+                        quarto={quarto} 
+                        borderColorClass="border-pink-300"
+                        isReadOnly={isReadOnly} // ADICIONADO
+                    />
                   ))}
                 </div>
               </div>
@@ -120,7 +131,13 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
                 <h3 className="text-2xl font-bold text-blue-600 mb-4 border-b-2 border-blue-200 pb-2">Bloco Masculino</h3>
                 <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
                   {homensAlocados.map(quarto => (
-                    <DormitoryCard key={`homens-${quarto.nome}`} ref={el => (roomRefs.current[quarto.nome] = el)} quarto={quarto} borderColorClass="border-blue-300" />
+                    <DormitoryCard 
+                        key={`homens-${quarto.nome}`} 
+                        ref={el => (roomRefs.current[quarto.nome] = el)} 
+                        quarto={quarto} 
+                        borderColorClass="border-blue-300" 
+                        isReadOnly={isReadOnly} // ADICIONADO
+                    />
                   ))}
                 </div>
               </div>
@@ -134,7 +151,7 @@ const DormitoryReport: React.FC<{ inscriptions: Participant[] }> = ({ inscriptio
               </Card>
             )}
           </CardContent>
-        </DndContext>
+        </DndWrapper>
       )}
     </Card>
   );

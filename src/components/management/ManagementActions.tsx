@@ -21,9 +21,13 @@ const ManagementActions = ({
   handleExportXLSX,
   onOpenBatchModal, // Nova prop
 }: ManagementActionsProps) => {
+  // NOVO: Apenas admin e discipulador (perfil de edição total) têm permissão para exportar e lote
+  const isFullEditor = userRole === 'admin' || userRole === 'discipulador'; 
+
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mt-4 border-t pt-4">
-      {userRole === "discipulador" && userDiscipulado && (
+      {/* O Switch de filtro é exibido para todos os usuários com discipulado definido (incluindo 'viewer') */}
+      {userDiscipulado && (
         <div className="flex items-center space-x-2 flex-shrink-0">
           <Switch
             id="filter-discipulado"
@@ -38,7 +42,8 @@ const ManagementActions = ({
       
       <div className="flex-grow"></div>
 
-      {userRole === "admin" && (
+      {/* As ações de Batch e Exportar são restritas a perfis de edição total */}
+      {isFullEditor && (
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
           <Button onClick={onOpenBatchModal} variant="secondary" className="flex items-center gap-2 w-full md:w-auto justify-center">
             <Layers className="h-4 w-4" />

@@ -11,6 +11,7 @@ interface MobileCardActionsProps {
   onSave: () => void;
   onCancel: () => void;
   onDelete: (id: string) => void;
+  userRole: string | null; // ADICIONADO
 }
 
 export const MobileCardActions = ({
@@ -20,24 +21,32 @@ export const MobileCardActions = ({
   onSave,
   onCancel,
   onDelete,
+  userRole, // ADICIONADO
 }: MobileCardActionsProps) => {
+  // NOVO: A permissão de edição/deleção é para 'admin' e 'discipulador'.
+  const isReadOnly = userRole === 'viewer';
+  
   if (isEditing) {
     return (
       <div className="flex gap-2 justify-end w-full">
-        <Button size="sm" onClick={onSave} className="text-sm">Salvar</Button>
-        <Button size="sm" variant="outline" onClick={onCancel} className="text-sm">Cancelar</Button>
+        <Button size="sm" onClick={onSave} className="text-sm" disabled={isReadOnly}>
+          Salvar
+        </Button>
+        <Button size="sm" variant="outline" onClick={onCancel} className="text-sm">
+          Cancelar
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="flex flex-row gap-2 w-full mt-3">
-      <Button size="sm" variant="outline" onClick={onEdit} className="w-1/2">
+      <Button size="sm" variant="outline" onClick={onEdit} className="w-1/2" disabled={isReadOnly}>
         <Edit className="h-4 w-4 mr-2" /> Editar
       </Button>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button size="sm" variant="destructive" className="w-1/2">
+          <Button size="sm" variant="destructive" className="w-1/2" disabled={isReadOnly}>
             <Trash2 className="h-4 w-4 mr-2" /> Deletar
           </Button>
         </AlertDialogTrigger>

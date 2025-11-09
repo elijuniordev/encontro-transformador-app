@@ -22,6 +22,7 @@ interface TableRowActionsProps {
   onSave: () => void;
   onCancel: () => void;
   onDelete: (id: string) => void;
+  userRole: string | null; // ADICIONADO
 }
 
 export const TableRowActions = ({
@@ -31,11 +32,15 @@ export const TableRowActions = ({
   onSave,
   onCancel,
   onDelete,
+  userRole, // ADICIONADO
 }: TableRowActionsProps) => {
+  // NOVO: A permissão de edição/deleção é para 'admin' e 'discipulador'.
+  const isReadOnly = userRole === 'viewer';
+  
   if (isEditing) {
     return (
       <div className="flex gap-1">
-        <Button size="sm" onClick={onSave} className="text-xs px-2 py-1">
+        <Button size="sm" onClick={onSave} className="text-xs px-2 py-1" disabled={isReadOnly}>
           Salvar
         </Button>
         <Button size="sm" variant="outline" onClick={onCancel} className="text-xs px-2 py-1">
@@ -49,7 +54,7 @@ export const TableRowActions = ({
     <div className="flex gap-1">
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button size="sm" variant="outline" onClick={onEdit} className="px-2 py-1">
+          <Button size="sm" variant="outline" onClick={onEdit} className="px-2 py-1" disabled={isReadOnly}>
             <Edit className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
@@ -59,7 +64,7 @@ export const TableRowActions = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="destructive" className="px-2 py-1">
+              <Button size="sm" variant="destructive" className="px-2 py-1" disabled={isReadOnly}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>

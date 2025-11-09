@@ -47,7 +47,7 @@ export type User = {
     email: string;
     id: string;
     password_hash: string;
-    role: string;
+    role: 'admin' | 'discipulador' | 'viewer';
 };
 
 export type EventSettings = {
@@ -56,3 +56,4 @@ export type EventSettings = {
     registrations_open: boolean;
     updated_at: string;
 };
+

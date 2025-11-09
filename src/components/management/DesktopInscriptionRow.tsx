@@ -21,6 +21,7 @@ interface DesktopInscriptionRowProps {
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
+  userRole: string | null; // ADICIONADO
 }
 
 export const DesktopInscriptionRow = ({
@@ -34,10 +35,17 @@ export const DesktopInscriptionRow = ({
   onEdit,
   onSave,
   onCancel,
+  userRole, // ADICIONADO
 }: DesktopInscriptionRowProps) => {
   const [isDetailsModalOpen, setDetailsModalOpen] = useState(false);
 
   const displayTotalValue = inscription.status_pagamento === 'Isento' ? 0 : inscription.total_value;
+  // NOVO: Flag de permissão de edição para desabilitar inputs
+  const isReadOnly = userRole === 'viewer';
+
+  function handleCancelEdit(): void {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <>
@@ -55,10 +63,10 @@ export const DesktopInscriptionRow = ({
                 value={editData.total_value ?? ''}
                 onChange={e => setEditData({ ...editData, total_value: Number(e.target.value) })}
                 className="h-9 w-28 text-sm"
-                disabled={editData.status_pagamento === 'Isento'}
+                disabled={editData.status_pagamento === 'Isento' || isReadOnly} // DESABILITADO
               />
           ) : (
-            <Button variant="ghost" onClick={onOpenPaymentModal} className="h-auto p-0 text-left flex flex-col items-start">
+            <Button variant="ghost" onClick={onOpenPaymentModal} className="h-auto p-0 text-left flex flex-col items-start" disabled={isReadOnly}> {/* DESABILITADO */}
               <span className="font-semibold">
                 R$ {inscription.paid_amount.toFixed(2).replace('.', ',')} / R$ {displayTotalValue.toFixed(2).replace('.', ',')}
               </span>
@@ -77,6 +85,7 @@ export const DesktopInscriptionRow = ({
                   }
                   setEditData(newData);
                 }}
+                disabled={isReadOnly} // DESABILITADO
               >
                   <SelectTrigger className="h-9 w-[130px] text-xs">
                       <SelectValue />
@@ -94,6 +103,7 @@ export const DesktopInscriptionRow = ({
                   value={editData.observacao || ''} 
                   onChange={e => setEditData({ ...editData, observacao: e.target.value })} 
                   className="h-9 text-sm"
+                  disabled={isReadOnly} // DESABILITADO
               />
           ) : (
               <div className="min-h-8 text-sm">
@@ -113,8 +123,9 @@ export const DesktopInscriptionRow = ({
                   isEditing={isEditing}
                   onEdit={onEdit}
                   onSave={onSave}
-                  onCancel={onCancel}
+                  onCancel={handleCancelEdit}
                   onDelete={handleDelete}
+                  userRole={userRole} // ADICIONADO
                 />
             </div>
         </TableCell>
