@@ -99,7 +99,7 @@ export const useInscriptionFormLogic = () => {
 
     try {
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-      // CORREÇÃO APLICADA AQUI: Apenas "Cozinha" é considerado Isento junto com Pastores/Obreiros. "Equipe" paga o valor integral.
+      // CORREÇÃO: Apenas "Cozinha" é considerado Isento. Removido o comentário incorreto.
       const isExemptStaff = formData.situacao === "Cozinha";
       const isChild = formData.situacao === 'Criança';
       const isEncontrista = formData.situacao === 'Encontrista';
@@ -117,7 +117,10 @@ export const useInscriptionFormLogic = () => {
         }
       }
 
-      if (isExemptStaff || isPastorObreiro) { // Condição corrigida
+      // CORRIGIDO: A condição de isenção agora verifica APENAS isExemptStaff (Cozinha).
+      // Pastores/obreiros (isPastorObreiro) não entram mais nesta condição de isenção, 
+      // garantindo que paguem o valor integral (finalValue = eventDetails.fullValue).
+      if (isExemptStaff) { 
         finalValue = 0.00;
         paymentStatus = 'Isento';
       }
@@ -137,6 +140,7 @@ export const useInscriptionFormLogic = () => {
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
+        // Mantido isPastorObreiro na lógica de Discipuladores/Líderes, pois eles devem ser seus próprios líderes/discipuladores
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
         lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
         irmao_voce_e: formData.situacao,
