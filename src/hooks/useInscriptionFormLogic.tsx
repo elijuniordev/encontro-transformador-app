@@ -17,17 +17,14 @@ type ValidationErrors = {
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  
-  // CORREÇÃO AQUI: Inicializando TODOS os campos de InscriptionFormData, incluindo os responsáveis, para evitar que sejam 'undefined'.
   const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
     idade: "", whatsapp: "", situacao: "",
-    nomeResponsavel1: "", whatsappResponsavel1: "", // ADICIONADO
-    nomeResponsavel2: "", whatsappResponsavel2: "", // ADICIONADO
-    nomeResponsavel3: "", whatsappResponsavel3: "", // ADICIONADO
+    nomeResponsavel1: "", whatsappResponsavel1: "",
+    nomeResponsavel2: "", whatsappResponsavel2: "",
+    nomeResponsavel3: "", whatsappResponsavel3: "",
     nomeAcompanhante: "", parentescoAcompanhante: "",
   });
-  
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -122,8 +119,7 @@ export const useInscriptionFormLogic = () => {
         }
       }
 
-      // Lógica corrigida para isenção (apenas Cozinha)
-      if (isExemptStaff) { 
+      if (isExemptStaff || isPastorObreiro) { 
         finalValue = 0.00;
         paymentStatus = 'Isento';
       }
@@ -145,17 +141,19 @@ export const useInscriptionFormLogic = () => {
         whatsapp: formData.whatsapp,
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
         lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
-        irmao_voce_e: formData.situacao,
         
-        // Os campos agora são seguramente strings vazias ("") ou strings preenchidas, 
-        // evitando que sejam 'undefined' vindo do estado inicial.
+        // CORREÇÃO CRÍTICA: Adiciona a coluna 'situacao' (obsoleta) com um valor válido
+        // para satisfazer a restrição NOT NULL do banco de dados, caso a migração de DROP
+        // tenha falhado. 'membro' é um valor válido do CHECK inicial.
+        situacao: 'membro', 
+        
+        irmao_voce_e: formData.situacao, // O valor real do formulário vai para a coluna correta
         responsavel_1_nome: formData.nomeResponsavel1?.toUpperCase() || null,
         responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
         responsavel_2_nome: formData.nomeResponsavel2?.toUpperCase() || null,
         responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
         responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
-        
         status_pagamento: paymentStatus,
         forma_pagamento: null,
         total_value: finalValue,
@@ -172,15 +170,9 @@ export const useInscriptionFormLogic = () => {
 
     } catch (error: unknown) {
       let errorMessage = "Ocorreu um erro inesperado.";
-      
-      // Melhora o logging de erro para ajudar a identificar a causa no console
       if (error instanceof Error) {
         errorMessage = error.message;
-        console.error("Erro na Inserção Supabase (Detalhe):", error);
-      } else {
-         console.error("Erro na Inserção Supabase (Objeto Completo):", error);
       }
-      
       toast({ title: "Erro na inscrição", description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
