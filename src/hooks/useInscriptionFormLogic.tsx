@@ -17,11 +17,17 @@ type ValidationErrors = {
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // CORREÇÃO AQUI: Inicializando TODOS os campos de InscriptionFormData, incluindo os responsáveis, para evitar que sejam 'undefined'.
   const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
     idade: "", whatsapp: "", situacao: "",
+    nomeResponsavel1: "", whatsappResponsavel1: "", // ADICIONADO
+    nomeResponsavel2: "", whatsappResponsavel2: "", // ADICIONADO
+    nomeResponsavel3: "", whatsappResponsavel3: "", // ADICIONADO
     nomeAcompanhante: "", parentescoAcompanhante: "",
   });
+  
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -99,7 +105,6 @@ export const useInscriptionFormLogic = () => {
 
     try {
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-      // CORREÇÃO: Apenas "Cozinha" é considerado Isento. Removido o comentário incorreto.
       const isExemptStaff = formData.situacao === "Cozinha";
       const isChild = formData.situacao === 'Criança';
       const isEncontrista = formData.situacao === 'Encontrista';
@@ -117,9 +122,7 @@ export const useInscriptionFormLogic = () => {
         }
       }
 
-      // CORRIGIDO: A condição de isenção agora verifica APENAS isExemptStaff (Cozinha).
-      // Pastores/obreiros (isPastorObreiro) não entram mais nesta condição de isenção, 
-      // garantindo que paguem o valor integral (finalValue = eventDetails.fullValue).
+      // Lógica corrigida para isenção (apenas Cozinha)
       if (isExemptStaff) { 
         finalValue = 0.00;
         paymentStatus = 'Isento';
@@ -140,16 +143,19 @@ export const useInscriptionFormLogic = () => {
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
-        // Mantido isPastorObreiro na lógica de Discipuladores/Líderes, pois eles devem ser seus próprios líderes/discipuladores
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
         lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
         irmao_voce_e: formData.situacao,
+        
+        // Os campos agora são seguramente strings vazias ("") ou strings preenchidas, 
+        // evitando que sejam 'undefined' vindo do estado inicial.
         responsavel_1_nome: formData.nomeResponsavel1?.toUpperCase() || null,
         responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
         responsavel_2_nome: formData.nomeResponsavel2?.toUpperCase() || null,
         responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
         responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
+        
         status_pagamento: paymentStatus,
         forma_pagamento: null,
         total_value: finalValue,
@@ -166,9 +172,15 @@ export const useInscriptionFormLogic = () => {
 
     } catch (error: unknown) {
       let errorMessage = "Ocorreu um erro inesperado.";
+      
+      // Melhora o logging de erro para ajudar a identificar a causa no console
       if (error instanceof Error) {
         errorMessage = error.message;
+        console.error("Erro na Inserção Supabase (Detalhe):", error);
+      } else {
+         console.error("Erro na Inserção Supabase (Objeto Completo):", error);
       }
+      
       toast({ title: "Erro na inscrição", description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
