@@ -6,6 +6,7 @@ import {
 } from "@/config/options";
 
 export interface FinancialSummary {
+// ... (interface inalterada)
   totalPaid: number;
   totalPending: number;
   totalPotential: number;
@@ -13,7 +14,6 @@ export interface FinancialSummary {
   paymentMethodTotals: { [key: string]: number };
 }
 
-// NOVO: Interface para os dados do gráfico por discipulador
 export interface DisciplineChartData {
   discipulador: string;
   total: number;
@@ -22,6 +22,7 @@ export interface DisciplineChartData {
 // FIM NOVO
 
 export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
+// ... (função inalterada)
   const counts: { [key: string]: number } = {};
   counts['Total'] = inscriptions.length;
 
@@ -37,11 +38,10 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 
 /**
  * Calcula o resumo financeiro completo.
- * @param inscriptions Array de inscrições filtradas.
- * @param allPayments Array com TODOS os pagamentos do banco.
- * @returns Um objeto com o resumo financeiro.
+// ... (função inalterada)
  */
 export const calculateFinancialSummary = (inscriptions: Inscription[], allPayments: Payment[]): FinancialSummary => {
+// ... (o corpo desta função permanece inalterado)
   const summary: FinancialSummary = {
     totalPaid: 0,
     totalPending: 0,
@@ -89,18 +89,17 @@ export const calculateFinancialSummary = (inscriptions: Inscription[], allPaymen
   return summary;
 };
 
-// Função para calcular inscrições por discipulador e função
-export const calculateInscriptionsByDiscipler = (inscriptions: Inscription[]): DisciplineChartData[] => {
-  // Filtra apenas as inscrições confirmadas ou isentas
-  const relevantInscriptions = inscriptions.filter(
-    (i) => ["Confirmado", "Isento"].includes(i.status_pagamento)
-  );
+// NOVO NOME: Função para calcular o TOTAL de inscrições por discipulador e função
+export const calculateTotalInscriptionsByDiscipler = (inscriptions: Inscription[]): DisciplineChartData[] => {
+  // CORREÇÃO CRUCIAL: Removemos o filtro de status para incluir todas as inscrições.
+  const relevantInscriptions = inscriptions; 
   
-  const categories = FUNCAO_OPTIONS; // Usando as opções do config
+  const categories = FUNCAO_OPTIONS; 
 
   const groupedData: Record<string, Record<string, number>> = {};
 
   relevantInscriptions.forEach(i => {
+    // A chave do discipulador agora inclui a opção de 'Pastor, obreiro ou discipulador'
     const discipulador = i.discipuladores || 'N/A';
     const categoria = i.irmao_voce_e || 'Outro';
 
@@ -127,3 +126,4 @@ export const calculateInscriptionsByDiscipler = (inscriptions: Inscription[]): D
     return finalCounts as DisciplineChartData;
   }).filter(d => d.total > 0).sort((a, b) => (b.total as number) - (a.total as number)); 
 };
+// FIM NOVO CÁLCULO

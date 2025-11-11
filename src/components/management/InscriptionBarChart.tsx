@@ -21,7 +21,7 @@ const colors: { [key: string]: string } = {
 };
 
 const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
-  // CORREÇÃO: Força o tipo como number antes de filtrar para evitar o erro de TS anterior.
+  // CORREÇÃO TS APLICADA: Força o tipo como number antes de filtrar para evitar o erro de comparação.
   const chartKeys = FUNCAO_OPTIONS.filter(key => chartData.some(d => (d[key] as number) > 0));
   
   if (chartData.length === 0) {
@@ -33,7 +33,7 @@ const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground">Nenhuma inscrição confirmada/isenta para exibir.</p>
+          <p className="text-center text-muted-foreground">Nenhuma inscrição total para exibir.</p>
         </CardContent>
       </Card>
     );
@@ -46,7 +46,7 @@ const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
           <Users className="h-5 w-5 md:h-6 md:w-6" />
-          Inscrições por Discipulado (Confirmadas/Isentas)
+          Total de Inscrições por Discipulado {/* CORRIGIDO: Novo Título */}
         </CardTitle>
       </CardHeader>
       <CardContent style={{ height: dynamicHeight }}>
@@ -58,9 +58,10 @@ const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             
-            {/* CORREÇÃO AQUI: Garante que o eixo X é do tipo numérico para exibir a contagem */}
+            {/* Eixo X: Garante que é numérico para contagem total */}
             <XAxis type="number" stroke="#6b7280" />
             
+            {/* Eixo Y: Nomes dos Discipuladores */}
             <YAxis 
                 dataKey="discipulador" 
                 type="category" 

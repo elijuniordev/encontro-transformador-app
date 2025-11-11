@@ -3,17 +3,17 @@ import { useManagement } from "./useManagement";
 import { StatisticsCardsSkeleton } from "@/components/management/StatisticsCardsSkeleton";
 import SituationStatistics from "@/components/management/SituationStatistics";
 import PaymentMethodStatistics from "@/components/management/PaymentMethodStatistics";
-import InscriptionBarChart from "@/components/management/InscriptionBarChart"; // NOVO: Importa o novo componente de gráfico
+import InscriptionBarChart from "@/components/management/InscriptionBarChart"; 
 import { useMemo } from "react";
 import { 
   calculateFinancialSummary, 
   calculateSituationCounts, 
-  calculateInscriptionsByDiscipler // NOVO: Importa a nova função de cálculo
+  calculateTotalInscriptionsByDiscipler // CORRIGIDO: Nome da função
 } from '@/lib/statistics';
 import { FinancialChart } from "@/components/management/FinancialChart";
 import { Payment } from "@/types/supabase";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
-import { Users2, CreditCard } from "lucide-react";
+import { Users2, CreditCard, Users } from "lucide-react"; // Adicionado Users
 
 const DashboardPage = () => {
   const { isLoading, inscriptions, payments, isRegistrationsOpen, userRole } = useManagement();
@@ -21,12 +21,12 @@ const DashboardPage = () => {
   const statistics = useMemo(() => ({
     situationCounts: calculateSituationCounts(inscriptions),
     financialSummary: calculateFinancialSummary(inscriptions, payments),
-    disciplerChartData: calculateInscriptionsByDiscipler(inscriptions), // NOVO CÁLCULO
+    disciplerChartData: calculateTotalInscriptionsByDiscipler(inscriptions), // CORRIGIDO: Chamada da nova função
   }), [inscriptions, payments]);
   
   const summaryDataForChart = useMemo(() => {
     const summary: { [key: string]: number } = {};
-    payments.forEach((payment: Payment) => { // Tipagem explícita adicionada
+    payments.forEach((payment: Payment) => { 
         const method = payment.payment_method || 'Não especificado';
         if (!summary[method]) summary[method] = 0;
         summary[method] += payment.amount;
@@ -37,7 +37,6 @@ const DashboardPage = () => {
     }));
   }, [payments]);
 
-  // NOVO: Determinar se o usuário tem permissão para ver dados detalhados (exclui 'viewer')
   const isDetailedViewAllowed = userRole === "admin" || userRole === "discipulador";
 
   return (
