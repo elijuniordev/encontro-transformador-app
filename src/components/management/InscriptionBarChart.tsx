@@ -5,7 +5,7 @@ import { Users } from 'lucide-react';
 import { DisciplineChartData, STAFF_CONSOLIDATED_KEY } from '@/lib/statistics'; 
 import { IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS } from '@/config/options';
 
-interface InscriptionBarChartProps {
+interface InscriptionChartProps {
   chartData: DisciplineChartData[];
 }
 
@@ -30,7 +30,7 @@ const mapDiscipuladorLabel = (label: string) => {
     return label;
 };
 
-const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarChartProps) => {
+const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionChartProps) => {
   // Mapeia os dados para renomear a chave interna para o label desejado.
   const chartData = originalChartData.map(d => ({
       ...d,
@@ -38,12 +38,8 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
   }));
 
   // Corrigido o acesso à chave para resolver o erro TS7053.
-  const chartKeys = FUNCAO_OPTIONS.filter(key =>
-    chartData.some(d => {
-      // Garante que a chave existe e é do tipo number
-      const value = (d as Record<string, unknown>)[key];
-      return typeof value === 'number' && value > 0;
-    })
+  const chartKeys = FUNCAO_OPTIONS.filter(key => 
+      chartData.some(d => ((d as unknown) as Record<string, number>)[key] > 0)
   );
   
   if (chartData.length === 0) {
@@ -78,7 +74,7 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            // MUDANÇA CRUCIAL: layout="vertical" para Gráfico de BARRAS HORIZONTAIS
+            // MUDANÇA CRUCIAL: layout="vertical" para Gráfico de BARRAS HORIZONTAIS AGRUPADAS
             layout="vertical"
             // Margens ajustadas para otimizar o espaço
             margin={{ top: 10, right: 20, left: 10, bottom: 0 }} 
@@ -120,7 +116,7 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
                 iconSize={10}
             />
             
-            {/* Barras Agrupadas: maxBarSize reduzido para aproximar as barras */}
+            {/* Barras Agrupadas: maxBarSize ajustado para aparência mais clean e compacta */}
             {chartKeys.map(key => (
               <Bar 
                 key={key} 
