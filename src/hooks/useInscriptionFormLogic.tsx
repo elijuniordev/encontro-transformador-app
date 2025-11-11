@@ -138,11 +138,9 @@ export const useInscriptionFormLogic = () => {
       const inscriptionData = {
         nome_completo: formData.nomeCompleto.toUpperCase(),
         anjo_guarda: anjoGuardaFinal,
-        // --- INÍCIO DA CORREÇÃO ---
-        // Capitaliza a primeira letra para bater com o CHECK ('Feminino', 'Masculino')
+        // Correção do 'sexo'
         sexo: formData.sexo.charAt(0).toUpperCase() + formData.sexo.slice(1),
-        // --- FIM DA CORREÇÃO ---
-        idade: formData.idade,
+        idade: formData.idade, // O banco aceita string e converte para integer
         whatsapp: formData.whatsapp,
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
         lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
@@ -160,8 +158,6 @@ export const useInscriptionFormLogic = () => {
         acompanhante_nome: isChild ? formData.nomeAcompanhante?.toUpperCase() : null,
         acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
       };
-
-      // O bloco de DEBUG foi removido daqui.
 
       const { error, status } = await supabase.from('inscriptions').insert([inscriptionData]).select();
       

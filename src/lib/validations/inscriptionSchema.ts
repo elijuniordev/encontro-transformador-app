@@ -1,42 +1,82 @@
 // src/lib/validations/inscriptionSchema.ts
-import { z } from "zod";
+import { z } from 'zod';
+// Removido 'eventDetails' pois não é mais necessário neste arquivo após a correção
+// import { eventDetails } from '@/config/eventDetails'; 
 
-const whatsappSchema = z.string().trim().regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "WhatsApp inválido. Use (XX) XXXXX-XXXX.");
+// Regex para (XX) 9XXXX-XXXX (permitindo DDDs com 0)
+const phoneRegex = /^\(\d{2}\) 9\d{4}-\d{4}$/;
 
 export const inscriptionSchema = z.object({
-  situacao: z.string({ required_error: "Por favor, selecione sua situação." }).nonempty("Por favor, selecione sua situação."),
-  nomeCompleto: z.string({ required_error: "O nome completo é obrigatório." }).trim().min(3, "O nome completo precisa ter no mínimo 3 caracteres."),
-  sexo: z.string({ required_error: "Por favor, selecione o sexo." }).nonempty("Por favor, selecione o sexo."),
-  idade: z.string({ required_error: "A idade é obrigatória." }).nonempty("A idade é obrigatória."),
-  whatsapp: whatsappSchema.nonempty("O WhatsApp é obrigatório."),
-  discipuladores: z.string().optional(),
-  lider: z.string().optional(),
+  nomeCompleto: z.string().min(3, "Nome completo é obrigatório"),
+  
+  // Correção da IDADE (validação Zod)
+  idade: z.string()
+    .min(1, "Idade é obrigatória")
+    .regex(/^\d+$/, "Idade deve ser um número") // Garante que é um número
+    .refine(val => {
+      const num = parseInt(val, 10);
+      return num > 0; // Deve ser maior que 0 (mesma regra do banco)
+    }, { message: "Idade deve ser maior que 0" })
+    .refine(val => {
+      const num = parseInt(val, 10);
+      return num < 100; // Limite de sanidade
+    }, { message: "Idade inválida" }),
+
+  sexo: z.string().min(1, "Sexo é obrigatório"),
+  whatsapp: z.string().refine(val => phoneRegex.test(val), "Whatsapp inválido. Formato esperado: (XX) 9XXXX-XXXX"),
+  discipuladores: z.string().min(1, "Discipulador é obrigatório"),
+  lider: z.string().min(1, "Líder é obrigatório"),
+  situacao: z.string().min(1, "Situação é obrigatória"),
+
+  // Lógica condicional
   anjoGuarda: z.string().optional(),
-  nomeResponsavel1: z.string().trim().optional(),
-  whatsappResponsavel1: whatsappSchema.optional().or(z.literal('')),
-  nomeResponsavel2: z.string().trim().optional(),
-  whatsappResponsavel2: whatsappSchema.optional().or(z.literal('')),
-  nomeResponsavel3: z.string().trim().optional(),
-  whatsappResponsavel3: whatsappSchema.optional().or(z.literal('')),
   nomeAcompanhante: z.string().optional(),
   parentescoAcompanhante: z.string().optional(),
-}).superRefine((data, ctx) => {
+
+  // Campos condicionais para menor de idade
+  nomeResponsavel1: z.string().optional(),
+  whatsappResponsavel1: z.string().optional(),
+  nomeResponsavel2: z.string().optional(),
+  whatsappResponsavel2: z.string().optional(),
+  nomeResponsavel3: z.string().optional(),
+  whatsappResponsavel3: z.string().optional(),
+
+}).refine(data => {
+  // Se for Encontrista, Anjo da Guarda é obrigatório
+  if (data.situacao === 'Encontrista') {
+    return data.anjoGuarda && data.anjoGuarda.length > 0;
+  }
+  return true;
+}, {
+  message: 'Anjo da guarda é obrigatório para Encontristas',
+  path: ['anjoGuarda'],
+})
+.refine(data => {
+  // Se for Criança, nome e parentesco do acompanhante são obrigatórios
+  if (data.situacao === 'Criança') {
+    return (data.nomeAcompanhante && data.nomeAcompanhante.length > 0) &&
+           (data.parentescoAcompanhante && data.parentescoAcompanhante.length > 0);
+  }
+  return true;
+}, {
+  message: 'Nome e parentesco do acompanhante são obrigatórios para Crianças',
+  path: ['nomeAcompanhante'], // Mostra o erro no primeiro campo
+})
+.refine(data => {
+  // Se for menor de 18, pelo menos um responsável é obrigatório
   const idadeNum = parseInt(data.idade, 10);
-  if (!isNaN(idadeNum)) {
-    if (data.situacao !== 'Criança' && (idadeNum < 12 || idadeNum > 100)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para adultos e equipes, a idade deve ser entre 12 e 100 anos.", path: ['idade'] });
-    }
-    if (data.situacao === 'Criança' && idadeNum >= 12) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Para 'Criança', a idade deve ser menor que 12. Para idades maiores, selecione 'Encontrista'.", path: ['idade'] });
-    }
+  
+  // --- INÍCIO DA CORREÇÃO ---
+  // Troquei eventDetails.adultAge por 18
+  if (idadeNum > 0 && idadeNum < 18) { 
+  // --- FIM DA CORREÇÃO ---
+  
+    const hasResponsavel1 = (data.nomeResponsavel1 && data.nomeResponsavel1.length > 0) && 
+                            (data.whatsappResponsavel1 && phoneRegex.test(data.whatsappResponsavel1));
+    return hasResponsavel1; // Pelo menos o primeiro é obrigatório
   }
-  if (['Encontrista', 'Equipe', 'Acompanhante', 'Criança'].includes(data.situacao) && (!data.discipuladores || !data.lider)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Discipulador e Líder são obrigatórios. Para crianças, preencha com os dados dos pais.", path: ['discipuladores'] });
-  }
-  if ((data.situacao === "Encontrista" || data.situacao === "Criança") && (!data.nomeResponsavel1 || !data.whatsappResponsavel1)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e o WhatsApp do primeiro responsável são obrigatórios.", path: ['nomeResponsavel1'] });
-  }
-  if (data.situacao === 'Criança' && (!data.nomeAcompanhante || !data.parentescoAcompanhante)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O nome e o parentesco do acompanhante são obrigatórios para crianças.", path: ['nomeAcompanhante'] });
-  }
+  return true;
+}, {
+  message: 'Pelo menos um responsável com nome e whatsapp válidos é obrigatório para menores de 18 anos',
+  path: ['nomeResponsavel1'], // Mostra o erro no primeiro campo
 });
