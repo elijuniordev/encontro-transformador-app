@@ -135,13 +135,21 @@ export const useInscriptionFormLogic = () => {
         anjoGuardaFinal = formData.nomeCompleto.toUpperCase();
       }
       
+      // --- INÍCIO DA CORREÇÃO E DEBUG ---
+      // A correção é esta linha.
+      const sexoFormatado = formData.sexo.charAt(0).toUpperCase() + formData.sexo.slice(1);
+      
+      // Adicionei este log para termos certeza
+      console.log("--- DEBUG: SEXO FORMATADO ---");
+      console.log(sexoFormatado);
+      console.log("-------------------------------");
+      // --- FIM DA CORREÇÃO E DEBUG ---
+      
       const inscriptionData = {
         nome_completo: formData.nomeCompleto.toUpperCase(),
         anjo_guarda: anjoGuardaFinal,
         
-        // --- ESTA É A CORREÇÃO ---
-        // Capitaliza a primeira letra para bater com o CHECK ('Feminino', 'Masculino')
-        sexo: formData.sexo.charAt(0).toUpperCase() + formData.sexo.slice(1),
+        sexo: sexoFormatado, // Usando a variável formatada
         
         idade: formData.idade, 
         whatsapp: formData.whatsapp,
@@ -153,7 +161,6 @@ export const useInscriptionFormLogic = () => {
         responsavel_2_nome: formData.nomeResponsavel2?.toUpperCase() || null,
         responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
         responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
-        // Correção de typo que encontrei (era whatsappResponsabil3)
         responsavel_3_whatsapp: formData.whatsappResponsavel3 || null, 
         status_pagamento: paymentStatus,
         forma_pagamento: null,
