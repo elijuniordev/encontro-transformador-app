@@ -145,12 +145,7 @@ export const useInscriptionFormLogic = () => {
         whatsapp: formData.whatsapp,
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
         lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
-        
-        // CORREÇÃO FINAL: REMOÇÃO DA COLUNA OBSOLETA 'situacao' (frontend)
-        // Isso resolve o erro 400 Bad Request APÓS a migração SQL ter removido a coluna do DB
-        // O valor do formulário está sendo enviado corretamente para 'irmao_voce_e'
         irmao_voce_e: formData.situacao,
-        
         responsavel_1_nome: formData.nomeResponsavel1?.toUpperCase() || null,
         responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
         responsavel_2_nome: formData.nomeResponsavel2?.toUpperCase() || null,
