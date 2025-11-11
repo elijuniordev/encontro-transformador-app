@@ -22,7 +22,6 @@ export interface DisciplineChartData {
 // FIM NOVO
 
 export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
-// ... (o conteúdo desta função permanece inalterado)
   const counts: { [key: string]: number } = {};
   counts['Total'] = inscriptions.length;
 
@@ -38,7 +37,9 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 
 /**
  * Calcula o resumo financeiro completo.
-// ... (o conteúdo desta função permanece inalterado)
+ * @param inscriptions Array de inscrições filtradas.
+ * @param allPayments Array com TODOS os pagamentos do banco.
+ * @returns Um objeto com o resumo financeiro.
  */
 export const calculateFinancialSummary = (inscriptions: Inscription[], allPayments: Payment[]): FinancialSummary => {
   const summary: FinancialSummary = {

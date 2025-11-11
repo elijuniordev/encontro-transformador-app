@@ -21,8 +21,7 @@ const colors: { [key: string]: string } = {
 };
 
 const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
-  // CORREÇÃO TS APLICADA: Força a tipagem como number para evitar o erro de comparação.
-  // Filtra apenas as categorias que possuem pelo menos 1 participante para não poluir a legenda.
+  // CORREÇÃO: Força o tipo como number antes de filtrar para evitar o erro de TS anterior.
   const chartKeys = FUNCAO_OPTIONS.filter(key => chartData.some(d => (d[key] as number) > 0));
   
   if (chartData.length === 0) {
@@ -40,7 +39,6 @@ const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
     );
   }
 
-  // Define uma altura dinâmica baseada no número de grupos, garantindo um mínimo
   const dynamicHeight = Math.max(500, chartData.length * 80);
 
   return (
@@ -59,10 +57,10 @@ const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
             layout="vertical"
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            {/* Eixo X: Valores de contagem */}
+            
+            {/* CORREÇÃO AQUI: Garante que o eixo X é do tipo numérico para exibir a contagem */}
             <XAxis type="number" stroke="#6b7280" />
             
-            {/* Eixo Y: Nomes dos Discipuladores */}
             <YAxis 
                 dataKey="discipulador" 
                 type="category" 
@@ -82,7 +80,7 @@ const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
             {/* Legenda: Exibe as cores para cada tipo de inscrição */}
             <Legend wrapperStyle={{ paddingTop: 20 }} />
             
-            {/* Barras Empilhadas: Uma Bar para cada tipo de inscrição */}
+            {/* Barras Empilhadas: O stackId="a" é crucial para o empilhamento correto */}
             {chartKeys.map(key => (
               <Bar 
                 key={key} 
