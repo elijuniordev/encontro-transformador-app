@@ -5,11 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { DISCIPULADORES_OPTIONS, LIDERES_MAP, IRMAO_VOCE_E_OPTIONS, PARENTESCO_OPTIONS } from "@/config/options";
 import { useNavigate } from "react-router-dom";
 import { formatPhoneNumber } from "@/lib/utils";
-import { eventDetails } from "@/config/eventDetails";
 import { InscriptionFormData } from "@/types/forms";
 import { inscriptionSchema } from "@/lib/validations/inscriptionSchema";
 import { ZodError } from "zod";
-import { calculateInscriptionDetails } from "@/lib/inscriptionLogic"; // <--- Importação da função auxiliar
 
 type ValidationErrors = {
   [key: string]: string | undefined;
@@ -37,11 +35,17 @@ export const useInscriptionFormLogic = () => {
   const lideresMap = useMemo(() => LIDERES_MAP, []);
   const situacaoOptions = useMemo(() => IRMAO_VOCE_E_OPTIONS, []);
   const parentescoOptions = useMemo(() => PARENTESCO_OPTIONS, []);
-  const filteredLideresOptions = useMemo(() => formData.discipuladores ? lideresMap[formData.discipuladores as keyof typeof lideresMap] : [], [formData.discipuladores, lideresMap]);
+  const filteredLideresOptions = useMemo(
+    () => formData.discipuladores ? lideresMap[formData.discipuladores as keyof typeof lideresMap] : [],
+    [formData.discipuladores, lideresMap]
+  );
 
   useEffect(() => {
     const fetchRegistrationStatus = async () => {
-      const { data, error } = await supabase.from('event_settings').select('registrations_open').single();
+      const { data, error } = await supabase
+        .from('event_settings')
+        .select('registrations_open')
+        .single();
       setIsRegistrationsOpen(error ? false : data.registrations_open);
     };
     fetchRegistrationStatus();
@@ -82,7 +86,11 @@ export const useInscriptionFormLogic = () => {
           }
         });
         setErrors(newErrors);
-        toast({ title: "Existem erros no formulário", description: "Por favor, corrija os campos destacados.", variant: "destructive" });
+        toast({
+          title: "Existem erros no formulário",
+          description: "Por favor, corrija os campos destacados.",
+          variant: "destructive",
+        });
       }
       return false;
     }
@@ -91,10 +99,6 @@ export const useInscriptionFormLogic = () => {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // --- LOG 1: VERIFICAR SE O CÓDIGO NOVO ESTÁ A SER EXECUTADO ---
-    console.log("--- DEBUG: Início do handleSubmit (VERSÃO REVERTIDA - minúsculas) ---");
-    console.log("Dados do formulário (formData):", JSON.stringify(formData, null, 2));
 
     if (!isRegistrationsOpen) {
       toast({ title: "Inscrições Encerradas", variant: "destructive" });
@@ -108,8 +112,6 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      // 1. LÓGICA REUTILIZÁVEL: Usa a função externa para calcular valores e montar o objeto
-            // 1. MONTA O OBJETO COM VALORES PADRÃO PARA CAMPOS OBRIGATÓRIOS
       const inscriptionData = {
         nome_completo: formData.nomeCompleto?.trim().toUpperCase(),
         anjo_guarda: formData.anjoGuarda?.trim() || 'Não informado',
@@ -133,42 +135,46 @@ export const useInscriptionFormLogic = () => {
         acompanhante_parentesco: formData.parentescoAcompanhante || null,
       };
 
+      const { error } = await supabase
+        .from('inscriptions')
+        .insert([inscriptionData])
+        .select();
 
-      // --- LOG 3: VERIFICAR O OBJETO FINAL ANTES DE ENVIAR ---
-      console.log("--- DEBUG: Objeto 'inscriptionData' a ser enviado ---");
-      console.log(JSON.stringify(inscriptionData, null, 2));
-      console.log("-----------------------------------------------------");
+      if (error) throw error;
 
-      // 2. INSERÇÃO NO SUPABASE
-      const { error, status } = await supabase.from('inscriptions').insert([inscriptionData]).select();
-      
-      if (error) {
-        console.error("ERRO CRÍTICO NA INSERÇÃO (Supabase Error Object):", error);
-        console.error("STATUS HTTP:", status);
-        throw error;
-      }
-
-      toast({ title: "Inscrição realizada com sucesso!", description: "Sua inscrição foi registrada." });
+      toast({
+        title: "Inscrição realizada com sucesso!",
+        description: "Sua inscrição foi registrada.",
+      });
       setIsSuccess(true);
-
     } catch (error: unknown) {
-      let errorMessage = "Ocorreu um erro inesperado. Verifique o Console (F12) para detalhes do erro.";
-      
+      let errorMessage = "Ocorreu um erro inesperado.";
       if (error instanceof Error) {
-        errorMessage = `Erro de rede/cliente: ${error.message}`;
-        console.error("ERRO DE EXECUÇÃO (Network/Client Error):", error);
-      } else {
-         console.error("ERRO DESCONHECIDO:", error);
+        errorMessage = `Erro: ${error.message}`;
       }
-      
-      toast({ title: "Erro na inscrição", description: errorMessage, variant: "destructive" });
+      toast({
+        title: "Erro na inscrição",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   }, [formData, isRegistrationsOpen, toast, validateForm]);
 
   return {
-    formData, setFormData, handleSubmit, isRegistrationsOpen, isLoading, isSuccess,
-    discipuladoresOptions, filteredLideresOptions, situacaoOptions, parentescoOptions, handleInputChange, errors, resetForm
+    formData,
+    setFormData,
+    handleSubmit,
+    isRegistrationsOpen,
+    isLoading,
+    isSuccess,
+    discipuladoresOptions,
+    filteredLideresOptions,
+    situacaoOptions,
+    parentescoOptions,
+    handleInputChange,
+    errors,
+    resetForm,
   };
 };
