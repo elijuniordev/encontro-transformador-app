@@ -27,7 +27,8 @@ export const AdditionalInfoSection = ({
   filteredLideresOptions,
   errors
 }: AdditionalInfoSectionProps) => {
-  if (["Pastor, obreiro ou discipulador", "Cozinha"].includes(formData.situacao)) {
+  // CORREÇÃO: A seção só é oculta para o papel de mais alto escalão
+  if (formData.situacao === "Pastor, obreiro ou discipulador") {
     return null;
   }
 
