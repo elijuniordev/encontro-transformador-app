@@ -19,41 +19,48 @@ const PaymentMethodStatistics = ({ financialSummary }: PaymentMethodStatisticsPr
     <>
       {/* Cards de Resumo Financeiro */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+        {/* Card Arrecadado */}
         <Card className="shadow-sm border bg-green-50 border-green-200">
-          <CardContent className="pt-4 md:pt-6 flex items-center gap-2 md:gap-3">
+          <CardContent className="pt-4 md:pt-6 flex flex-col items-start gap-2 md:gap-3">
             <CheckCircle className="h-7 w-7 text-green-600 flex-shrink-0" />
-            <div>
-              {/* Ajustado para garantir que o número não quebre (whitespace-nowrap) */}
+            <div className="text-left">
+              {/* Ajuste para garantir que o número não quebre (whitespace-nowrap) */}
               <p className="text-xl md:text-2xl font-bold whitespace-nowrap">{formatCurrency(financialSummary.totalPaid)}</p>
               <p className="text-xs text-muted-foreground">Arrecadado</p>
             </div>
           </CardContent>
         </Card>
+        
+        {/* Card Pendente */}
         <Card className="shadow-sm border bg-yellow-50 border-yellow-200">
-          <CardContent className="pt-4 md:pt-6 flex items-center gap-2 md:gap-3">
+          <CardContent className="pt-4 md:pt-6 flex flex-col items-start gap-2 md:gap-3">
             <Clock className="h-7 w-7 text-yellow-600 flex-shrink-0" />
-            <div>
-              {/* Ajustado para garantir que o número não quebre (whitespace-nowrap) */}
+            <div className="text-left">
+              {/* Ajuste para garantir que o número não quebre (whitespace-nowrap) */}
               <p className="text-xl md:text-2xl font-bold whitespace-nowrap">{formatCurrency(financialSummary.totalPending)}</p>
               <p className="text-xs text-muted-foreground">Pendente</p>
             </div>
           </CardContent>
         </Card>
+        
+        {/* Card Potencial */}
         <Card className="shadow-sm border bg-blue-50 border-blue-200">
-          <CardContent className="pt-4 md:pt-6 flex items-center gap-2 md:gap-3">
+          <CardContent className="pt-4 md:pt-6 flex flex-col items-start gap-2 md:gap-3">
             <TrendingUp className="h-7 w-7 text-blue-600 flex-shrink-0" />
-            <div>
-              {/* Ajustado para garantir que o número não quebre (whitespace-nowrap) */}
+            <div className="text-left">
+              {/* Ajuste para garantir que o número não quebre (whitespace-nowrap) */}
               <p className="text-xl md:text-2xl font-bold whitespace-nowrap">{formatCurrency(financialSummary.totalPotential)}</p>
               <p className="text-xs text-muted-foreground">Potencial</p>
             </div>
           </CardContent>
         </Card>
+        
+        {/* Card Isentos */}
         <Card className="shadow-sm border">
-          <CardContent className="pt-4 md:pt-6 flex items-center gap-2 md:gap-3">
+          <CardContent className="pt-4 md:pt-6 flex flex-col items-start gap-2 md:gap-3">
             {/* Ícone e tamanho padronizados */}
             <Users className="h-7 w-7 text-gray-500 flex-shrink-0" /> 
-            <div>
+            <div className="text-left">
               {/* Ajustado para alinhar com o tamanho da fonte dos valores de moeda */}
               <p className="text-xl md:text-2xl font-bold">{financialSummary.waivedCount}</p>
               <p className="text-xs text-muted-foreground">Isentos</p>
