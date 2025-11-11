@@ -37,13 +37,10 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
       discipulador: mapDiscipuladorLabel(d.discipulador as string)
   }));
 
-  // CORREÇÃO TS7053: Corrigido o acesso à chave para resolver o erro.
-    const chartKeys = FUNCAO_OPTIONS.filter(key =>
-      chartData.some(d => {
-        const value = (d as unknown as Record<string, unknown>)[key];
-        return typeof value === 'number' && value > 0;
-      })
-    );
+  // Corrigido o acesso à chave para resolver o erro TS7053.
+  const chartKeys = FUNCAO_OPTIONS.filter(key => 
+      chartData.some(d => ((d as DisciplineChartData)[key as keyof DisciplineChartData] as number) > 0)
+  );
   
   if (chartData.length === 0) {
     return (
@@ -92,7 +89,7 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
                 interval={0} // Garante que todos os nomes apareçam
             />
             
-            {/* Eixo Y (Vertical): Valores de contagem. Corrigido: Removido stackId, tipo number. */}
+            {/* Eixo Y (Vertical): Valores de contagem. Tipo number. */}
             <YAxis 
                 type="number" 
                 stroke="#6b7280" 
@@ -110,15 +107,15 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
             {/* Legenda: Exibe as cores para cada tipo de inscrição */}
             <Legend wrapperStyle={{ paddingTop: 20 }} />
             
-            {/* Barras Empilhadas: stackId="a" é crucial para o empilhamento correto */}
+            {/* Barras Agrupadas: Removido stackId="a" */}
             {chartKeys.map(key => (
               <Bar 
                 key={key} 
                 dataKey={key} 
-                stackId="a" 
+                // REMOVIDO: stackId="a"
                 fill={colors[key] || colors['Outro']} 
                 name={key}
-                maxBarSize={50} // Define largura máxima da coluna
+                maxBarSize={15} // Reduzido para melhor visualização agrupada
               />
             ))}
           </BarChart>
