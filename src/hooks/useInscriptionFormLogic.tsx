@@ -160,6 +160,13 @@ export const useInscriptionFormLogic = () => {
         acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
       };
 
+      // --- INÍCIO DO CÓDIGO DE DEBUG ---
+      // Este log é a chave. Vamos ver o que está sendo enviado.
+      console.log("--- DEBUG: DADOS A SEREM ENVIADOS ---");
+      console.log(JSON.stringify(inscriptionData, null, 2));
+      console.log("--------------------------------------");
+      // --- FIM DO CÓDIGO DE DEBUG ---
+
       const { error, status } = await supabase.from('inscriptions').insert([inscriptionData]).select();
       
       if (error) {
