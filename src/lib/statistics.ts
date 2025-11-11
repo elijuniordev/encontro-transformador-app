@@ -3,7 +3,7 @@ import { Inscription, Payment } from "@/types/supabase";
 import { 
   FORMA_PAGAMENTO_OPTIONS, 
   IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS,
-  DISCIPULADORES_OPTIONS // <--- NOVO IMPORT
+  DISCIPULADORES_OPTIONS 
 } from "@/config/options";
 
 export interface FinancialSummary {
@@ -17,9 +17,11 @@ export interface FinancialSummary {
 export interface DisciplineChartData {
   discipulador: string;
   total: number;
-  [key: string]: number | string; // Permite chaves dinâmicas para cada 'irmao_voce_e'
+  [key: string]: number | string; // Index signature é mantida para os dados do gráfico
 }
-// FIM NOVO
+
+// Chave interna para o grupo consolidado (Pastores, Cozinha, Não-atribuídos)
+const STAFF_CONSOLIDATED_KEY = '__STAFF_CONSOLIDATED__'; 
 
 export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
   const counts: { [key: string]: number } = {};
@@ -97,32 +99,28 @@ export const calculateTotalInscriptionsByDiscipler = (inscriptions: Inscription[
 
   const groupedData: Record<string, Record<string, number>> = {};
   
-  // Use um nome canônico para agrupar discipulados não oficiais
-  const OTHER_DISCIPLINER_GROUP = 'Outros Discipulados';
-  const OFFICIAL_DISCIPLINERS = new Set(DISCIPULADORES_OPTIONS); // Usar um Set para busca rápida
+  const OFFICIAL_DISCIPLINERS = new Set(DISCIPULADORES_OPTIONS);
 
   relevantInscriptions.forEach(i => {
-    // Determine a chave de agrupamento:
-    let discipulador = i.discipuladores || 'N/A';
-    
-    // CORREÇÃO LÓGICA: Se o discipulador não está na lista oficial e não é "N/A", 
-    // presumimos que é um nome próprio (como "ARTHUR NASCIMENTO") que deve ser agrupado.
-    if (discipulador !== 'N/A' && !OFFICIAL_DISCIPLINERS.has(discipulador)) {
-        discipulador = OTHER_DISCIPLINER_GROUP;
-    }
-    
+    let discipuladorKey = i.discipuladores || 'N/A';
     const categoria = i.irmao_voce_e || 'Outro';
 
-    if (!groupedData[discipulador]) {
-      groupedData[discipulador] = {};
-      categories.forEach(cat => groupedData[discipulador][cat] = 0);
+    // Se o discipulador não é oficial (ou é N/A), agrupamos no grupo consolidado.
+    if (!OFFICIAL_DISCIPLINERS.has(discipuladorKey) || discipuladorKey === 'N/A') {
+        discipuladorKey = STAFF_CONSOLIDATED_KEY;
+    } 
+
+    const categoryKey = categories.includes(categoria) ? categoria : 'Outro';
+
+    if (!groupedData[discipuladorKey]) {
+      groupedData[discipuladorKey] = {};
+      categories.forEach(cat => groupedData[discipuladorKey][cat] = 0);
     }
     
-    const categoryKey = categories.includes(categoria) ? categoria : 'Outro';
-    
-    groupedData[discipulador][categoryKey] = (groupedData[discipulador][categoryKey] || 0) + 1;
+    groupedData[discipuladorKey][categoryKey] = (groupedData[discipuladorKey][categoryKey] || 0) + 1;
   });
 
+  // Mapear para o formato do gráfico
   return Object.entries(groupedData).map(([discipulador, counts]) => {
     const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
     
@@ -134,3 +132,6 @@ export const calculateTotalInscriptionsByDiscipler = (inscriptions: Inscription[
     return finalCounts as DisciplineChartData;
   }).filter(d => d.total > 0).sort((a, b) => (b.total as number) - (a.total as number)); 
 };
+
+// Exportar a chave interna para uso no componente de gráfico
+export { STAFF_CONSOLIDATED_KEY };

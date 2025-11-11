@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import { 
   calculateFinancialSummary, 
   calculateSituationCounts, 
-  calculateTotalInscriptionsByDiscipler // CORRIGIDO: Nome da função
+  calculateTotalInscriptionsByDiscipler
 } from '@/lib/statistics';
 import { FinancialChart } from "@/components/management/FinancialChart";
 import { Payment } from "@/types/supabase";
@@ -21,7 +21,7 @@ const DashboardPage = () => {
   const statistics = useMemo(() => ({
     situationCounts: calculateSituationCounts(inscriptions),
     financialSummary: calculateFinancialSummary(inscriptions, payments),
-    disciplerChartData: calculateTotalInscriptionsByDiscipler(inscriptions), // CORRIGIDO: Chamada da nova função
+    disciplerChartData: calculateTotalInscriptionsByDiscipler(inscriptions),
   }), [inscriptions, payments]);
   
   const summaryDataForChart = useMemo(() => {
