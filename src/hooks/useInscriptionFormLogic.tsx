@@ -18,7 +18,6 @@ export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // CORREÇÃO: Inicializando TODOS os campos para evitar que sejam 'undefined'
   const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
     idade: "", whatsapp: "", situacao: "",
@@ -58,7 +57,6 @@ export const useInscriptionFormLogic = () => {
     }
   };
 
-  // CORREÇÃO: Inicializando TODOS os campos no reset também
   const resetForm = useCallback(() => {
     setFormData({
       discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
@@ -140,7 +138,10 @@ export const useInscriptionFormLogic = () => {
       const inscriptionData = {
         nome_completo: formData.nomeCompleto.toUpperCase(),
         anjo_guarda: anjoGuardaFinal,
-        sexo: formData.sexo,
+        // --- INÍCIO DA CORREÇÃO ---
+        // Capitaliza a primeira letra para bater com o CHECK ('Feminino', 'Masculino')
+        sexo: formData.sexo.charAt(0).toUpperCase() + formData.sexo.slice(1),
+        // --- FIM DA CORREÇÃO ---
         idade: formData.idade,
         whatsapp: formData.whatsapp,
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
@@ -160,12 +161,7 @@ export const useInscriptionFormLogic = () => {
         acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
       };
 
-      // --- INÍCIO DO CÓDIGO DE DEBUG ---
-      // Este log é a chave. Vamos ver o que está sendo enviado.
-      console.log("--- DEBUG: DADOS A SEREM ENVIADOS ---");
-      console.log(JSON.stringify(inscriptionData, null, 2));
-      console.log("--------------------------------------");
-      // --- FIM DO CÓDIGO DE DEBUG ---
+      // O bloco de DEBUG foi removido daqui.
 
       const { error, status } = await supabase.from('inscriptions').insert([inscriptionData]).select();
       
