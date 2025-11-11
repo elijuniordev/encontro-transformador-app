@@ -9,6 +9,7 @@ import { eventDetails } from "@/config/eventDetails";
 import { InscriptionFormData } from "@/types/forms";
 import { inscriptionSchema } from "@/lib/validations/inscriptionSchema";
 import { ZodError } from "zod";
+import { calculateInscriptionDetails } from "@/lib/inscriptionLogic"; // <--- NOVO: IMPORTADO A FUNÇÃO
 
 type ValidationErrors = {
   [key: string]: string | undefined;
@@ -107,67 +108,8 @@ export const useInscriptionFormLogic = () => {
     }
 
     try {
-      const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-      const isExemptStaff = formData.situacao === "Cozinha";
-      const isChild = formData.situacao === 'Criança';
-      const isEncontrista = formData.situacao === 'Encontrista';
-
-      let finalValue = eventDetails.fullValue;
-      let paymentStatus = 'Pendente';
-
-      if (isChild) {
-        const age = parseInt(formData.idade || '0', 10);
-        if (age <= eventDetails.childFreeCutoffAge) {
-          finalValue = 0.00;
-          paymentStatus = 'Isento';
-        } else if (age <= eventDetails.childValueCutoffAge) {
-          finalValue = eventDetails.childValue;
-        }
-      }
-
-      if (isExemptStaff || isPastorObreiro) { 
-        finalValue = 0.00;
-        paymentStatus = 'Isento';
-      }
-      
-      let anjoGuardaFinal = "";
-      if (isChild) {
-        anjoGuardaFinal = `${formData.nomeAcompanhante} (${formData.parentescoAcompanhante})`.toUpperCase();
-      } else if (isEncontrista) {
-        anjoGuardaFinal = (formData.anjoGuarda || "N/A").toUpperCase();
-      } else {
-        anjoGuardaFinal = formData.nomeCompleto.toUpperCase();
-      }
-      
-      // --- LOG 2: REVERTENDO A CORREÇÃO. ENVIANDO O VALOR BRUTO ---
-      console.log(`--- DEBUG: Valor 'sexo' bruto: [${formData.sexo}]`);
-      const sexoFinal = formData.sexo; // Sem .toUpperCase(), Sem .charAt(0).toUpperCase()
-      console.log(`--- DEBUG: Valor 'sexo' final (sem formatação): [${sexoFinal}]`);
-      
-      const inscriptionData = {
-        nome_completo: formData.nomeCompleto.toUpperCase(),
-        anjo_guarda: anjoGuardaFinal,
-        
-        sexo: sexoFinal, // Usando a variável revertida
-        
-        idade: formData.idade, 
-        whatsapp: formData.whatsapp,
-        discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
-        lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
-        irmao_voce_e: formData.situacao,
-        responsavel_1_nome: formData.nomeResponsavel1?.toUpperCase() || null,
-        responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
-        responsavel_2_nome: formData.nomeResponsavel2?.toUpperCase() || null,
-        responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
-        responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
-        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null, 
-        status_pagamento: paymentStatus,
-        forma_pagamento: null,
-        total_value: finalValue,
-        paid_amount: 0,
-        acompanhante_nome: isChild ? formData.nomeAcompanhante?.toUpperCase() : null,
-        acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
-      };
+      // 1. LÓGICA REUTILIZÁVEL: Usa a função externa para calcular valores e montar o objeto
+      const inscriptionData = calculateInscriptionDetails(formData);
 
       // --- LOG 3: VERIFICAR O OBJETO FINAL ANTES DE ENVIAR ---
       console.log("--- DEBUG: Objeto 'inscriptionData' a ser enviado ---");

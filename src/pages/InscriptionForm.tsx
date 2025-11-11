@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Footer from "@/components/Footer";
-import { UserPlus, Send, AlertTriangle, Loader2 } from "lucide-react";
+import { UserPlus, Send, AlertTriangle, Loader2, XCircle } from "lucide-react"; // <--- ADICIONAR XCircle
 import { useInscriptionFormLogic } from "@/hooks/useInscriptionFormLogic";
 import InscriptionSuccess from "@/components/InscriptionSuccess";
 import { eventDetails } from "@/config/eventDetails";
@@ -51,9 +51,16 @@ const InscriptionForm = () => {
             </CardHeader>
             <CardContent>
               {!isRegistrationsOpen ? (
-                <div className="flex flex-col items-center justify-center p-8 bg-red-50 border border-red-300 rounded-lg text-red-800">
-                  <AlertTriangle className="h-12 w-12 mb-4" />
+                // NOVO BLOCO para Inscrições Encerradas (melhor UX)
+                <div className="flex flex-col items-center space-y-4 p-8 bg-red-50 border border-red-300 rounded-lg text-red-800">
+                  <XCircle className="h-12 w-12 text-red-600" />
                   <h3 className="text-2xl font-bold mb-2">Inscrições Encerradas!</h3>
+                  <p className="text-gray-700 text-center">
+                    Agradecemos o seu interesse! Fique atento(a) aos próximos eventos.
+                  </p>
+                  <Button variant="destructive" size="lg" className="w-full max-w-sm" disabled>
+                    Inscrições Encerradas
+                  </Button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-8">
