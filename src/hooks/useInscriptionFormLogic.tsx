@@ -92,7 +92,7 @@ export const useInscriptionFormLogic = () => {
     setIsLoading(true);
 
     // --- LOG 1: VERIFICAR SE O CÓDIGO NOVO ESTÁ A SER EXECUTADO ---
-    console.log("--- DEBUG: Início do handleSubmit (VERSÃO .toUpperCase()) ---");
+    console.log("--- DEBUG: Início do handleSubmit (VERSÃO REVERTIDA - minúsculas) ---");
     console.log("Dados do formulário (formData):", JSON.stringify(formData, null, 2));
 
     if (!isRegistrationsOpen) {
@@ -139,16 +139,16 @@ export const useInscriptionFormLogic = () => {
         anjoGuardaFinal = formData.nomeCompleto.toUpperCase();
       }
       
-      // --- LOG 2: VERIFICAR O VALOR BRUTO E O FORMATADO ---
+      // --- LOG 2: REVERTENDO A CORREÇÃO. ENVIANDO O VALOR BRUTO ---
       console.log(`--- DEBUG: Valor 'sexo' bruto: [${formData.sexo}]`);
-      const sexoFormatado = formData.sexo.toUpperCase(); // Correção: .toUpperCase()
-      console.log(`--- DEBUG: Valor 'sexo' formatado (com .toUpperCase()): [${sexoFormatado}]`);
+      const sexoFinal = formData.sexo; // Sem .toUpperCase(), Sem .charAt(0).toUpperCase()
+      console.log(`--- DEBUG: Valor 'sexo' final (sem formatação): [${sexoFinal}]`);
       
       const inscriptionData = {
         nome_completo: formData.nomeCompleto.toUpperCase(),
         anjo_guarda: anjoGuardaFinal,
         
-        sexo: sexoFormatado, // Usando a variável formatada
+        sexo: sexoFinal, // Usando a variável revertida
         
         idade: formData.idade, 
         whatsapp: formData.whatsapp,
