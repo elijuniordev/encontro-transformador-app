@@ -39,7 +39,7 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionChartP
 
   // Corrigido o acesso à chave para resolver o erro TS7053.
   const chartKeys = FUNCAO_OPTIONS.filter(key => 
-      chartData.some(d => ((d as unknown) as Record<string, number>)[key] > 0)
+      chartData.some(d => Number((d as DisciplineChartData)[key]) > 0)
   );
   
   if (chartData.length === 0) {
@@ -74,12 +74,12 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionChartP
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            // MUDANÇA CRUCIAL: layout="vertical" para Gráfico de BARRAS HORIZONTAIS AGRUPADAS
+            // MUDANÇA: layout="vertical" para Gráfico de BARRAS HORIZONTAIS AGRUPADAS
             layout="vertical"
-            // Margens ajustadas para otimizar o espaço
+            // Margens ajustadas para otimizar o espaço, dando mais largura para o nome do Discipulador
             margin={{ top: 10, right: 20, left: 10, bottom: 0 }} 
           >
-            {/* Linhas de grade verticais para gráficos horizontais */}
+            {/* Linhas de grade horizontais (já que o layout é vertical) */}
             <CartesianGrid strokeDasharray="3 3" horizontal={false} /> 
             
             {/* Eixo X (Bottom): Valores de Contagem (numérico) */}
