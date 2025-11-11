@@ -13,6 +13,14 @@ export interface FinancialSummary {
   paymentMethodTotals: { [key: string]: number };
 }
 
+// NOVO: Interface para os dados do gráfico por discipulador
+export interface DisciplineChartData {
+  discipulador: string;
+  total: number;
+  [key: string]: number | string; // Permite chaves dinâmicas para cada 'irmao_voce_e'
+}
+// FIM NOVO
+
 export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
   const counts: { [key: string]: number } = {};
   counts['Total'] = inscriptions.length;
@@ -79,4 +87,43 @@ export const calculateFinancialSummary = (inscriptions: Inscription[], allPaymen
   summary.totalPotential = summary.totalPaid + summary.totalPending;
 
   return summary;
+};
+
+// NOVO: Função para calcular inscrições por discipulador e função
+export const calculateInscriptionsByDiscipler = (inscriptions: Inscription[]): DisciplineChartData[] => {
+  // Filtra apenas as inscrições confirmadas ou isentas
+  const relevantInscriptions = inscriptions.filter(
+    (i) => ["Confirmado", "Isento"].includes(i.status_pagamento)
+  );
+  
+  const categories = FUNCAO_OPTIONS; // Usando as opções do config
+
+  const groupedData: Record<string, Record<string, number>> = {};
+
+  relevantInscriptions.forEach(i => {
+    const discipulador = i.discipuladores || 'N/A';
+    const categoria = i.irmao_voce_e || 'Outro';
+
+    if (!groupedData[discipulador]) {
+      groupedData[discipulador] = {};
+      categories.forEach(cat => groupedData[discipulador][cat] = 0);
+    }
+    
+    // Incrementa a contagem para a categoria e discipulador
+    const categoryKey = categories.includes(categoria) ? categoria : 'Outro';
+    
+    groupedData[discipulador][categoryKey] = (groupedData[discipulador][categoryKey] || 0) + 1;
+  });
+
+  return Object.entries(groupedData).map(([discipulador, counts]) => {
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    
+    // Garantir que todas as categorias listadas em FUNCAO_OPTIONS existam no objeto
+    const finalCounts: Record<string, number | string> = { discipulador, total };
+    categories.forEach(cat => {
+      finalCounts[cat] = counts[cat] || 0;
+    });
+
+    return finalCounts as DisciplineChartData;
+  }).filter(d => d.total > 0).sort((a, b) => (b.total as number) - (a.total as number)); 
 };
