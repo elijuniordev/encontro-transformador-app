@@ -11,11 +11,15 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     throw new Error('As variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_KEY são obrigatórias.');
 }
 
-// Usando SUPABASE_PUBLISHABLE_KEY (VITE_SUPABASE_KEY) como a chave anônima (Anon Key).
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+const supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
         storage: localStorage,
         persistSession: true,
         autoRefreshToken: true,
     }
 });
+
+// AÇÃO CORRETA: Removendo a lógica de signOut() que causava a race condition
+// O cliente agora confia inteiramente na chave pública (Anon Key) para requisições anônimas.
+
+export const supabase = supabaseClient;
