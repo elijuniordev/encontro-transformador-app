@@ -39,7 +39,7 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
 
   // Corrigido o acesso à chave para resolver o erro TS7053.
   const chartKeys = FUNCAO_OPTIONS.filter(key => 
-      chartData.some(d => ((d as DisciplineChartData)[key as keyof DisciplineChartData] as number) > 0)
+      chartData.some(d => Number((d as Record<string, number | string>)[key]) > 0)
   );
   
   if (chartData.length === 0) {
@@ -58,7 +58,7 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
   }
 
   // Altura fixa para gráfico de colunas
-  const fixedHeight = 500;
+  const fixedHeight = 450; // REDUÇÃO DE ALTURA
 
   return (
     <Card className="shadow-peaceful">
@@ -68,12 +68,13 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
           Total de Inscrições por Discipulado
         </CardTitle>
       </CardHeader>
-      <CardContent style={{ height: fixedHeight }}>
+      {/* Redução do padding da CardContent para diminuir o espaço */}
+      <CardContent style={{ height: fixedHeight }} className="p-4 pt-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            // Removendo layout="vertical" para ter colunas verticais
+            // MARGEM AJUSTADA: Reduzimos a margem vertical para diminuir o espaço
+            margin={{ top: 5, right: 10, left: 0, bottom: 5 }} 
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} /> 
             
@@ -81,12 +82,14 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
             <XAxis 
                 dataKey="discipulador" 
                 type="category" 
-                angle={-45} // Inclina o texto para caber nomes longos
+                angle={-30} // Inclinação ajustada para ser menos agressiva
                 textAnchor="end"
-                height={100} // Aumenta a altura para os labels inclinados
+                height={70} // Altura do eixo ajustada
                 stroke="#6b7280" 
                 tick={{ fontSize: 10 }}
-                interval={0} // Garante que todos os nomes apareçam
+                interval={0} 
+                // NOVO: Adicionado um padding para centralizar os grupos, melhorando a aparência
+                padding={{ left: 20, right: 20 }} 
             />
             
             {/* Eixo Y (Vertical): Valores de contagem. Tipo number. */}
@@ -105,17 +108,21 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
             />
             
             {/* Legenda: Exibe as cores para cada tipo de inscrição */}
-            <Legend wrapperStyle={{ paddingTop: 20 }} />
+            <Legend 
+                wrapperStyle={{ paddingTop: 10 }} // Reduzido o padding da legenda
+                layout="horizontal" 
+                verticalAlign="bottom"
+                align="center"
+            />
             
             {/* Barras Agrupadas: Removido stackId="a" */}
             {chartKeys.map(key => (
               <Bar 
                 key={key} 
                 dataKey={key} 
-                // REMOVIDO: stackId="a"
                 fill={colors[key] || colors['Outro']} 
                 name={key}
-                maxBarSize={15} // Reduzido para melhor visualização agrupada
+                maxBarSize={12} // Reduzido para um visual mais clean e agrupado
               />
             ))}
           </BarChart>
