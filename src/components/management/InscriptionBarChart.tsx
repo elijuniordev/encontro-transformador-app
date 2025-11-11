@@ -38,8 +38,12 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
   }));
 
   // Corrigido o acesso à chave para resolver o erro TS7053.
-  const chartKeys = FUNCAO_OPTIONS.filter(key => 
-      chartData.some(d => Number((d as Record<string, number | string>)[key]) > 0)
+  const chartKeys = FUNCAO_OPTIONS.filter(key =>
+    chartData.some(d => {
+      // Garante que a chave existe e é do tipo number
+      const value = (d as Record<string, unknown>)[key];
+      return typeof value === 'number' && value > 0;
+    })
   );
   
   if (chartData.length === 0) {
@@ -57,8 +61,8 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
     );
   }
 
-  // Altura fixa para gráfico de colunas
-  const fixedHeight = 450; // REDUÇÃO DE ALTURA
+  // Altura dinâmica: 40px por barra + espaço para margens/labels (Otimizado para vertical/mobile)
+  const dynamicHeight = Math.max(350, chartData.length * 40 + 100); 
 
   return (
     <Card className="shadow-peaceful">
@@ -68,35 +72,35 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
           Total de Inscrições por Discipulado
         </CardTitle>
       </CardHeader>
-      {/* Redução do padding da CardContent para diminuir o espaço */}
-      <CardContent style={{ height: fixedHeight }} className="p-4 pt-0">
+      
+      {/* Container com altura dinâmica */}
+      <CardContent style={{ height: dynamicHeight }} className="p-4 pt-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            // MARGEM AJUSTADA: Reduzimos a margem vertical para diminuir o espaço
-            margin={{ top: 5, right: 10, left: 0, bottom: 5 }} 
+            // MUDANÇA CRUCIAL: layout="vertical" para Gráfico de BARRAS HORIZONTAIS
+            layout="vertical"
+            // Margens ajustadas para otimizar o espaço
+            margin={{ top: 10, right: 20, left: 10, bottom: 0 }} 
           >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} /> 
+            {/* Linhas de grade verticais para gráficos horizontais */}
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} /> 
             
-            {/* Eixo X (Horizontal): Nomes dos Discipuladores */}
+            {/* Eixo X (Bottom): Valores de Contagem (numérico) */}
             <XAxis 
-                dataKey="discipulador" 
-                type="category" 
-                angle={-30} // Inclinação ajustada para ser menos agressiva
-                textAnchor="end"
-                height={70} // Altura do eixo ajustada
-                stroke="#6b7280" 
-                tick={{ fontSize: 10 }}
-                interval={0} 
-                // NOVO: Adicionado um padding para centralizar os grupos, melhorando a aparência
-                padding={{ left: 20, right: 20 }} 
-            />
-            
-            {/* Eixo Y (Vertical): Valores de contagem. Tipo number. */}
-            <YAxis 
                 type="number" 
                 stroke="#6b7280" 
-                tick={{ fontSize: 12 }} 
+                tick={{ fontSize: 10 }}
+                label={{ value: 'Total de Inscrições', position: 'insideBottomRight', offset: 0, fill: '#6b7280', fontSize: 10 }}
+            />
+            
+            {/* Eixo Y (Left): Nomes dos Discipuladores (categoria) */}
+            <YAxis 
+                dataKey="discipulador" 
+                type="category" 
+                width={150} // Aumenta a largura para os nomes longos dos Discipuladores
+                stroke="#6b7280" 
+                tick={{ fontSize: 10 }}
             />
             
             {/* Tooltip: Exibe os valores detalhados ao passar o mouse */}
@@ -107,22 +111,24 @@ const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionBarCha
                 itemStyle={{ color: '#1f2937' }}
             />
             
-            {/* Legenda: Exibe as cores para cada tipo de inscrição */}
+            {/* Legenda: Otimiza o layout horizontal */}
             <Legend 
-                wrapperStyle={{ paddingTop: 10 }} // Reduzido o padding da legenda
+                wrapperStyle={{ paddingTop: 10 }} 
                 layout="horizontal" 
                 verticalAlign="bottom"
                 align="center"
+                iconSize={10}
             />
             
-            {/* Barras Agrupadas: Removido stackId="a" */}
+            {/* Barras Agrupadas: maxBarSize reduzido para aproximar as barras */}
             {chartKeys.map(key => (
               <Bar 
                 key={key} 
                 dataKey={key} 
                 fill={colors[key] || colors['Outro']} 
                 name={key}
-                maxBarSize={12} // Reduzido para um visual mais clean e agrupado
+                maxBarSize={10} // Colunas mais finas e próximas
+                minPointSize={1}
               />
             ))}
           </BarChart>

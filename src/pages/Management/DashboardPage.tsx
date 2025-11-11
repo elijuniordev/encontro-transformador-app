@@ -14,6 +14,7 @@ import { FinancialChart } from "@/components/management/FinancialChart";
 import { Payment } from "@/types/supabase";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import { Users2, CreditCard, Users } from "lucide-react"; 
+import { Skeleton } from "@/components/ui/skeleton"; // Importando Skeleton para o Card Vazio
 
 const DashboardPage = () => {
   const { isLoading, inscriptions, payments, isRegistrationsOpen, userRole } = useManagement();
@@ -43,6 +44,8 @@ const DashboardPage = () => {
     <div className="space-y-4 md:space-y-6">
       {isLoading ? <StatisticsCardsSkeleton /> : (
         <div className="space-y-4 md:space-y-6">
+            
+            {/* LINHA 1: Estatísticas (Inscrições e Financeiro) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <Card className="shadow-peaceful">
                 <CardHeader>
@@ -73,12 +76,26 @@ const DashboardPage = () => {
               </Card>
             </div>
             
-            {/* NOVO BLOCO: Gráfico de Barras por Discipulado (Visível para Admin/Discipulador) */}
+            {/* LINHA 2: Gráfico (Ocupando 6/12) e Card Vazio (Ocupando 6/12) */}
             {isDetailedViewAllowed && statistics.disciplerChartData.length > 0 && (
-                <InscriptionBarChart chartData={statistics.disciplerChartData} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                    {/* NOVO BLOCO: Gráfico ocupa 6/12 */}
+                    <InscriptionBarChart chartData={statistics.disciplerChartData} />
+                    
+                    {/* NOVO BLOCO: Card Vazio (Placeholder) ocupa 6/12 */}
+                    <Card className="shadow-peaceful hidden lg:block">
+                        <CardHeader>
+                            <CardTitle className="text-xl md:text-2xl text-muted-foreground">
+                                Espaço para futuros widgets
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <Skeleton className="h-[300px] w-full" />
+                        </CardContent>
+                    </Card>
+                </div>
             )}
-            {/* FIM NOVO BLOCO */}
-
+            {/* FIM NOVO LAYOUT */}
         </div>
       )}
     </div>
