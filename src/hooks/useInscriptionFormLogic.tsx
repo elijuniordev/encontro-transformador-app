@@ -91,10 +91,6 @@ export const useInscriptionFormLogic = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // --- LOG 1: VERIFICAR SE O CÓDIGO NOVO ESTÁ A SER EXECUTADO ---
-    console.log("--- DEBUG: Início do handleSubmit (NOVA VERSÃO COM LOGS) ---");
-    console.log("Dados do formulário (formData):", JSON.stringify(formData, null, 2));
-
     if (!isRegistrationsOpen) {
       toast({ title: "Inscrições Encerradas", variant: "destructive" });
       setIsLoading(false);
@@ -139,16 +135,14 @@ export const useInscriptionFormLogic = () => {
         anjoGuardaFinal = formData.nomeCompleto.toUpperCase();
       }
       
-      // --- LOG 2: VERIFICAR O VALOR BRUTO E O FORMATADO ---
-      console.log(`--- DEBUG: Valor 'sexo' bruto: [${formData.sexo}]`);
-      const sexoFormatado = formData.sexo.charAt(0).toUpperCase() + formData.sexo.slice(1);
-      console.log(`--- DEBUG: Valor 'sexo' formatado: [${sexoFormatado}]`);
-      
       const inscriptionData = {
         nome_completo: formData.nomeCompleto.toUpperCase(),
         anjo_guarda: anjoGuardaFinal,
         
-        sexo: sexoFormatado, // Usando a variável formatada
+        // --- INÍCIO DA CORREÇÃO ---
+        // A regra do banco de dados espera MASCULINO/FEMININO, e não Masculino/Feminino.
+        sexo: formData.sexo.toUpperCase(),
+        // --- FIM DA CORREÇÃO ---
         
         idade: formData.idade, 
         whatsapp: formData.whatsapp,
@@ -168,11 +162,6 @@ export const useInscriptionFormLogic = () => {
         acompanhante_nome: isChild ? formData.nomeAcompanhante?.toUpperCase() : null,
         acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
       };
-
-      // --- LOG 3: VERIFICAR O OBJETO FINAL ANTES DE ENVIAR ---
-      console.log("--- DEBUG: Objeto 'inscriptionData' a ser enviado ---");
-      console.log(JSON.stringify(inscriptionData, null, 2));
-      console.log("-----------------------------------------------------");
 
       const { error, status } = await supabase.from('inscriptions').insert([inscriptionData]).select();
       
