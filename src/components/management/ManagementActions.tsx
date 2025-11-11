@@ -21,8 +21,11 @@ const ManagementActions = ({
   handleExportXLSX,
   onOpenBatchModal, // Nova prop
 }: ManagementActionsProps) => {
-  // NOVO: Apenas admin e discipulador (perfil de edição total) têm permissão para exportar e lote
-  const isFullEditor = userRole === 'admin' || userRole === 'discipulador'; 
+  // CORREÇÃO: Permissão para Batch (que edita) continua restrita.
+  const isBatchAllowed = userRole === 'admin' || userRole === 'discipulador'; 
+  
+  // NOVO: Permissão para Exportar, incluindo a role 'viewer'.
+  const isExporterAllowed = isBatchAllowed || userRole === 'viewer';
 
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mt-4 border-t pt-4">
@@ -43,18 +46,22 @@ const ManagementActions = ({
       <div className="flex-grow"></div>
 
       {/* As ações de Batch e Exportar são restritas a perfis de edição total */}
-      {isFullEditor && (
-        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+      <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+        
+        {isBatchAllowed && (
           <Button onClick={onOpenBatchModal} variant="secondary" className="flex items-center gap-2 w-full md:w-auto justify-center">
             <Layers className="h-4 w-4" />
             Lançamento em Lote
           </Button>
+        )}
+        
+        {isExporterAllowed && (
           <Button onClick={handleExportXLSX} className="flex items-center gap-2 w-full md:w-auto justify-center">
             <Download className="h-4 w-4" />
             Exportar XLSX
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
