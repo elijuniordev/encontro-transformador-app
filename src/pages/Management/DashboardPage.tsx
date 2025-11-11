@@ -13,7 +13,7 @@ import {
 import { FinancialChart } from "@/components/management/FinancialChart";
 import { Payment } from "@/types/supabase";
 import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
-import { Users2, CreditCard, Users } from "lucide-react"; // Adicionado Users
+import { Users2, CreditCard, Users } from "lucide-react"; 
 
 const DashboardPage = () => {
   const { isLoading, inscriptions, payments, isRegistrationsOpen, userRole } = useManagement();

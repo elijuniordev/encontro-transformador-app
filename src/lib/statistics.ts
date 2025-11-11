@@ -2,11 +2,11 @@
 import { Inscription, Payment } from "@/types/supabase";
 import { 
   FORMA_PAGAMENTO_OPTIONS, 
-  IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS 
+  IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS,
+  DISCIPULADORES_OPTIONS // <--- NOVO IMPORT
 } from "@/config/options";
 
 export interface FinancialSummary {
-// ... (interface inalterada)
   totalPaid: number;
   totalPending: number;
   totalPotential: number;
@@ -22,7 +22,6 @@ export interface DisciplineChartData {
 // FIM NOVO
 
 export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
-// ... (função inalterada)
   const counts: { [key: string]: number } = {};
   counts['Total'] = inscriptions.length;
 
@@ -38,10 +37,11 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 
 /**
  * Calcula o resumo financeiro completo.
-// ... (função inalterada)
+ * @param inscriptions Array de inscrições filtradas.
+ * @param allPayments Array com TODOS os pagamentos do banco.
+ * @returns Um objeto com o resumo financeiro.
  */
 export const calculateFinancialSummary = (inscriptions: Inscription[], allPayments: Payment[]): FinancialSummary => {
-// ... (o corpo desta função permanece inalterado)
   const summary: FinancialSummary = {
     totalPaid: 0,
     totalPending: 0,
@@ -89,18 +89,28 @@ export const calculateFinancialSummary = (inscriptions: Inscription[], allPaymen
   return summary;
 };
 
-// NOVO NOME: Função para calcular o TOTAL de inscrições por discipulador e função
+// Função para calcular o TOTAL de inscrições por discipulador e função
 export const calculateTotalInscriptionsByDiscipler = (inscriptions: Inscription[]): DisciplineChartData[] => {
-  // CORREÇÃO CRUCIAL: Removemos o filtro de status para incluir todas as inscrições.
   const relevantInscriptions = inscriptions; 
   
   const categories = FUNCAO_OPTIONS; 
 
   const groupedData: Record<string, Record<string, number>> = {};
+  
+  // Use um nome canônico para agrupar discipulados não oficiais
+  const OTHER_DISCIPLINER_GROUP = 'Outros Discipulados';
+  const OFFICIAL_DISCIPLINERS = new Set(DISCIPULADORES_OPTIONS); // Usar um Set para busca rápida
 
   relevantInscriptions.forEach(i => {
-    // A chave do discipulador agora inclui a opção de 'Pastor, obreiro ou discipulador'
-    const discipulador = i.discipuladores || 'N/A';
+    // Determine a chave de agrupamento:
+    let discipulador = i.discipuladores || 'N/A';
+    
+    // CORREÇÃO LÓGICA: Se o discipulador não está na lista oficial e não é "N/A", 
+    // presumimos que é um nome próprio (como "ARTHUR NASCIMENTO") que deve ser agrupado.
+    if (discipulador !== 'N/A' && !OFFICIAL_DISCIPLINERS.has(discipulador)) {
+        discipulador = OTHER_DISCIPLINER_GROUP;
+    }
+    
     const categoria = i.irmao_voce_e || 'Outro';
 
     if (!groupedData[discipulador]) {
@@ -108,7 +118,6 @@ export const calculateTotalInscriptionsByDiscipler = (inscriptions: Inscription[
       categories.forEach(cat => groupedData[discipulador][cat] = 0);
     }
     
-    // Incrementa a contagem para a categoria e discipulador
     const categoryKey = categories.includes(categoria) ? categoria : 'Outro';
     
     groupedData[discipulador][categoryKey] = (groupedData[discipulador][categoryKey] || 0) + 1;
@@ -117,7 +126,6 @@ export const calculateTotalInscriptionsByDiscipler = (inscriptions: Inscription[
   return Object.entries(groupedData).map(([discipulador, counts]) => {
     const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
     
-    // Garantir que todas as categorias listadas em FUNCAO_OPTIONS existam no objeto
     const finalCounts: Record<string, number | string> = { discipulador, total };
     categories.forEach(cat => {
       finalCounts[cat] = counts[cat] || 0;
@@ -126,4 +134,3 @@ export const calculateTotalInscriptionsByDiscipler = (inscriptions: Inscription[
     return finalCounts as DisciplineChartData;
   }).filter(d => d.total > 0).sort((a, b) => (b.total as number) - (a.total as number)); 
 };
-// FIM NOVO CÁLCULO
