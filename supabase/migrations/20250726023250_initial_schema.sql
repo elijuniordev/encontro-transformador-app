@@ -1,3 +1,4 @@
+// supabase/migrations/20250726023250_initial_schema.sql
 -- Create inscriptions table
 CREATE TABLE public.inscriptions (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -28,9 +29,11 @@ CREATE TABLE public.inscriptions (
 ALTER TABLE public.inscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for inscriptions
-CREATE POLICY "Anyone can insert inscriptions" 
+-- REMOVEMOS A POLÍTICA ANTIGA E ADICIONAMOS A CORRETA PARA INSERÇÃO PÚBLICA
+CREATE POLICY "Allow public insert for inscriptions" 
 ON public.inscriptions 
 FOR INSERT 
+TO public -- Alvo para o role público
 WITH CHECK (true);
 
 CREATE POLICY "Admin and discipulador can view all inscriptions" 
