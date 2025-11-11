@@ -3,7 +3,7 @@ import { useManagement } from "./useManagement";
 import { StatisticsCardsSkeleton } from "@/components/management/StatisticsCardsSkeleton";
 import SituationStatistics from "@/components/management/SituationStatistics";
 import PaymentMethodStatistics from "@/components/management/PaymentMethodStatistics";
-// CORRIGIDO: Renomeia o import para refletir o conteúdo (embora o nome do arquivo seja InscriptionBarChart)
+// CORRIGIDO: Importa o componente de Rosca
 import InscriptionDoughnutChart from "@/components/management/InscriptionBarChart"; 
 import { useMemo } from "react";
 import { 
@@ -101,7 +101,6 @@ const DashboardPage = () => {
             {isDetailedViewAllowed && pieChartData.length > 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     {/* NOVO BLOCO: Gráfico de Rosca ocupa 6/12 */}
-                    {/* CORRIGIDO: Passando pieChartData para o componente */}
                     <InscriptionDoughnutChart chartData={pieChartData} /> 
                     
                     {/* NOVO BLOCO: Card Vazio (Placeholder) ocupa 6/12 */}

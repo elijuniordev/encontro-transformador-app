@@ -2,6 +2,8 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Sector } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users } from 'lucide-react';
+import { DisciplineChartData, STAFF_CONSOLIDATED_KEY } from '@/lib/statistics'; 
+import { IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS } from '@/config/options';
 
 // Custom colors for Pie chart slices (cores de alto contraste para a Rosca)
 const PIE_COLORS = [
@@ -22,27 +24,21 @@ interface InscriptionDoughnutProps {
 }
 
 // Render custom label inside the doughnut slices
-interface CustomizedLabelProps {
-    cx: number;
-    cy: number;
-    midAngle: number;
-    innerRadius: number;
-    outerRadius: number;
-    percent: number;
-    index?: number;
-    name?: string;
-    value?: number;
-}
+import type { PieLabelRenderProps } from 'recharts';
 
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: CustomizedLabelProps) => {
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+const renderCustomizedLabel = ({ cx = 0, cy = 0, midAngle = 0, innerRadius = 0, outerRadius = 0, percent, name }: PieLabelRenderProps) => {
+    const inner = typeof innerRadius === 'number' ? innerRadius : parseFloat(innerRadius as string) || 0;
+    const outer = typeof outerRadius === 'number' ? outerRadius : parseFloat(outerRadius as string) || 0;
+    const radius = inner + (outer - inner) * 0.5;
+    const cxNum = typeof cx === 'number' ? cx : parseFloat(cx as string) || 0;
+    const cyNum = typeof cy === 'number' ? cy : parseFloat(cy as string) || 0;
+    const x = cxNum + radius * Math.cos(-midAngle * (Math.PI / 180));
+    const y = cyNum + radius * Math.sin(-midAngle * (Math.PI / 180));
 
     // Exibe o label percentual se o slice for grande o suficiente
-    if (percent > 0.05) {
+    if (percent && percent > 0.05) {
         return (
-            <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" style={{ fontSize: '10px' }}>
+            <text x={x} y={y} fill="white" textAnchor={x > cxNum ? 'start' : 'end'} dominantBaseline="central" style={{ fontSize: '10px' }}>
                 {`${(percent * 100).toFixed(0)}%`}
             </text>
         );
@@ -87,8 +83,8 @@ const InscriptionDoughnutChart = ({ chartData }: InscriptionDoughnutProps) => {
               data={chartData}
               dataKey="value"
               nameKey="name"
-              cx="40%" // Move o centro para a esquerda para dar espaço para a legenda à direita
-              cy="50%"
+              cx="50%" // CORREÇÃO: Centraliza a Rosca para melhor visualização mobile
+              cy="50%" 
               innerRadius={60} // Doughnut/Rosca
               outerRadius={100}
               fill="#8884d8"
@@ -113,9 +109,9 @@ const InscriptionDoughnutChart = ({ chartData }: InscriptionDoughnutProps) => {
             />
             <Legend 
                 wrapperStyle={{ paddingTop: 10 }} 
-                layout="vertical" // Layout vertical é ideal para Rosca com nomes longos
-                verticalAlign="middle"
-                align="right"
+                layout="horizontal" // CORREÇÃO: Legenda abaixo para mobile/6-column layout
+                verticalAlign="bottom"
+                align="center"
                 iconSize={10}
             />
           </PieChart>
