@@ -1,137 +1,128 @@
 // src/components/management/InscriptionBarChart.tsx
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Sector } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users } from 'lucide-react';
-import { DisciplineChartData, STAFF_CONSOLIDATED_KEY } from '@/lib/statistics'; 
-import { IRMAO_VOCE_E_OPTIONS as FUNCAO_OPTIONS } from '@/config/options';
 
-interface InscriptionChartProps {
-  chartData: DisciplineChartData[];
+// Custom colors for Pie chart slices (cores de alto contraste para a Rosca)
+const PIE_COLORS = [
+    "#3b82f6", // blue
+    "#10b981", // emerald
+    "#8b5cf6", // violet
+    "#f59e0b", // amber
+    "#ec4899", // pink
+    "#f97316", // orange
+    "#6b7280", // gray
+    "#7e22ce", // purple
+    "#059669", // dark green
+];
+
+// Interface para dados de rosca (simples nome/valor)
+interface InscriptionDoughnutProps {
+  chartData: { name: string; value: number }[];
 }
 
-const colors: { [key: string]: string } = {
-  // Mapeamento de cores para as categorias (tailwind colors)
-  'Encontrista': '#3b82f6', // blue-500
-  'Equipe': '#10b981',      // emerald-500
-  // Usamos a cor primária para destacar a categoria de pastor/obreiro
-  'Pastor, obreiro ou discipulador': 'hsl(var(--primary))', 
-  'Criança': '#f59e0b',      // amber-500
-  'Cozinha': '#f97316',      // orange-500
-  'Acompanhante': '#ec4899', // pink-500
-  'Outro': '#6b7280',        // gray-500
-};
+// Render custom label inside the doughnut slices
+interface CustomizedLabelProps {
+    cx: number;
+    cy: number;
+    midAngle: number;
+    innerRadius: number;
+    outerRadius: number;
+    percent: number;
+    index?: number;
+    name?: string;
+    value?: number;
+}
 
-// Funçao auxiliar para mapear a chave interna para o texto desejado pelo usuário.
-const mapDiscipuladorLabel = (label: string) => {
-    if (label === STAFF_CONSOLIDATED_KEY) {
-        // Texto solicitado: "Pastor, obreiro ou discipulador"
-        return 'Pastor, obreiro ou discipulador'; 
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: CustomizedLabelProps) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+
+    // Exibe o label percentual se o slice for grande o suficiente
+    if (percent > 0.05) {
+        return (
+            <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" style={{ fontSize: '10px' }}>
+                {`${(percent * 100).toFixed(0)}%`}
+            </text>
+        );
     }
-    return label;
 };
 
-const InscriptionBarChart = ({ chartData: originalChartData }: InscriptionChartProps) => {
-  // Mapeia os dados para renomear a chave interna para o label desejado.
-  const chartData = originalChartData.map(d => ({
-      ...d,
-      discipulador: mapDiscipuladorLabel(d.discipulador as string)
-  }));
+const InscriptionDoughnutChart = ({ chartData }: InscriptionDoughnutProps) => {
+  const total = chartData.reduce((sum, entry) => sum + entry.value, 0);
 
-  // Corrigido o acesso à chave para resolver o erro TS7053.
-  const chartKeys = FUNCAO_OPTIONS.filter(key => 
-      chartData.some(d => Number((d as DisciplineChartData)[key]) > 0)
-  );
-  
-  if (chartData.length === 0) {
+  if (chartData.length === 0 || total === 0) {
     return (
-      <Card className="shadow-peaceful">
+      <Card className="shadow-peaceful h-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
-            <Users className="h-5 w-5 md:h-6 md:w-6" /> Total de Inscrições por Discipulado
+            <Users className="h-5 w-5 md:h-6 md:w-6" /> Distribuição por Discipulado
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground">Nenhuma inscrição total para exibir.</p>
+          <p className="text-center text-muted-foreground">Nenhuma inscrição total para exibir no gráfico.</p>
         </CardContent>
       </Card>
     );
   }
-
-  // Altura dinâmica: 40px por barra + espaço para margens/labels (Otimizado para vertical/mobile)
-  const dynamicHeight = Math.max(350, chartData.length * 40 + 100); 
+  
+  // Altura fixa otimizada para o layout 6/12
+  const fixedHeight = 400; 
 
   return (
     <Card className="shadow-peaceful">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
           <Users className="h-5 w-5 md:h-6 md:w-6" />
-          Total de Inscrições por Discipulado
+          Distribuição por Discipulado
         </CardTitle>
       </CardHeader>
       
-      {/* Container com altura dinâmica */}
-      <CardContent style={{ height: dynamicHeight }} className="p-4 pt-0">
+      {/* Container com altura fixa */}
+      <CardContent style={{ height: fixedHeight }} className="p-4 pt-0">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            // MUDANÇA: layout="vertical" para Gráfico de BARRAS HORIZONTAIS AGRUPADAS
-            layout="vertical"
-            // Margens ajustadas para otimizar o espaço, dando mais largura para o nome do Discipulador
-            margin={{ top: 10, right: 20, left: 10, bottom: 0 }} 
-          >
-            {/* Linhas de grade horizontais (já que o layout é vertical) */}
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} /> 
-            
-            {/* Eixo X (Bottom): Valores de Contagem (numérico) */}
-            <XAxis 
-                type="number" 
-                stroke="#6b7280" 
-                tick={{ fontSize: 10 }}
-                label={{ value: 'Total de Inscrições', position: 'insideBottomRight', offset: 0, fill: '#6b7280', fontSize: 10 }}
-            />
-            
-            {/* Eixo Y (Left): Nomes dos Discipuladores (categoria) */}
-            <YAxis 
-                dataKey="discipulador" 
-                type="category" 
-                width={150} // Aumenta a largura para os nomes longos dos Discipuladores
-                stroke="#6b7280" 
-                tick={{ fontSize: 10 }}
-            />
-            
-            {/* Tooltip: Exibe os valores detalhados ao passar o mouse */}
+          <PieChart>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="40%" // Move o centro para a esquerda para dar espaço para a legenda à direita
+              cy="50%"
+              innerRadius={60} // Doughnut/Rosca
+              outerRadius={100}
+              fill="#8884d8"
+              paddingAngle={2}
+              labelLine={false}
+              label={renderCustomizedLabel} // Mostra % dentro das fatias
+            >
+              {chartData.map((entry, index) => (
+                <Cell 
+                    key={`cell-${entry.name}`} 
+                    fill={PIE_COLORS[index % PIE_COLORS.length]} 
+                />
+              ))}
+            </Pie>
             <Tooltip 
-                labelFormatter={(label: string) => `Discipulador: ${label}`}
-                formatter={(value: number, name: string) => [`${value} Inscrições`, name]}
+                formatter={(value: number, name: string) => [
+                    `${value} Inscrições`, 
+                    `${name} (${(value / total * 100).toFixed(1)}%)`
+                ]}
                 contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '4px' }}
                 itemStyle={{ color: '#1f2937' }}
             />
-            
-            {/* Legenda: Otimiza o layout horizontal */}
             <Legend 
                 wrapperStyle={{ paddingTop: 10 }} 
-                layout="horizontal" 
-                verticalAlign="bottom"
-                align="center"
+                layout="vertical" // Layout vertical é ideal para Rosca com nomes longos
+                verticalAlign="middle"
+                align="right"
                 iconSize={10}
             />
-            
-            {/* Barras Agrupadas: maxBarSize ajustado para aparência mais clean e compacta */}
-            {chartKeys.map(key => (
-              <Bar 
-                key={key} 
-                dataKey={key} 
-                fill={colors[key] || colors['Outro']} 
-                name={key}
-                maxBarSize={10} // Colunas mais finas e próximas
-                minPointSize={1}
-              />
-            ))}
-          </BarChart>
+          </PieChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
   );
 };
 
-export default InscriptionBarChart;
+export default InscriptionDoughnutChart;
