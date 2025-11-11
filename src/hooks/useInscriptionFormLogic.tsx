@@ -109,7 +109,30 @@ export const useInscriptionFormLogic = () => {
 
     try {
       // 1. LÓGICA REUTILIZÁVEL: Usa a função externa para calcular valores e montar o objeto
-      const inscriptionData = calculateInscriptionDetails(formData);
+            // 1. MONTA O OBJETO COM VALORES PADRÃO PARA CAMPOS OBRIGATÓRIOS
+      const inscriptionData = {
+        nome_completo: formData.nomeCompleto?.trim().toUpperCase(),
+        anjo_guarda: formData.anjoGuarda?.trim() || 'Não informado',
+        sexo: formData.sexo,
+        idade: formData.idade,
+        whatsapp: formData.whatsapp,
+        discipuladores: formData.discipuladores || null,
+        lider: formData.lider || null,
+        irmao_voce_e: formData.situacao,
+        responsavel_1_nome: formData.nomeResponsavel1 || null,
+        responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
+        responsavel_2_nome: formData.nomeResponsavel2 || null,
+        responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
+        responsavel_3_nome: formData.nomeResponsavel3 || null,
+        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
+        status_pagamento: 'Pendente',
+        forma_pagamento: null,
+        total_value: 200.00,
+        paid_amount: 0.00,
+        acompanhante_nome: formData.nomeAcompanhante || null,
+        acompanhante_parentesco: formData.parentescoAcompanhante || null,
+      };
+
 
       // --- LOG 3: VERIFICAR O OBJETO FINAL ANTES DE ENVIAR ---
       console.log("--- DEBUG: Objeto 'inscriptionData' a ser enviado ---");
