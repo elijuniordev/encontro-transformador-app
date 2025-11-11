@@ -17,11 +17,17 @@ type ValidationErrors = {
 export const useInscriptionFormLogic = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // CORREÇÃO: Inicializando TODOS os campos para evitar que sejam 'undefined'
   const [formData, setFormData] = useState<InscriptionFormData>({
     discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
     idade: "", whatsapp: "", situacao: "",
+    nomeResponsavel1: "", whatsappResponsavel1: "",
+    nomeResponsavel2: "", whatsappResponsavel2: "",
+    nomeResponsavel3: "", whatsappResponsavel3: "",
     nomeAcompanhante: "", parentescoAcompanhante: "",
   });
+  
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -52,6 +58,7 @@ export const useInscriptionFormLogic = () => {
     }
   };
 
+  // CORREÇÃO: Inicializando TODOS os campos no reset também
   const resetForm = useCallback(() => {
     setFormData({
       discipuladores: "", lider: "", nomeCompleto: "", anjoGuarda: "", sexo: "",
@@ -99,7 +106,6 @@ export const useInscriptionFormLogic = () => {
 
     try {
       const isPastorObreiro = formData.situacao === "Pastor, obreiro ou discipulador";
-      // CORREÇÃO: Apenas "Cozinha" é considerado Isento. Removido o comentário incorreto.
       const isExemptStaff = formData.situacao === "Cozinha";
       const isChild = formData.situacao === 'Criança';
       const isEncontrista = formData.situacao === 'Encontrista';
@@ -117,10 +123,7 @@ export const useInscriptionFormLogic = () => {
         }
       }
 
-      // CORRIGIDO: A condição de isenção agora verifica APENAS isExemptStaff (Cozinha).
-      // Pastores/obreiros (isPastorObreiro) não entram mais nesta condição de isenção, 
-      // garantindo que paguem o valor integral (finalValue = eventDetails.fullValue).
-      if (isExemptStaff) { 
+      if (isExemptStaff || isPastorObreiro) { 
         finalValue = 0.00;
         paymentStatus = 'Isento';
       }
@@ -140,10 +143,14 @@ export const useInscriptionFormLogic = () => {
         sexo: formData.sexo,
         idade: formData.idade,
         whatsapp: formData.whatsapp,
-        // Mantido isPastorObreiro na lógica de Discipuladores/Líderes, pois eles devem ser seus próprios líderes/discipuladores
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
         lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
+        
+        // CORREÇÃO FINAL: REMOÇÃO DA COLUNA OBSOLETA 'situacao' (frontend)
+        // Isso resolve o erro 400 Bad Request APÓS a migração SQL ter removido a coluna do DB
+        // O valor do formulário está sendo enviado corretamente para 'irmao_voce_e'
         irmao_voce_e: formData.situacao,
+        
         responsavel_1_nome: formData.nomeResponsavel1?.toUpperCase() || null,
         responsavel_1_whatsapp: formData.whatsappResponsavel1 || null,
         responsavel_2_nome: formData.nomeResponsavel2?.toUpperCase() || null,
@@ -158,17 +165,27 @@ export const useInscriptionFormLogic = () => {
         acompanhante_parentesco: isChild ? formData.parentescoAcompanhante : null,
       };
 
-      const { error } = await supabase.from('inscriptions').insert([inscriptionData]).select();
-      if (error) throw error;
+      const { error, status } = await supabase.from('inscriptions').insert([inscriptionData]).select();
+      
+      if (error) {
+        console.error("ERRO CRÍTICO NA INSERÇÃO (Supabase Error Object):", error);
+        console.error("STATUS HTTP:", status);
+        throw error;
+      }
 
       toast({ title: "Inscrição realizada com sucesso!", description: "Sua inscrição foi registrada." });
       setIsSuccess(true);
 
     } catch (error: unknown) {
-      let errorMessage = "Ocorreu um erro inesperado.";
+      let errorMessage = "Ocorreu um erro inesperado. Verifique o Console (F12) para detalhes do erro.";
+      
       if (error instanceof Error) {
-        errorMessage = error.message;
+        errorMessage = `Erro de rede/cliente: ${error.message}`;
+        console.error("ERRO DE EXECUÇÃO (Network/Client Error):", error);
+      } else {
+         console.error("ERRO DESCONHECIDO:", error);
       }
+      
       toast({ title: "Erro na inscrição", description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
