@@ -9,7 +9,7 @@ import { eventDetails } from "@/config/eventDetails";
 import { InscriptionFormData } from "@/types/forms";
 import { inscriptionSchema } from "@/lib/validations/inscriptionSchema";
 import { ZodError } from "zod";
-import { calculateInscriptionDetails } from "@/lib/inscriptionLogic"; // <--- NOVO: IMPORTADO A FUNÇÃO
+import { calculateInscriptionDetails } from "@/lib/inscriptionLogic"; // <--- Importação da função auxiliar
 
 type ValidationErrors = {
   [key: string]: string | undefined;
@@ -116,6 +116,7 @@ export const useInscriptionFormLogic = () => {
       console.log(JSON.stringify(inscriptionData, null, 2));
       console.log("-----------------------------------------------------");
 
+      // 2. INSERÇÃO NO SUPABASE
       const { error, status } = await supabase.from('inscriptions').insert([inscriptionData]).select();
       
       if (error) {
