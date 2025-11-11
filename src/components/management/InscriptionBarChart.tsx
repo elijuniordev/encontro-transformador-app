@@ -21,8 +21,8 @@ const colors: { [key: string]: string } = {
 };
 
 const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
-  // Garantimos que a ordem das chaves do gráfico é a mesma para todas as barras
-  // e que excluímos a chave 'total' que não deve ser plotada.
+  // CORREÇÃO TS APLICADA: Força a tipagem como number para evitar o erro de comparação.
+  // Filtra apenas as categorias que possuem pelo menos 1 participante para não poluir a legenda.
   const chartKeys = FUNCAO_OPTIONS.filter(key => chartData.some(d => (d[key] as number) > 0));
   
   if (chartData.length === 0) {
@@ -59,7 +59,10 @@ const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
             layout="vertical"
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            {/* Eixo X: Valores de contagem */}
             <XAxis type="number" stroke="#6b7280" />
+            
+            {/* Eixo Y: Nomes dos Discipuladores */}
             <YAxis 
                 dataKey="discipulador" 
                 type="category" 
@@ -67,13 +70,19 @@ const InscriptionBarChart = ({ chartData }: InscriptionBarChartProps) => {
                 stroke="#6b7280" 
                 tick={{ fontSize: 12 }} 
             />
+            
+            {/* Tooltip: Exibe os valores detalhados ao passar o mouse */}
             <Tooltip 
                 formatter={(value: number, name: string) => [`${value} Inscrições`, name]}
                 labelFormatter={(label: string) => `Discipulador: ${label}`}
                 contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '4px' }}
                 itemStyle={{ color: '#1f2937' }}
             />
+            
+            {/* Legenda: Exibe as cores para cada tipo de inscrição */}
             <Legend wrapperStyle={{ paddingTop: 20 }} />
+            
+            {/* Barras Empilhadas: Uma Bar para cada tipo de inscrição */}
             {chartKeys.map(key => (
               <Bar 
                 key={key} 

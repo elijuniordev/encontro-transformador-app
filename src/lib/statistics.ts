@@ -22,6 +22,7 @@ export interface DisciplineChartData {
 // FIM NOVO
 
 export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: string]: number } => {
+// ... (o conteúdo desta função permanece inalterado)
   const counts: { [key: string]: number } = {};
   counts['Total'] = inscriptions.length;
 
@@ -37,9 +38,7 @@ export const calculateSituationCounts = (inscriptions: Inscription[]): { [key: s
 
 /**
  * Calcula o resumo financeiro completo.
- * @param inscriptions Array de inscrições filtradas.
- * @param allPayments Array com TODOS os pagamentos do banco.
- * @returns Um objeto com o resumo financeiro.
+// ... (o conteúdo desta função permanece inalterado)
  */
 export const calculateFinancialSummary = (inscriptions: Inscription[], allPayments: Payment[]): FinancialSummary => {
   const summary: FinancialSummary = {
@@ -89,7 +88,7 @@ export const calculateFinancialSummary = (inscriptions: Inscription[], allPaymen
   return summary;
 };
 
-// NOVO: Função para calcular inscrições por discipulador e função
+// Função para calcular inscrições por discipulador e função
 export const calculateInscriptionsByDiscipler = (inscriptions: Inscription[]): DisciplineChartData[] => {
   // Filtra apenas as inscrições confirmadas ou isentas
   const relevantInscriptions = inscriptions.filter(
