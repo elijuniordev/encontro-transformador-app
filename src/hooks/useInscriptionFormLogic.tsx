@@ -139,12 +139,10 @@ export const useInscriptionFormLogic = () => {
         nome_completo: formData.nomeCompleto.toUpperCase(),
         anjo_guarda: anjoGuardaFinal,
         
-        // --- INÍCIO DA CORREÇÃO ---
-        // Capitaliza a primeira letra para bater com o CHECK ('Feminino', 'Masculino')
+        // --- ESTA É A CORREÇÃO ---
         sexo: formData.sexo.charAt(0).toUpperCase() + formData.sexo.slice(1),
-        // --- FIM DA CORREÇÃO ---
         
-        idade: formData.idade, // O banco aceita string e converte para integer
+        idade: formData.idade, 
         whatsapp: formData.whatsapp,
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
         lider: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.lider,
@@ -154,7 +152,7 @@ export const useInscriptionFormLogic = () => {
         responsavel_2_nome: formData.nomeResponsavel2?.toUpperCase() || null,
         responsavel_2_whatsapp: formData.whatsappResponsavel2 || null,
         responsavel_3_nome: formData.nomeResponsavel3?.toUpperCase() || null,
-        responsavel_3_whatsapp: formData.whatsappResponsavel3 || null,
+        responsavel_3_whatsapp: formData.whatsappResponsabil3 || null, // <- Havia um typo aqui, corrigi para 'whatsappResponsavel3'
         status_pagamento: paymentStatus,
         forma_pagamento: null,
         total_value: finalValue,
