@@ -138,8 +138,12 @@ export const useInscriptionFormLogic = () => {
       const inscriptionData = {
         nome_completo: formData.nomeCompleto.toUpperCase(),
         anjo_guarda: anjoGuardaFinal,
-        // Correção do 'sexo'
+        
+        // --- INÍCIO DA CORREÇÃO ---
+        // Capitaliza a primeira letra para bater com o CHECK ('Feminino', 'Masculino')
         sexo: formData.sexo.charAt(0).toUpperCase() + formData.sexo.slice(1),
+        // --- FIM DA CORREÇÃO ---
+        
         idade: formData.idade, // O banco aceita string e converte para integer
         whatsapp: formData.whatsapp,
         discipuladores: (isPastorObreiro || isExemptStaff) ? formData.nomeCompleto.toUpperCase() : formData.discipuladores,
