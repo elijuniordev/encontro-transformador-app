@@ -36,7 +36,7 @@ export const PARENTESCO_OPTIONS = [
   "Outro",
 ];
 
-export const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Pagamento Incompleto", "Cancelado", "Isento"];
+export const STATUS_PAGAMENTO_OPTIONS = ["Pendente", "Confirmado", "Parcial", "Cancelado", "Isento"];
 
 export const FORMA_PAGAMENTO_OPTIONS = ["Pix", "Cartão de Crédito", "CartaoCredito2x", "CartaoDebito", "Dinheiro", "Transferência", "Pagamento Incompleto"];
 
