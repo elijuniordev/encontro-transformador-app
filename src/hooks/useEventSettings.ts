@@ -7,6 +7,7 @@ export const useEventSettings = () => {
   const { toast } = useToast();
   const [isRegistrationsOpen, setIsRegistrationsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [settingsId, setSettingsId] = useState<string | null>(null);
 
   const fetchRegistrationStatus = useCallback(async () => {
     setIsLoading(true);
@@ -20,6 +21,7 @@ export const useEventSettings = () => {
       setIsRegistrationsOpen(true); // Default para aberto em caso de erro
     } else {
       setIsRegistrationsOpen(data.registrations_open);
+      setSettingsId(data.id);
     }
     setIsLoading(false);
   }, []);
@@ -30,7 +32,15 @@ export const useEventSettings = () => {
 
   const handleToggleRegistrations = useCallback(async () => {
     const newStatus = !isRegistrationsOpen;
-    const settingsId = '8ff1cff8-2c26-4cc4-b2bf-7faa5612b747'; // ID fixo da configuração
+
+    if (!settingsId) {
+      toast({
+        title: "Configuração não encontrada",
+        description: "Não foi possível localizar a configuração do evento.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { error } = await supabase
       .from('event_settings')
@@ -51,7 +61,7 @@ export const useEventSettings = () => {
         description: `Inscrições ${newStatus ? "abertas" : "encerradas"} com sucesso!`,
       });
     }
-  }, [isRegistrationsOpen, toast]);
+  }, [isRegistrationsOpen, settingsId, toast]);
 
   return {
     isRegistrationsOpen,
